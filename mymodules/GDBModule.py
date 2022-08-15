@@ -43,7 +43,9 @@ def allFolders(hide_inactive=True):
     folders = []
     query = QtSql.QSqlQuery()
     if hide_inactive:
-        command = "SELECT path FROM folders where active=1"
+        command = "SELECT fo.path FROM folders fo " \
+                  "left join drives d on d.serial=fo.drive_id " \
+                  "where d.active=1"
     else:
         command = "SELECT path FROM folders"
     if query.exec(command):
