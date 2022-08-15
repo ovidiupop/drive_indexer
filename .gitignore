@@ -25,6 +25,7 @@ dist/
 bin/
 lib/
 share/
+venv/
 
 
 # JetBrains IDE
