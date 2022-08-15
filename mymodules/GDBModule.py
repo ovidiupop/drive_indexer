@@ -181,16 +181,13 @@ def setDrivesActive(drives):
     if not drives:
         return
     query = QtSql.QSqlQuery()
-    query.prepare("UPDATE drives SET active=0")
-    serials = []
-    for drive in drives:
-        serials.append(drive['serial'])
+    query.prepare("UPDATE drives SET active=0, path='unmounted'")
     if query.exec():
-        placeholder = ','.join("?" * len(serials))
-        query.prepare('UPDATE drives SET active=1 WHERE serial IN (%s)' % placeholder)
-        for binder in serials:
-            query.addBindValue(str(binder))
-        return query.exec()
+        for drive in drives:
+            query.prepare('UPDATE drives SET active=1, path=:path WHERE serial=:serial')
+            query.bindValue(':path', drive['path'])
+            query.bindValue(':serial', drive['serial'])
+            query.exec()
 
 
 def dummyDataResult():

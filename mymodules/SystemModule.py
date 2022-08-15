@@ -15,7 +15,8 @@ def setActiveDriveDB(mounted_drives):
 
 
 def folderCanBeIndexed(folder):
-    response = subprocess.Popen(f'df {folder}', shell=True, stdin=None,
+    command = f'df "{folder}"'
+    response = subprocess.Popen(command, shell=True, stdin=None,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # /dev/sda4      316212352 204173148  95906752  69% /home/matricks/aacustom
     lines = response.stdout.readlines()
