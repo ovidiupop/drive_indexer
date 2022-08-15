@@ -279,11 +279,11 @@ class GDatabase:
         self.con = QtSql.QSqlDatabase.addDatabase(driver)
         self.con.setDatabaseName(database)
         # self.default_drive = {'name': 'tecra', 'size': 500}  # size in gigabytes
-        self.required_tables = {'drives', 'folders', 'extensions', 'files'}
-        self.preselected_extensions = ['py', 'csv', 'php']
-        # self.default_extensions = ['mkv', 'mov', 'mp4', 'avi', 'srt', 'sub']
-        self.default_extensions = ['csv', 'txt', 'xml', 'js', 'php', 'py', 'mkv', 'mov', 'mp4', 'avi', 'srt', 'sub']
-
+        self.required_tables = {'drives', 'folders', 'extensions', 'files', 'categories'}
+        self.categories = ['Audio', 'Compressed', 'Disc and media', 'Data and database', 'E-mail', 'Executable',
+                           'Font', 'Image', 'Internet', 'Presentation', 'Programming', 'Spreadsheet', 'System',
+                           'Video', 'Word']
+        self.default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0], ['mp3', 1, 1], ['mpa', 1, 0], ['ogg', 1, 1], ['wav', 1, 0], ['wma', 1, 0], ['wpl', 1, 0], ['7z', 2, 0], ['arj', 2, 0], ['deb', 2, 0], ['pkg', 2, 0], ['rar', 2, 1], ['rpm', 2, 0], ['tar.gz', 2, 0], ['z', 2, 0], ['zip', 2, 1], ['dmg', 3, 0], ['iso', 3, 0], ['toast', 3, 0], ['vcd', 3, 0], ['csv', 4, 1], ['dat', 4, 0], ['db', 4, 1], ['dbf', 4, 0], ['log', 4, 0], ['mdb', 4, 0], ['sav', 4, 0], ['sql', 4, 1], ['tar', 4, 0], ['xml', 4, 1], ['email', 5, 0], ['eml', 5, 0], ['emlx', 5, 0], ['msg', 5, 0], ['oft', 5, 0], ['ost', 5, 0], ['pst', 5, 0], ['vcf', 5, 0], ['apk', 6, 0], ['bat', 6, 0], ['bin', 6, 0], ['cgi', 6, 0], ['com', 6, 0], ['exe', 6, 1], ['gadget', 6, 0], ['jar', 6, 0], ['msi', 6, 1], ['wsf', 6, 0], ['fnt', 7, 0], ['fon', 7, 0], ['otf', 7, 1], ['ttf', 7, 1], ['ai', 8, 1], ['bmp', 8, 0], ['gif', 8, 0], ['ico', 8, 0], ['jpeg', 8, 1], ['jpg', 8, 1], ['png', 8, 1], ['ps', 8, 0], ['psd', 8, 0], ['svg', 8, 0], ['tif', 8, 0], ['tiff', 8, 0], ['asp', 9, 1], ['aspx', 9, 1], ['cer', 9, 0], ['cfm', 9, 0], ['css', 9, 1], ['htm', 9, 0], ['html', 9, 1], ['js', 9, 1], ['jsp', 9, 0], ['part', 9, 0], ['rss', 9, 0], ['xhtml', 9, 0], ['key', 10, 0], ['odp', 10, 0], ['pps', 10, 0], ['ppt', 10, 1], ['pptx', 10, 1], ['c', 11, 0], ['pl', 11, 0], ['class', 11, 0], ['cpp', 11, 0], ['cs', 11, 0], ['h', 11, 1], ['java', 11, 1], ['php', 11, 1], ['py', 11, 1], ['sh', 11, 1], ['swift', 11, 0], ['vb', 11, 0], ['json', 11, 0], ['ods', 12, 1], ['xls', 12, 1], ['xlsm', 12, 1], ['xlsx', 12, 1], ['bak', 13, 0], ['cab', 13, 0], ['cfg', 13, 0], ['cpl', 13, 0], ['cur', 13, 0], ['dll', 13, 0], ['dmp', 13, 0], ['drv', 13, 0], ['icns', 13, 0], ['ini', 13, 0], ['lnk', 13, 0], ['sys', 13, 0], ['tmp', 13, 0], ['3g2', 14, 0], ['3gp', 14, 0], ['avi', 14, 1], ['flv', 14, 0], ['h264', 14, 0], ['m4v', 14, 1], ['mkv', 14, 1], ['mov', 14, 0], ['mp4', 14, 1], ['mpg', 14, 1], ['mpeg', 14, 1], ['rm', 14, 0], ['swf', 14, 0], ['vob', 14, 0], ['wmv', 14, 1], ['srt', 14, 1], ['sub', 14, 1], ['doc', 15, 1], ['docx', 15, 1], ['odt', 15, 1], ['pdf', 15, 1], ['rtf', 15, 0], ['tex', 15, 0], ['txt', 15, 0], ['wpd', 15, 0]]
         self.checkDatabaseConnection()
         self.ensureData()
 
@@ -308,15 +308,17 @@ class GDatabase:
     def addTablesDatabase(self):
         query = QtSql.QSqlQuery()
         commands = [
+            'DROP TABLE IF EXISTS categories',
             'DROP TABLE IF EXISTS drives',
             'DROP TABLE IF EXISTS folders',
             'DROP TABLE IF EXISTS extensions',
             'DROP TABLE IF EXISTS files',
+            'CREATE TABLE categories (id INTEGER PRIMARY KEY, category TEXT NOT NULL)',
             'CREATE TABLE drives ( serial TEXT PRIMARY KEY, name TEXT NOT NULL, label TEXT NOT NULL, size FLOAT NOT NULL, active INTEGER DEFAULT 0, partitions TEXT NOT NULL, path TEXT NOT NULL)',
-            'CREATE TABLE folders ( id INTEGER PRIMARY KEY, path TEXT NOT NULL, drive_id TEXT)',
-            'CREATE TABLE extensions ( id INTEGER PRIMARY KEY, extension TEXT NOT NULL, selected INTEGER DEFAULT 0)',
+            'CREATE TABLE folders ( id INTEGER PRIMARY KEY, path TEXT NOT NULL, drive_id TEXT, FOREIGN KEY(drive_id) REFERENCES drives(serial))',
+            'CREATE TABLE extensions ( id INTEGER PRIMARY KEY, extension TEXT NOT NULL, category_id INTEGER NOT NULL, selected INTEGER DEFAULT 0, FOREIGN KEY(category_id) REFERENCES categories(id))',
             'CREATE TABLE files ( id INTEGER PRIMARY KEY, dir TEXT NOT NULL, filename TEXT NOT NULL, size INTEGER, '
-            'extension_id INTEGER NOT NULL, folder_id INTEGER NOT NULL)',
+            'extension_id INTEGER NOT NULL, folder_id INTEGER NOT NULL, FOREIGN KEY(extension_id) REFERENCES extensions(id), FOREIGN KEY(folder_id) REFERENCES folders(id))',
         ]
 
         # each query must be prepared before execution
@@ -336,15 +338,19 @@ class GDatabase:
                 f'{missing_tables}')
             sys.exit(1)
 
+        # populate categories
+        for category in self.categories:
+            query.prepare("""INSERT INTO categories (category) VALUES (?)""")
+            query.addBindValue(category)
+            query.exec()
+
         # populate tables with default values
         # populate extensions
         for extension in self.default_extensions:
-            selected = 0
-            if extension in self.preselected_extensions:
-                selected = 1
-            query.prepare("""INSERT INTO extensions (extension, selected) VALUES (?, ?)""")
-            query.addBindValue(extension)
-            query.addBindValue(selected)
+            query.prepare("""INSERT INTO extensions (extension, category_id, selected) VALUES (?, ?, ?)""")
+            query.addBindValue(extension[0])
+            query.addBindValue(extension[1])
+            query.addBindValue(extension[2])
             query.exec()
 
         # check if extension has been populated
@@ -357,24 +363,3 @@ class GDatabase:
                     'Missing data from extensions')
                 sys.exit(1)
 
-        # self.populateDrives(query)
-
-    def populateDrives(self, query):
-        # populate tables with default values
-        # populate drives
-        name = self.default_drive['name']
-        size = self.default_drive['size']
-        query.prepare("""INSERT INTO drives (name, size) VALUES (?, ?)""")
-        query.addBindValue(name)
-        query.addBindValue(size)
-        query.exec()
-
-        # check if drives has been populated
-        if query.exec("SELECT name FROM drives"):
-            query.first()
-            name = query.value('name')
-            if not name:
-                QtWidgets.QMessageBox.critical(
-                    None, 'DB Integrity Error',
-                    'Missing data from drives')
-                sys.exit(1)
