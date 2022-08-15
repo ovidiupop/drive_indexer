@@ -11,6 +11,7 @@ from mymodules import GDBModule as gdb
 COLUMN_SIZE = [0.10, 0.30, 0.20, 0.20, 0.10, 0.10]
 COLUMN_SIZE_ID_HIDDEN = [0.10, 0.40, 0.20, 0.20, 0.09, 0.10]
 
+
 class Drives(QtWidgets.QWidget):
 
     check_add_button = QtCore.pyqtSignal()
