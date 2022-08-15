@@ -13,7 +13,6 @@ class Folders(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Folders, self).__init__(parent)
         self.hide_unmounted_drives = True
-
         self.folder_add_button = PushButton('Add')
         self.folder_remove_all_button = PushButton('Remove All')
         self.folder_remove_selected_button = PushButton('Remove')
