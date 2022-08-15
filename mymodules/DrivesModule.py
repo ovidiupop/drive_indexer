@@ -21,9 +21,6 @@ class Drives(QtWidgets.QWidget):
 
         self.partitions_as_list_partition_key = self.partitionsAsListPartitionKey()
         self.partitions_as_list_serial_key = self.partitionsAsListSerialKey()
-        # print(self.partitions_as_list_partition_key)
-        # print(self.partitions_as_list_serial_key)
-
         self.drive_serial_input = QtWidgets.QLineEdit()
         self.drive_serial_input.setDisabled(True)
         self.drive_name_input = QtWidgets.QLineEdit()
@@ -35,8 +32,6 @@ class Drives(QtWidgets.QWidget):
         self.drive_size_input.setSuffix(' GB')
         self.drive_active_input = QtWidgets.QLineEdit()
         self.drive_active_input.setDisabled(True)
-        # self.drive_partitions_input = QtWidgets.QListWidget()
-        # self.drive_partitions_input.setDisabled(True)
         self.add_drive_button = PushButton('Add')
         self.remove_drive_button = PushButton('Remove')
         self.show_id_drive_button = PushButton('Show ID')
@@ -44,13 +39,12 @@ class Drives(QtWidgets.QWidget):
         self.show_id_drive_button.setChecked(False)
         self.drive_form_close = QtWidgets.QPushButton()
         self.drive_form_close.setMaximumWidth(30)
-
         self.combo_active_drives = QtWidgets.QComboBox()
-
         self.drive_form_close.setIcon(iconForButton('SP_DialogCloseButton'))
         self.add_drive_button.setIcon(iconForButton('SP_DriveHDIcon'))
         self.remove_drive_button.setIcon(iconForButton('SP_TrashIcon'))
         self.show_id_drive_button.setIcon(iconForButton('SP_FileDialogListView'))
+
 
     def partitionsAsListSerialKey(self):
         drives = gdb.allDrives()
