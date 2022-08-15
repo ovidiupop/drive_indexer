@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QFileDialog
 from gallery import iconForButton, confirmationDialog
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
-from mymodules.DrivesModule import Drives
-from mymodules.SystemModule import System, folderCanBeIndexed
+from mymodules.SystemModule import folderCanBeIndexed
 
 
 class Folders(QtWidgets.QWidget):
@@ -13,7 +12,7 @@ class Folders(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(Folders, self).__init__(parent)
-        self.hide_unmonted_drives = True
+        self.hide_unmounted_drives = True
 
         self.folder_add_button = PushButton('Add')
         self.folder_remove_all_button = PushButton('Remove All')
