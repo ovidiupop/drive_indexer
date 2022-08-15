@@ -79,7 +79,7 @@ class Folders(QtWidgets.QWidget):
 
     def fillPreferredFolders(self):
         self.folders_indexed.setSelectionMode(QtWidgets.QListWidget.ExtendedSelection)
-        self.folders_indexed.addItems(gdb.allFolders(False))
+        self.folders_indexed.addItems(gdb.allFolders())
 
     def removeAllFolders(self):
         self.folders_indexed.selectAll()
