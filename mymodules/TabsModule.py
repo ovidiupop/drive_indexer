@@ -71,7 +71,7 @@ class TabsWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def fillExtensions(self):
-        extensions_list = [self.search.extensions_list_search, self.extensions.settings_extensions_list]
+        extensions_list = [self.extensions.settings_extensions_list]
         extensions_db = gdb.getAll('extensions')
         for ext_list in extensions_list:
             ext_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
@@ -180,7 +180,7 @@ class TabsWidget(QtWidgets.QWidget):
             self.folders.indexing_progress_bar.hide()
 
     def preselectFavoriteExtensions(self):
-        ext_lists = [self.search.extensions_list_search, self.extensions.settings_extensions_list]
+        ext_lists = [self.extensions.settings_extensions_list]
         extensions_db = gdb.getAll('extensions')
         selected_extensions = gdb.preselectedExtensions()
         self.entry = QtGui.QStandardItemModel()

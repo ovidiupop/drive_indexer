@@ -4,13 +4,12 @@ from gallery import iconForButton
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
 
-
 class Categories(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Categories, self).__init__(parent)
 
         self.categories = gdb.getAll('categories')
-        categories_selector = CategoriesSelector('tab_categories_', save_selection=False)
+        categories_selector = CategoriesSelector('tab_categories_', save_selection=True)
         categories_layout = categories_selector.generateBox()
 
         self.layout_tab_categories = QtWidgets.QHBoxLayout()
@@ -23,7 +22,7 @@ class CategoriesSelector(QtWidgets.QWidget):
         self.identifier = None if not identifier else identifier
         self.categories = gdb.getAll('categories')
         self.save_selection = save_selection
-        self.selected_for_search = []
+        self.extensions_for_search = []
 
     def generateBox(self):
         # Set the vertical Qt Layout
@@ -38,9 +37,9 @@ class CategoriesSelector(QtWidgets.QWidget):
             x = cat_name
             cat_name.stateChanged.connect(lambda checked, val=x: self.setPreferredCategory(val))
             if idx % 5 == 0:
-                column = 'column' + str(idx)
                 column = QtWidgets.QVBoxLayout()
                 columns.append(column)
+            # add cat_name to previous column
             column.addWidget(cat_name)
 
         for column in columns:
@@ -50,6 +49,7 @@ class CategoriesSelector(QtWidgets.QWidget):
         last_column = QtWidgets.QVBoxLayout()
         check_all_categories = PushButton('Check all')
         check_all_categories.setCheckable(True)
+        check_all_categories.setChecked(gdb.allCategoriesAreSelected())
         check_all_categories.clicked.connect(lambda: self.checkAllCategories(check_all_categories.isChecked()))
         last_column.addWidget(check_all_categories)
         h_cat_box.addLayout(last_column)
@@ -62,25 +62,30 @@ class CategoriesSelector(QtWidgets.QWidget):
         for box in self.sender().parent().findChildren(QtWidgets.QCheckBox):
             box.setChecked(True) if is_checked else box.setChecked(False)
 
+    def getExtensionsForSearch(self):
+        # come from search tab
+        selected_categories = []
+        checkboxes = self.sender().parent().findChildren(QtWidgets.QCheckBox)
+        for checkbox in checkboxes:
+            if checkbox.isChecked():
+                print(checkbox.text())
+                selected_categories.append(checkbox.text())
+        print("NO SAVE! CREATE LIST")
+        print(selected_categories)
+        # Get list of extensions for selected categories
+        # and set them for searching
+        selected_extensions = gdb.getExtensionsForCategories(selected_categories)
+        self.extensions_for_search = selected_extensions
+
     def setPreferredCategory(self, btn):
         text = btn.text()
         if self.save_selection:
+            # come from settings tab
             if gdb.categorySetSelected(text, btn.isChecked()):
                 print("Success")
+                # check also in search tab
             else:
                 print("Fail")
         else:
-            selected_categories = []
-            checkboxes = self.sender().parent().findChildren(QtWidgets.QCheckBox)
-            for checkbox in checkboxes:
-                if checkbox.isChecked():
-                    print(checkbox.text())
-                    selected_categories.append(checkbox.text())
-            print("NO SAVE! CREATE LIST")
-            print(selected_categories)
-
-            # Get list of extensions for selected categories
-            # and set them for searching
-            selected_extensions = gdb.getExtensionsForCategories(selected_categories)
-            print(selected_extensions)
+            self.getExtensionsForSearch()
 

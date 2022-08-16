@@ -66,10 +66,11 @@ def allFolders(hide_inactive=True) -> list:
     else:
         command = "SELECT path FROM folders"
     query = QtSql.QSqlQuery(command)
-    while query.next():
-        folders.append(query.value('path'))
-    query.clear()
-    return folders
+    if query.exec():
+        while query.next():
+            folders.append(query.value('path'))
+        query.clear()
+        return folders
 
 
 def setSelectedExtensionsByCategories():
@@ -88,7 +89,8 @@ def setSelectedExtensionsByCategories():
 def getExtensionsForCategories(categories: list) -> list:
     query = QtSql.QSqlQuery()
     placeholder = ','.join("?" * len(categories))
-    query.prepare('SELECT extension from extensions WHERE category_id IN (SELECT id from categories where category in (%s))' % placeholder)
+    query.prepare('SELECT extension from extensions WHERE category_id IN (SELECT id from categories where category in '
+                  '(%s))' % placeholder)
     for binder in categories:
         query.addBindValue(str(binder))
     if query.exec():
@@ -99,11 +101,16 @@ def getExtensionsForCategories(categories: list) -> list:
         return ext
 
 
+def allCategoriesAreSelected() -> bool:
+    query = QtSql.QSqlQuery('SELECT selected FROM categories WHERE selected=0')
+    found = query.first()
+    return not found
+
+
 # set category selected and also if success
 # set selected for related extensions
 def categorySetSelected(category, selected):
     query = QtSql.QSqlQuery()
-    x = int(selected)
     query.prepare("UPDATE categories SET selected=:selected WHERE category=:category")
     query.bindValue(':selected', int(selected))
     query.bindValue(':category', category)
@@ -250,7 +257,7 @@ def extensionExists(extension: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT extension FROM extensions WHERE extension=:extension")
     query.bindValue(":extension", str(extension))
-    ret = query.first()
+    ret = query.exec() and query.first()
     query.clear()
     return ret
 
@@ -303,20 +310,22 @@ def getDriveByPath(path: str) -> str:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT serial FROM drives WHERE path=:path and active=1")
     query.bindValue(":path", str(path))
-    query.first()
-    ret = query.value('serial')
-    query.clear()
-    return ret
+    if query.exec():
+        query.first()
+        ret = query.value('serial')
+        query.clear()
+        return ret
 
 
 def driveSerialExists(serial: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT * FROM drives WHERE serial=:serial")
     query.bindValue(":serial", str(serial))
-    ret = query.first()
-    query.clear()
-    return ret
-
+    if query.exec():
+        ret = query.first()
+        query.clear()
+        return ret
+    return False
 
 def dummyDataResult():
     results = []
