@@ -47,7 +47,7 @@ class Drives(QtWidgets.QWidget):
 
 
     def partitionsAsListSerialKey(self):
-        drives = gdb.allDrives()
+        drives = gdb.getAll('drives')
         partitions = {}
         if drives:
             for drive in drives:
@@ -57,7 +57,7 @@ class Drives(QtWidgets.QWidget):
         return partitions
 
     def partitionsAsListPartitionKey(self):
-        drives = gdb.allDrives()
+        drives = gdb.getAll('drives')
         partitions = {}
         if drives:
             for drive in drives:

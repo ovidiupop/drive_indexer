@@ -29,6 +29,9 @@ class IndexerWindow(QMainWindow):
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
         gdb.GDatabase()
+        # drives = gdb.getAll('extensions', ['extension'])
+        # print(drives, len(drives))
+
 
         # remaining code
         self.statusbar = self.statusBar()
@@ -51,17 +54,15 @@ class IndexerWindow(QMainWindow):
         file_menu.addSeparator()
         quit_action = file_menu.addAction('Quit', self.close)
 
-        settings_menu  = self.menuBar()
+        settings_menu = self.menuBar()
         settings_menu = settings_menu .addMenu('Settings')
         settings_extensions_action = settings_menu.addAction('Extensions')
         settings_folders_action = settings_menu.addAction('Folders')
         settings_drives_action = settings_menu.addAction('Drives')
 
-        # Status Bar
-        # self.statusbar = self.statusBar()
-
-        #
-        # self.print_number = None
+        help_menu = self.menuBar()
+        help_menu = help_menu .addMenu('Help')
+        about_action = help_menu.addAction('About')
 
         # End main UI code
         self.show()

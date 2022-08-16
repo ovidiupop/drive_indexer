@@ -7,6 +7,7 @@ from mymodules.HumanReadableSize import HumanBytes
 
 DATABASE_NAME = 'indexer.db'
 
+
 def connection(name):
     driver = 'QSQLITE'
     database = DATABASE_NAME
@@ -21,55 +22,125 @@ def printQueryErr(query, method_name=''):
     print(", ".join(errors))
 
 
-def allExtensions():
-    extensions = []
-    query = QtSql.QSqlQuery()
-    if query.exec("SELECT extension FROM extensions ORDER BY id"):
-        while query.next():
-            extensions.append(query.value('extension'))
-    return extensions
+# return column's name of a table
+def tables_columns(table):
+    columns = []
+    query = QtSql.QSqlQuery(f"PRAGMA table_info({table})")
+    while query.next():
+        name = query.record().indexOf("name")
+        columns.append(query.value(name))
+    return columns
 
 
-def preselectedExtensions():
-    query = QtSql.QSqlQuery()
-    selected = []
-    if query.exec("SELECT extension FROM extensions where selected=1 ORDER BY id"):
-        while query.next():
-            selected.append(query.value('extension'))
-    return selected
+# get all records from table
+# if only_fields is set, return a list of choosen fields
+# ex: ['aif', 'doc', 'docx', 'odt', 'pdf', 'rtf', 'tex', 'txt', 'wpd']
+# else return a list of dict with all fields of table
+# ex:[{'serial': 'S2R6NX0H703355N', 'name': 'Samsung_SSD_850_EVO_250GB', 'label': 'Samsung_SSD_850_EVO_250GB'},
+# {'serial': '4990779F50C0', 'name': 'XPG_EX500', 'label': 'XPG_EX500'}]
+
+def getAll(table: str, only_field: list = None) -> list:
+    return_array = []
+    tables = tables_columns(table) if not only_field else only_field
+    fields = ','.join(tables)
+    query = QtSql.QSqlQuery(f"SELECT {fields} FROM {table}")
+    while query.next():
+        row = {} if not only_field else []
+        for field in tables:
+            if only_field:
+                return_array.append(query.value(field))
+            else:
+                row[field] = query.value(field)
+        if not only_field:
+            return_array.append(row)
+    query.clear()
+    return return_array
 
 
-def allFolders(hide_inactive=True):
+def allFolders(hide_inactive=True) -> list:
     folders = []
-    query = QtSql.QSqlQuery()
     if hide_inactive:
         command = "SELECT fo.path FROM folders fo " \
                   "left join drives d on d.serial=fo.drive_id " \
                   "where d.active=1"
     else:
         command = "SELECT path FROM folders"
-    if query.exec(command):
-        while query.next():
-            folders.append(query.value('path'))
+    query = QtSql.QSqlQuery(command)
+    while query.next():
+        folders.append(query.value('path'))
+    query.clear()
     return folders
 
 
-def folderExists(folder):
+def setSelectedExtensionsByCategories():
+    query = QtSql.QSqlQuery("update extensions set selected=0")
+    query.exec()
+    query = QtSql.QSqlQuery("update extensions set selected=1"
+                            " where category_id in ("
+                            "select c.id from categories c"
+                            " left join extensions e on c.id=e.category_id"
+                            " where c.selected = 1)")
+    ret = query.exec()
+    query.clear()
+    return ret
+
+
+def getExtensionsForCategories(categories: list) -> list:
+    query = QtSql.QSqlQuery()
+    placeholder = ','.join("?" * len(categories))
+    query.prepare('SELECT extension from extensions WHERE category_id IN (SELECT id from categories where category in (%s))' % placeholder)
+    for binder in categories:
+        query.addBindValue(str(binder))
+    if query.exec():
+        ext = []
+        while query.next():
+            ext.append(query.value(0))
+        query.clear()
+        return ext
+
+
+# set category selected and also if success
+# set selected for related extensions
+def categorySetSelected(category, selected):
+    query = QtSql.QSqlQuery()
+    x = int(selected)
+    query.prepare("UPDATE categories SET selected=:selected WHERE category=:category")
+    query.bindValue(':selected', int(selected))
+    query.bindValue(':category', category)
+    if query.exec():
+        query.clear()
+        return setSelectedExtensionsByCategories()
+
+
+def preselectedExtensions() -> list:
+    selected = []
+    query = QtSql.QSqlQuery("SELECT extension FROM extensions where selected=1 ORDER BY id")
+    while query.next():
+        selected.append(query.value('extension'))
+    query.clear()
+    return selected
+
+
+def folderExists(folder: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT path FROM folders where path=:path limit 1")
     query.bindValue(':path', folder)
-    return query.exec() and query.first()
+    ret = query.exec() and query.first()
+    query.clear()
+    return ret
 
 
-def addFolder(folder, serial):
+def addFolder(folder: str, serial: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare(""" INSERT INTO folders (path, drive_id) VALUES (?,?) """)
     query.addBindValue(folder)
     query.addBindValue(serial)
-    return query.exec()
+    ret = query.exec()
+    query.clear()
+    return ret
 
 
-def deleteFoldersDB(paths):
+def deleteFoldersDB(paths: list) -> bool:
     query = QtSql.QSqlQuery()
     for path in paths:
         folder_id = folderId(path)
@@ -80,32 +151,35 @@ def deleteFoldersDB(paths):
         else:
             printQueryErr(query, 'cleanFolders')
             return False
+    query.clear()
     return True
 
 
-def deleteFilesDB(folder_id):
+def deleteFilesDB(folder_id: int) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("""Delete from files where folder_id=:folder_id""")
     query.bindValue(':folder_id', folder_id)
     if query.exec():
+        query.clear()
         return True
     else:
         printQueryErr(query, 'clearFiles')
 
 
-def folderId(path):
+def folderId(path: str) -> int:
     query = QtSql.QSqlQuery()
     query.prepare("select id from folders where path=:path")
     query.bindValue(':path', path)
     if query.exec():
         while query.next():
             folder_id = query.value(0)
+            query.clear()
             return folder_id
     else:
         printQueryErr(query, 'folderId')
 
 
-def extensionsToInt(extensions_list_string):
+def extensionsToInt(extensions_list_string: list) -> list:
     query = QtSql.QSqlQuery()
     placeholder = ','.join("?" * len(extensions_list_string))
     query.prepare('SELECT id FROM extensions WHERE extension IN (%s)' % placeholder)
@@ -115,15 +189,14 @@ def extensionsToInt(extensions_list_string):
         ext = []
         while query.next():
             ext.append(query.value(0))
+        query.clear()
         return ext
     else:
         printQueryErr(query, 'extensionsToInt')
         qDebug(query.lastQuery())
 
 
-def findFiles(search_term, extensions):
-    if not search_term:
-        return
+def findFiles(search_term: str, extensions: list) -> list:
     extensions_list_ids = extensionsToInt(extensions) or []
     placeholder = ','.join("?" * len(extensions_list_ids))
     query = QtSql.QSqlQuery()
@@ -157,29 +230,11 @@ def findFiles(search_term, extensions):
                 query.value('label')
             ]
             results.append(item)
+        query.clear()
         return results
 
 
-def allDrives():
-    drives = []
-    query = QtSql.QSqlQuery()
-    if query.exec("SELECT serial, name, label, size, active, partitions FROM drives"):
-        while query.next():
-            drive = {
-                'serial': query.value('serial'),
-                'name': query.value('name'),
-                'label': query.value('label'),
-                'active': query.value('active'),
-                'size': query.value('size'),
-                'partitions': query.value('partitions'),
-            }
-            drives.append(drive)
-    return drives
-
-
-def setDrivesActive(drives):
-    if not drives:
-        return
+def setDrivesActive(drives: list) -> None:
     query = QtSql.QSqlQuery()
     query.prepare("UPDATE drives SET active=0, path='unmounted'")
     if query.exec():
@@ -188,46 +243,30 @@ def setDrivesActive(drives):
             query.bindValue(':path', drive['path'])
             query.bindValue(':serial', drive['serial'])
             query.exec()
+    query.clear()
 
 
-def dummyDataResult():
-    term = 'index'
-    query = QtSql.QSqlQuery()
-    query.prepare("select dir, filename, size, extension_id, folder_id from files "
-                  "where filename like '%index%'")
-    if query.exec():
-        results = []
-        while query.next():
-            item = [
-                query.value('dir'),
-                query.value('filename'),
-                query.value('size'),
-                query.value('extension_id'),
-                query.value('folder_id')
-            ]
-            results.append(item)
-        return results
-
-
-def extensionExists(extension):
+def extensionExists(extension: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT extension FROM extensions WHERE extension=:extension")
     query.bindValue(":extension", str(extension))
-    return query.exec() and query.first()
+    ret = query.first()
+    query.clear()
+    return ret
 
 
-def addNewExtension(extension):
+def addNewExtension(extension: str) -> bool:
     if not extension or extensionExists(extension):
-        return
+        return False
     query = QtSql.QSqlQuery()
     query.prepare(""" INSERT INTO extensions (extension) VALUES (?)""")
     query.addBindValue(extension)
-    return query.exec()
+    ret = query.exec()
+    query.clear()
+    return ret
 
 
-def setPreferredExtensions(extensions):
-    if not extensions:
-        return
+def setPreferredExtensions(extensions: list) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("UPDATE extensions SET selected=0 WHERE 1")
     if query.exec():
@@ -235,10 +274,12 @@ def setPreferredExtensions(extensions):
         query.prepare('UPDATE extensions SET selected=1 WHERE extension IN (%s)' % placeholder)
         for binder in extensions:
             query.addBindValue(str(binder))
-        return query.exec()
+        ret = query.exec()
+        query.clear()
+        return ret
 
 
-def removeExtensions(extensions):
+def removeExtensions(extensions: list) -> bool:
     query = QtSql.QSqlQuery()
     exts_id = extensionsToInt(extensions)
     # clear indexed files with extension
@@ -251,24 +292,47 @@ def removeExtensions(extensions):
         query.prepare('DELETE FROM extensions WHERE id IN (%s)' % placeholder)
         for binder in exts_id:
             query.addBindValue(str(binder))
-        return query.exec()
+        ret = query.exec()
+        query.clear()
+        return ret
+    query.clear()
     return False
 
 
-def getDriveByPath(path):
+def getDriveByPath(path: str) -> str:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT serial FROM drives WHERE path=:path and active=1")
     query.bindValue(":path", str(path))
-    if query.exec():
-        while query.first():
-            return query.value('serial')
+    query.first()
+    ret = query.value('serial')
+    query.clear()
+    return ret
 
 
-def driveSerialExists(serial):
+def driveSerialExists(serial: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT * FROM drives WHERE serial=:serial")
     query.bindValue(":serial", str(serial))
-    return query.exec() and query.first()
+    ret = query.first()
+    query.clear()
+    return ret
+
+
+def dummyDataResult():
+    results = []
+    term = 'index'
+    query = QtSql.QSqlQuery("select dir, filename, size, extension_id, folder_id from files "
+                            "where filename like '%index%'")
+    while query.next():
+        item = [
+            query.value('dir'),
+            query.value('filename'),
+            query.value('size'),
+            query.value('extension_id'),
+            query.value('folder_id')
+        ]
+        results.append(item)
+    return results
 
 
 class GDatabase:
@@ -283,7 +347,34 @@ class GDatabase:
         self.categories = ['Audio', 'Compressed', 'Disc and media', 'Data and database', 'E-mail', 'Executable',
                            'Font', 'Image', 'Internet', 'Presentation', 'Programming', 'Spreadsheet', 'System',
                            'Video', 'Word']
-        self.default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0], ['mp3', 1, 1], ['mpa', 1, 0], ['ogg', 1, 1], ['wav', 1, 0], ['wma', 1, 0], ['wpl', 1, 0], ['7z', 2, 0], ['arj', 2, 0], ['deb', 2, 0], ['pkg', 2, 0], ['rar', 2, 1], ['rpm', 2, 0], ['tar.gz', 2, 0], ['z', 2, 0], ['zip', 2, 1], ['dmg', 3, 0], ['iso', 3, 0], ['toast', 3, 0], ['vcd', 3, 0], ['csv', 4, 1], ['dat', 4, 0], ['db', 4, 1], ['dbf', 4, 0], ['log', 4, 0], ['mdb', 4, 0], ['sav', 4, 0], ['sql', 4, 1], ['tar', 4, 0], ['xml', 4, 1], ['email', 5, 0], ['eml', 5, 0], ['emlx', 5, 0], ['msg', 5, 0], ['oft', 5, 0], ['ost', 5, 0], ['pst', 5, 0], ['vcf', 5, 0], ['apk', 6, 0], ['bat', 6, 0], ['bin', 6, 0], ['cgi', 6, 0], ['com', 6, 0], ['exe', 6, 1], ['gadget', 6, 0], ['jar', 6, 0], ['msi', 6, 1], ['wsf', 6, 0], ['fnt', 7, 0], ['fon', 7, 0], ['otf', 7, 1], ['ttf', 7, 1], ['ai', 8, 1], ['bmp', 8, 0], ['gif', 8, 0], ['ico', 8, 0], ['jpeg', 8, 1], ['jpg', 8, 1], ['png', 8, 1], ['ps', 8, 0], ['psd', 8, 0], ['svg', 8, 0], ['tif', 8, 0], ['tiff', 8, 0], ['asp', 9, 1], ['aspx', 9, 1], ['cer', 9, 0], ['cfm', 9, 0], ['css', 9, 1], ['htm', 9, 0], ['html', 9, 1], ['js', 9, 1], ['jsp', 9, 0], ['part', 9, 0], ['rss', 9, 0], ['xhtml', 9, 0], ['key', 10, 0], ['odp', 10, 0], ['pps', 10, 0], ['ppt', 10, 1], ['pptx', 10, 1], ['c', 11, 0], ['pl', 11, 0], ['class', 11, 0], ['cpp', 11, 0], ['cs', 11, 0], ['h', 11, 1], ['java', 11, 1], ['php', 11, 1], ['py', 11, 1], ['sh', 11, 1], ['swift', 11, 0], ['vb', 11, 0], ['json', 11, 0], ['ods', 12, 1], ['xls', 12, 1], ['xlsm', 12, 1], ['xlsx', 12, 1], ['bak', 13, 0], ['cab', 13, 0], ['cfg', 13, 0], ['cpl', 13, 0], ['cur', 13, 0], ['dll', 13, 0], ['dmp', 13, 0], ['drv', 13, 0], ['icns', 13, 0], ['ini', 13, 0], ['lnk', 13, 0], ['sys', 13, 0], ['tmp', 13, 0], ['3g2', 14, 0], ['3gp', 14, 0], ['avi', 14, 1], ['flv', 14, 0], ['h264', 14, 0], ['m4v', 14, 1], ['mkv', 14, 1], ['mov', 14, 0], ['mp4', 14, 1], ['mpg', 14, 1], ['mpeg', 14, 1], ['rm', 14, 0], ['swf', 14, 0], ['vob', 14, 0], ['wmv', 14, 1], ['srt', 14, 1], ['sub', 14, 1], ['doc', 15, 1], ['docx', 15, 1], ['odt', 15, 1], ['pdf', 15, 1], ['rtf', 15, 0], ['tex', 15, 0], ['txt', 15, 0], ['wpd', 15, 0]]
+        self.default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0], ['mp3', 1, 1],
+                                   ['mpa', 1, 0], ['ogg', 1, 1], ['wav', 1, 0], ['wma', 1, 0], ['wpl', 1, 0],
+                                   ['7z', 2, 0], ['arj', 2, 0], ['deb', 2, 0], ['pkg', 2, 0], ['rar', 2, 1],
+                                   ['rpm', 2, 0], ['tar.gz', 2, 0], ['z', 2, 0], ['zip', 2, 1], ['dmg', 3, 0],
+                                   ['iso', 3, 0], ['toast', 3, 0], ['vcd', 3, 0], ['csv', 4, 1], ['dat', 4, 0],
+                                   ['db', 4, 1], ['dbf', 4, 0], ['log', 4, 0], ['mdb', 4, 0], ['sav', 4, 0],
+                                   ['sql', 4, 1], ['tar', 4, 0], ['xml', 4, 1], ['email', 5, 0], ['eml', 5, 0],
+                                   ['emlx', 5, 0], ['msg', 5, 0], ['oft', 5, 0], ['ost', 5, 0], ['pst', 5, 0],
+                                   ['vcf', 5, 0], ['apk', 6, 0], ['bat', 6, 0], ['bin', 6, 0], ['cgi', 6, 0],
+                                   ['com', 6, 0], ['exe', 6, 1], ['gadget', 6, 0], ['jar', 6, 0], ['msi', 6, 1],
+                                   ['wsf', 6, 0], ['fnt', 7, 0], ['fon', 7, 0], ['otf', 7, 1], ['ttf', 7, 1],
+                                   ['ai', 8, 1], ['bmp', 8, 0], ['gif', 8, 0], ['ico', 8, 0], ['jpeg', 8, 1],
+                                   ['jpg', 8, 1], ['png', 8, 1], ['ps', 8, 0], ['psd', 8, 0], ['svg', 8, 0],
+                                   ['tif', 8, 0], ['tiff', 8, 0], ['asp', 9, 1], ['aspx', 9, 1], ['cer', 9, 0],
+                                   ['cfm', 9, 0], ['css', 9, 1], ['htm', 9, 0], ['html', 9, 1], ['js', 9, 1],
+                                   ['jsp', 9, 0], ['part', 9, 0], ['rss', 9, 0], ['xhtml', 9, 0], ['key', 10, 0],
+                                   ['odp', 10, 0], ['pps', 10, 0], ['ppt', 10, 1], ['pptx', 10, 1], ['c', 11, 0],
+                                   ['pl', 11, 0], ['class', 11, 0], ['cpp', 11, 0], ['cs', 11, 0], ['h', 11, 1],
+                                   ['java', 11, 1], ['php', 11, 1], ['py', 11, 1], ['sh', 11, 1], ['swift', 11, 0],
+                                   ['vb', 11, 0], ['json', 11, 0], ['ods', 12, 1], ['xls', 12, 1], ['xlsm', 12, 1],
+                                   ['xlsx', 12, 1], ['bak', 13, 0], ['cab', 13, 0], ['cfg', 13, 0], ['cpl', 13, 0],
+                                   ['cur', 13, 0], ['dll', 13, 0], ['dmp', 13, 0], ['drv', 13, 0], ['icns', 13, 0],
+                                   ['ini', 13, 0], ['lnk', 13, 0], ['sys', 13, 0], ['tmp', 13, 0], ['3g2', 14, 0],
+                                   ['3gp', 14, 0], ['avi', 14, 1], ['flv', 14, 0], ['h264', 14, 0], ['m4v', 14, 1],
+                                   ['mkv', 14, 1], ['mov', 14, 0], ['mp4', 14, 1], ['mpg', 14, 1], ['mpeg', 14, 1],
+                                   ['rm', 14, 0], ['swf', 14, 0], ['vob', 14, 0], ['wmv', 14, 1], ['srt', 14, 1],
+                                   ['sub', 14, 1], ['doc', 15, 1], ['docx', 15, 1], ['odt', 15, 1], ['pdf', 15, 1],
+                                   ['rtf', 15, 0], ['tex', 15, 0], ['txt', 15, 0], ['wpd', 15, 0]]
         self.checkDatabaseConnection()
         self.ensureData()
 
@@ -313,7 +404,7 @@ class GDatabase:
             'DROP TABLE IF EXISTS folders',
             'DROP TABLE IF EXISTS extensions',
             'DROP TABLE IF EXISTS files',
-            'CREATE TABLE categories (id INTEGER PRIMARY KEY, category TEXT NOT NULL)',
+            'CREATE TABLE categories (id INTEGER PRIMARY KEY, category TEXT NOT NULL, selected INT NOT NULL DEFAULT 0)',
             'CREATE TABLE drives ( serial TEXT PRIMARY KEY, name TEXT NOT NULL, label TEXT NOT NULL, size FLOAT NOT NULL, active INTEGER DEFAULT 0, partitions TEXT NOT NULL, path TEXT NOT NULL)',
             'CREATE TABLE folders ( id INTEGER PRIMARY KEY, path TEXT NOT NULL, drive_id TEXT, FOREIGN KEY(drive_id) REFERENCES drives(serial))',
             'CREATE TABLE extensions ( id INTEGER PRIMARY KEY, extension TEXT NOT NULL, category_id INTEGER NOT NULL, selected INTEGER DEFAULT 0, FOREIGN KEY(category_id) REFERENCES categories(id))',
@@ -362,4 +453,3 @@ class GDatabase:
                     None, 'DB Integrity Error',
                     'Missing data from extensions')
                 sys.exit(1)
-

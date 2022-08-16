@@ -51,10 +51,10 @@ class Extensions(QtWidgets.QWidget):
         layout_tab_extensions_list = QtWidgets.QVBoxLayout()
         layout_tab_extensions_list.addWidget(self.settings_extensions_list)
         layout_tab_extensions_list.addWidget(self.add_extension_input)
-
         self.layout_tab_extensions = QtWidgets.QHBoxLayout()
         self.layout_tab_extensions.addLayout(layout_tab_extensions_buttons)
         self.layout_tab_extensions.addLayout(layout_tab_extensions_list)
+
 
     def setPreferredExtension(self):
         selected_ex = self.settings_extensions_list.selectedIndexes()
@@ -94,6 +94,4 @@ class Extensions(QtWidgets.QWidget):
         if extensions:
             if gdb.removeExtensions(extensions):
                 self.update_view_extensions.emit()
-
-
 

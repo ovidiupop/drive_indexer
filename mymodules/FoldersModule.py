@@ -96,10 +96,9 @@ class Folders(QtWidgets.QWidget):
             if gdb.deleteFoldersDB(names):
                 for _item in items:
                     self.folders_indexed.takeItem(self.folders_indexed.currentRow())
-                if count == 1:
-                    message = f'Removed folder <br><br> {names[0]}'
-                else:
-                    message = f"Removed folders <br><br>{'<br>'.join(names)}"
+                message = f'Removed folder <br><br> {names[0]}' if count == 1 \
+                    else f"Removed folders <br><br>{'<br>'.join(names)}"
+
                 QtWidgets.QMessageBox.information(self, 'Folder removes', message)
             else:
                 QtWidgets.QMessageBox.critical(self, 'Error', "Database wasn't cleaned!")
@@ -112,12 +111,6 @@ class Folders(QtWidgets.QWidget):
         self.folders_indexed.setCurrentRow(int(items) - 1)
 
     def selectAndAddNewFolder(self):
-        # drives = Drives(None)
-        # parts = drives.partitions_as_list_partition_key
-        # if not parts:
-        #     QtWidgets.QMessageBox.critical(self, 'Error!',
-        #                                    "There is no drive added for index!\nPlease add in Drives section!")
-        #     return
         self.unselectFolderSources()
         home_path = QtCore.QDir.homePath()
         folder_name = QFileDialog.getExistingDirectory(
@@ -138,4 +131,3 @@ class Folders(QtWidgets.QWidget):
                 else:
                     QtWidgets.QMessageBox.critical(self, 'Error!', f"Drive for this folder isn't available for index!"
                                                                    f"\nPlease add {response[1]} in Drives section!")
-

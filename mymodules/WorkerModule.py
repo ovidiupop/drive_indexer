@@ -31,7 +31,7 @@ class Indexer(QtCore.QObject):
         super().__init__()
         self.con = GDBModule.connection('indexer_connection')
         self.con.open()
-        self.extensions = GDBModule.allExtensions()
+        self.extensions = self.getExtensionsList()
         self.folders_to_index = []
         self.found_files = 0
         self.total_files = 0
@@ -39,6 +39,13 @@ class Indexer(QtCore.QObject):
         self.percentage = 0
         self.folder_id = 0
         self.remove_indexed = True
+
+    def getExtensionsList(self):
+        extensions = []
+        all_extensions = GDBModule.getAll('extensions')
+        for ext in all_extensions:
+            extensions.append(ext['extension'])
+        return extensions
 
     def setExtensions(self, extensions):
         self.extensions = extensions

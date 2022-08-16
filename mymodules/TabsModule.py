@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QTabWidget
 
 from gallery import tabIndexByName
 from mymodules import GDBModule as gdb, WorkerModule as wk
+from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
@@ -19,6 +20,8 @@ class TabsWidget(QtWidgets.QWidget):
         self.indexer_thread = None
         self.indexer = None
 
+        # importing Categories Module
+        self.categories = Categories()
         # importing Drives Module
         self.drives = DrivesView()
         # import Search Module
@@ -38,6 +41,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_main.addTab(self.tab_settings_group, 'Settings')
         self.tabs_main.setMovable(True)
 
+        self.tab_categories_group = QtWidgets.QGroupBox('Preferred categories for search')
         self.tab_folders_group = QtWidgets.QGroupBox('Folders')
         self.tab_extensions_group = QtWidgets.QGroupBox('Extensions')
         self.tab_drives_group = QtWidgets.QGroupBox('Drives')
@@ -47,6 +51,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.setTabPosition(QTabWidget.West)
         self.tabs_settings.setTabShape(QTabWidget.Rounded)
         self.tabs_settings.setMovable(True)
+        self.tabs_settings.addTab(self.tab_categories_group, 'Categories')
         self.tabs_settings.addTab(self.tab_folders_group, 'Folders')
         self.tabs_settings.addTab(self.tab_extensions_group, 'Extensions')
         self.tabs_settings.addTab(self.tab_drives_group, 'Drives')
@@ -67,13 +72,13 @@ class TabsWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def fillExtensions(self):
         extensions_list = [self.search.extensions_list_search, self.extensions.settings_extensions_list]
-        extensions_db = gdb.allExtensions()
+        extensions_db = gdb.getAll('extensions')
         for ext_list in extensions_list:
             ext_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
             ext_list.setModel(ExtensionsModel(extensions_db))
 
     def updateViewExtensions(self):
-        all_extensions = gdb.allExtensions()
+        all_extensions = gdb.getAll('extensions')
         extensions_model = ExtensionsModel(all_extensions)
         self.search.extensions_list_search.setModel(extensions_model)
         self.extensions.settings_extensions_list.setModel(extensions_model)
@@ -176,11 +181,12 @@ class TabsWidget(QtWidgets.QWidget):
 
     def preselectFavoriteExtensions(self):
         ext_lists = [self.search.extensions_list_search, self.extensions.settings_extensions_list]
-        extensions_db = gdb.allExtensions()
+        extensions_db = gdb.getAll('extensions')
         selected_extensions = gdb.preselectedExtensions()
         self.entry = QtGui.QStandardItemModel()
         for alist in ext_lists:
-            for idx, extension in enumerate(extensions_db):
+            for idx, ex in enumerate(extensions_db):
+                extension = ex['extension']
                 ext = QtGui.QStandardItem(extension)
                 self.entry.appendRow(ext)
                 # select preselected items
@@ -194,8 +200,12 @@ class TabsView(TabsWidget):
     def __init__(self, parent):
         super(TabsView, self).__init__(parent)
 
+        layout_tab_categories = self.categories.layout_tab_categories
+        self.tab_categories_group.setLayout(layout_tab_categories)
+
         layout_tab_drives = self.drives.layout_tab_drives
         self.tab_drives_group.setLayout(layout_tab_drives)
+
         # final layout for search tab
         layout_tab_search = self.search.search_tab_layout
         self.tab_search_group.setLayout(layout_tab_search)

@@ -11,7 +11,8 @@ from mymodules import GDBModule as gdb
 
 # set active all drives existing when the app is started
 def setActiveDriveDB(mounted_drives):
-    gdb.setDrivesActive(mounted_drives)
+    if mounted_drives:
+        gdb.setDrivesActive(mounted_drives)
 
 
 def folderCanBeIndexed(folder):
@@ -72,7 +73,8 @@ def mountedDrives():
                 disks.append(disk)
             else:  # is partition
                 pass
-    setActiveDriveDB(disks)
+    if disks:
+        setActiveDriveDB(disks)
     return disks
     # return this
     # [{'serial': 'S3Z2NB2KA50740N', 'path': '/dev/sda', 'size': 465.8, 'hotplug': '0', 'name': 'Samsung_SSD_860_EVO_500GB', 'vendor': 'ATA', 'partitions': '/boot/efi,/,/home,/home/matricks/aacustom'},

@@ -36,10 +36,11 @@ class ExtensionsModel(QtCore.QAbstractListModel):
 
     # override method of abstract class
     def data(self, index, role):
+        ex = self.extensions[index.row()]
         if role == Qt.DisplayRole:
-            return self.extensions[index.row()]
+            return ex['extension']
         elif role == Qt.DecorationRole:
-            icon = getIcon(self.extensions[index.row()])
+            icon = getIcon(ex['extension'])
             return icon
 
     # override method of abstract class
