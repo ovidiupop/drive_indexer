@@ -23,3 +23,18 @@ class Exmpler(QtWidgets.QWidget):
 
 in parent do:
     exampler = Exampler(self)
+
+# def preselectFavoriteExtensions(self):
+#     ext_lists = [self.settings_extensions_list]
+#     extensions_db = gdb.getAll('extensions')
+#     selected_extensions = gdb.preselectedExtensions()
+#     self.entry = QtGui.QStandardItemModel()
+#     for idx, ex in enumerate(extensions_db):
+#         extension = ex['extension']
+#         ext = QtGui.QStandardItem(extension)
+#         self.entry.appendRow(ext)
+#         # select preselected items
+#         if extension in selected_extensions:
+#             ix = self.entry.index(idx, 0)
+#             sm = self.settings_extensions_list.selectionModel()
+#             sm.select(ix, QtCore.QItemSelectionModel.Select)

@@ -1,16 +1,14 @@
-from PyQt5 import QtWidgets, QtCore
-
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
-from mymodules.GlobalFunctions import iconForButton
+from mymodules.GlobalFunctions import iconForButton, categoriesCombo
+from mymodules.ModelsModule import ExtensionsModel
 
 
 class Extensions(QtWidgets.QWidget):
     extension_added = QtCore.pyqtSignal()
     reindex_for_new_extension = QtCore.pyqtSignal()
-    preselect_favorite_extensions = QtCore.pyqtSignal()
-    update_view_extensions = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
         super(Extensions, self).__init__(parent)
@@ -31,19 +29,20 @@ class Extensions(QtWidgets.QWidget):
         self.add_extension_button.setIcon(iconForButton('SP_FileDialogNewFolder'))
         self.set_preferred_extension_button.setIcon(iconForButton('SP_FileDialogDetailedView'))
         self.remove_extension_button.setIcon(iconForButton('SP_DialogDiscardButton'))
+        self.categories_combo = categoriesCombo()
 
         self.add_extension_input.returnPressed.connect(lambda: self.addNewExtension())
         self.add_extension_button.clicked.connect(lambda: self.addNewExtension())
         self.set_preferred_extension_button.clicked.connect(lambda: self.setPreferredExtension())
         self.remove_extension_button.clicked.connect(lambda: self.removeExtension())
-
-        # self.preselect_favorite_extensions.emit()
+        self.categories_combo.currentIndexChanged.connect(self.loadExtensionsForCategory)
 
         # """settings extension section"""
         layout_tab_extensions_buttons = QtWidgets.QVBoxLayout()
         layout_tab_extensions_buttons.addWidget(self.set_preferred_extension_button)
         layout_tab_extensions_buttons.addWidget(self.remove_extension_button)
         layout_tab_extensions_buttons.addWidget(self.add_extension_button)
+        layout_tab_extensions_buttons.addWidget(self.categories_combo)
         layout_tab_extensions_buttons.addStretch()
 
         layout_tab_extensions_list = QtWidgets.QVBoxLayout()
@@ -53,6 +52,11 @@ class Extensions(QtWidgets.QWidget):
         self.layout_tab_extensions.addLayout(layout_tab_extensions_buttons)
         self.layout_tab_extensions.addLayout(layout_tab_extensions_list)
 
+    @QtCore.pyqtSlot(int)
+    def loadExtensionsForCategory(self, index):
+        if index:
+            extensions = gdb.getExtensionsForCategoryId(index)
+            self.fillExtensions(extensions)
 
     def setPreferredExtension(self):
         selected_ex = self.settings_extensions_list.selectedIndexes()
@@ -63,7 +67,6 @@ class Extensions(QtWidgets.QWidget):
                 extensions.append(extension.data())
         if extensions:
             if gdb.setPreferredExtensions(extensions):
-                self.preselect_favorite_extensions.emit()
                 QtWidgets.QMessageBox.information(None, 'Preferred set', 'Preferred extensions set!')
 
     @QtCore.pyqtSlot()
@@ -77,7 +80,6 @@ class Extensions(QtWidgets.QWidget):
             return
         if gdb.addNewExtension(new_extension):
             self.last_added_extension = new_extension
-            self.update_view_extensions.emit()
             self.reindex_for_new_extension.emit()
         else:
             QtWidgets.QMessageBox.critical(None, 'Not added', 'The extension has not been added!')
@@ -90,6 +92,9 @@ class Extensions(QtWidgets.QWidget):
             for extension in selected_ex:
                 extensions.append(extension.data())
         if extensions:
-            if gdb.removeExtensions(extensions):
-                self.update_view_extensions.emit()
+            gdb.removeExtensions(extensions)
+
+    def fillExtensions(self, extensions):
+        self.settings_extensions_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
+        self.settings_extensions_list.setModel(ExtensionsModel(extensions))
 

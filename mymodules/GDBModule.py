@@ -84,6 +84,20 @@ def setSelectedExtensionsByCategories():
     return ret
 
 
+def getExtensionsForCategoryId(category: int) -> list:
+    query = QtSql.QSqlQuery()
+    query.prepare('SELECT extension from extensions WHERE category_id=:category_id')
+    query.bindValue(':category_id', category)
+    if query.exec():
+        ext = []
+        while query.next():
+            ext.append(query.value(0))
+        query.clear()
+        return ext
+
+
+
+
 def getExtensionsForCategories(categories: list) -> list:
     query = QtSql.QSqlQuery()
     placeholder = ','.join("?" * len(categories))

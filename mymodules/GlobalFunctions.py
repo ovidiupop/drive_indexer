@@ -4,7 +4,8 @@ import mimetypes
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QMimeDatabase
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMessageBox
+from mymodules import GDBModule as gdb
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)", "active": "Active", 'partitions': "Partitions"}
@@ -42,6 +43,17 @@ def tabIndexByName(tab_widget, tab_name):
     for index in range(tab_widget.count()):
         if tab_name == tab_widget.tabText(index):
             return index
+
+
+def categoriesCombo():
+    categories = gdb.getAll('categories')
+    combo = QtWidgets.QComboBox()
+    categories_name = []
+    for item in categories:
+        categories_name.append(item['category'])
+    categories_name.insert(0, '--Categories--')
+    combo.addItems(categories_name)
+    return combo
 
 
 class Global():

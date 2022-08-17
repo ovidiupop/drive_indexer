@@ -56,8 +56,6 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.addTab(self.tab_drives_group, 'Drives')
 
         self.setProgressBarToStatusBar()
-        self.fillExtensions()
-        self.preselectFavoriteExtensions()
 
     def setDefaultActions(self):
         self.folders.folder_reindex_button.clicked.connect(self.startThreadIndexer)
@@ -65,23 +63,6 @@ class TabsWidget(QtWidgets.QWidget):
         self.folders.folder_added.connect(self.startThreadIndexer)
         self.extensions.extension_added.connect(self.startThreadIndexer)
         self.extensions.reindex_for_new_extension.connect(self.reindexForNewExtension)
-        self.extensions.preselect_favorite_extensions.connect(lambda: self.preselectFavoriteExtensions())
-        self.extensions.update_view_extensions.connect(self.updateViewExtensions)
-
-    @QtCore.pyqtSlot()
-    def fillExtensions(self):
-        extensions_list = [self.extensions.settings_extensions_list]
-        extensions_db = gdb.getAll('extensions')
-        for ext_list in extensions_list:
-            ext_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
-            ext_list.setModel(ExtensionsModel(extensions_db))
-
-    def updateViewExtensions(self):
-        all_extensions = gdb.getAll('extensions')
-        extensions_model = ExtensionsModel(all_extensions)
-        self.search.extensions_list_search.setModel(extensions_model)
-        self.extensions.settings_extensions_list.setModel(extensions_model)
-        self.preselectFavoriteExtensions()
 
     @QtCore.pyqtSlot()
     def onFinished(self):
@@ -177,22 +158,6 @@ class TabsWidget(QtWidgets.QWidget):
             self.folders.indexing_progress_bar.show()
         else:
             self.folders.indexing_progress_bar.hide()
-
-    def preselectFavoriteExtensions(self):
-        ext_lists = [self.extensions.settings_extensions_list]
-        extensions_db = gdb.getAll('extensions')
-        selected_extensions = gdb.preselectedExtensions()
-        self.entry = QtGui.QStandardItemModel()
-        for alist in ext_lists:
-            for idx, ex in enumerate(extensions_db):
-                extension = ex['extension']
-                ext = QtGui.QStandardItem(extension)
-                self.entry.appendRow(ext)
-                # select preselected items
-                if extension in selected_extensions:
-                    ix = self.entry.index(idx, 0)
-                    sm = alist.selectionModel()
-                    sm.select(ix, QtCore.QItemSelectionModel.Select)
 
 
 class TabsView(TabsWidget):
