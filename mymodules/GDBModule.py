@@ -37,7 +37,6 @@ def tables_columns(table):
 # else return a list of dict with all fields of table
 # ex:[{'serial': 'S2R6NX0H703355N', 'name': 'Samsung_SSD_850_EVO_250GB', 'label': 'Samsung_SSD_850_EVO_250GB'},
 # {'serial': '4990779F50C0', 'name': 'XPG_EX500', 'label': 'XPG_EX500'}]
-
 def getAll(table: str, only_field: list = None) -> list:
     return_array = []
     tables = tables_columns(table) if not only_field else only_field

@@ -12,8 +12,6 @@ from mymodules.ModelsModule import SearchResultsTableModel
 
 class Search(QtWidgets.QWidget):
 
-    categories_changed = QtCore.pyqtSignal()
-
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
 
@@ -40,62 +38,46 @@ class Search(QtWidgets.QWidget):
         self.found_results_table.setModel(sortermodel_results)
         self.found_results_table.setSortingEnabled(True)
         self.found_results_table.sortByColumn(2, Qt.AscendingOrder)
-        # input search layout
-        search_row_layout = QtWidgets.QHBoxLayout()
-        search_row_layout.addWidget(self.search_term_input)
-        search_row_layout.addWidget(self.search_button)
-        search_input_section_layout = QtWidgets.QVBoxLayout()
-        search_input_section_layout.addWidget(self.search_input_label)
-        search_input_section_layout.addLayout(search_row_layout)
-        search_input_section_layout.addStretch()
 
-        self.categories_selector = CategoriesSelector('search_categories_', save_selection=False)
         # categories box
-        self.categories_layout = self.categories_selector.generateBox()
-        self.categories_layout.addStrut(100)
+        self.categories_selector_search = CategoriesSelector(parent=self)
+        self.categories_layout = self.categories_selector_search.generateBox()
 
-        self.load_default_categories = PushButton('Load preferred')
-        self.load_default_categories.clicked.connect(self.setPreferredCategoriesOnSearchForm)
-        buttons_layout = QtWidgets.QHBoxLayout()
-        buttons_layout.addWidget(self.load_default_categories)
+        h_label = QtWidgets.QHBoxLayout()
+        h_label.addWidget(self.search_input_label)
 
-        # self.categories_layout.addLayout(buttons_layout)
+        h_search_row = QtWidgets.QHBoxLayout()
+        h_search_row.addWidget(self.search_term_input)
+        h_search_row.addWidget(self.search_button)
+
+        h_categories_row = QtWidgets.QHBoxLayout()
         self.checkboxes_group = QtWidgets.QGroupBox()
+        self.checkboxes_group.setMaximumHeight(140)
         self.checkboxes_group.setLayout(self.categories_layout)
+        h_categories_row.addWidget(self.checkboxes_group)
 
-        hlay = QtWidgets.QHBoxLayout()
-        hlay.addWidget(self.checkboxes_group)
-        hlay.addLayout(buttons_layout)
-
-        # upper area layout
-        top_layout = QtWidgets.QHBoxLayout()
-        top_layout.addLayout(search_input_section_layout, 85)
-        top_layout.addLayout(hlay, 85)
-
-        # container to maintain fixed height of top area
-        container_search_top = QtWidgets.QWidget(self)
-        container_search_top.setMaximumHeight(160)
-        container_search_top.setLayout(top_layout)
+        v_col_general = QtWidgets.QVBoxLayout()
+        v_col_general.addLayout(h_label)
+        v_col_general.addLayout(h_search_row)
+        v_col_general.addLayout(h_categories_row)
 
         # search results section
         search_results_layout = QtWidgets.QVBoxLayout()
         search_results_layout.addWidget(self.found_search_label)
         search_results_layout.addWidget(self.found_results_table)
 
+        v_col_general.addLayout(search_results_layout)
+
+        h_main = QtWidgets.QHBoxLayout()
+        h_main.addLayout(v_col_general)
+
         self.search_tab_layout = QtWidgets.QVBoxLayout()
-        self.search_tab_layout.addWidget(container_search_top)
-        self.search_tab_layout.addLayout(search_results_layout)
+        self.search_tab_layout.addLayout(h_main)
 
         # prepare extensions for search
         self.extensions_for_search = []
         self.getExtensionsForSearch()
 
-        self.categories_selector.check_all_categories.clicked.connect(lambda :self.preferredCategoriesChanged())
-
-
-    @QtCore.pyqtSlot()
-    def preferredCategoriesChanged(self):
-        print("I know")
 
     @QtCore.pyqtSlot()
     def onSubmitted(self):
@@ -131,6 +113,7 @@ class Search(QtWidgets.QWidget):
         self.extensions_for_search = gdb.getExtensionsForCategories(selected_categories)
 
     # synchronize search form categories with defaults
+    @QtCore.pyqtSlot()
     def setPreferredCategoriesOnSearchForm(self):
         print('load defaulta')
         categories = gdb.getAll('categories')
