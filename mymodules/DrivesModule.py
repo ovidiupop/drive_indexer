@@ -2,8 +2,8 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel
 
-from gallery import iconForButton, confirmationDialog
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
+from mymodules.GlobalFunctions import iconForButton
 from mymodules.ModelsModule import DrivesTableModel, DrivesItemsDelegate, DrivesMapper
 from mymodules.SystemModule import System
 from mymodules import GDBModule as gdb

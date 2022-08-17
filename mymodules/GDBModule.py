@@ -2,7 +2,6 @@ import sys
 from PyQt5 import QtWidgets, QtSql
 from PyQt5.QtCore import qDebug
 
-from mymodules import HumanReadableSize
 from mymodules.HumanReadableSize import HumanBytes
 
 DATABASE_NAME = 'indexer.db'

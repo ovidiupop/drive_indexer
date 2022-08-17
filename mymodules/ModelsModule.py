@@ -1,38 +1,15 @@
-import mimetypes
-
 from PyQt5 import QtCore, QtSql
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QMimeDatabase
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QItemDelegate, QLineEdit, \
     QDataWidgetMapper
 
-HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
-HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)", "active": "Active", 'partitions': "Partitions"}
-
-
-def getIcon(item, size=24):
-    mime = mimetypes.types_map
-    ext = '.'+item
-    if ext in mime.keys():
-        name = mime[ext].replace('/', '-')
-        icon = QIcon.fromTheme(name)
-        return icon.pixmap(size)
-    else:
-        a = QMimeDatabase().allMimeTypes()
-        for mime in a:
-            if mime.name() == 'text/' + item or mime.name() == 'application/x-' + item:
-                name = mime.name().replace('/', '-')
-                icon = QIcon.fromTheme(name)
-                return icon.pixmap(size)
+from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE
 
 
 class ExtensionsModel(QtCore.QAbstractListModel):
     def __init__(self, extensions):
         super().__init__()
         self.extensions = extensions
-
-    # def setData(self, data):
-    #     self.extensions = data
 
     # override method of abstract class
     def data(self, index, role):

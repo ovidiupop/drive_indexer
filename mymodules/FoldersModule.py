@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog
 
-from gallery import iconForButton, confirmationDialog
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
+from mymodules.GlobalFunctions import iconForButton
 from mymodules.SystemModule import folderCanBeIndexed
 
 

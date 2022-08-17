@@ -2,18 +2,21 @@ import pandas
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt
 
-from gallery import iconForButton
 from mymodules import ComponentsModule, ModelsModule
 from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import CategoriesSelector
 from mymodules.ComponentsModule import PushButton
+from mymodules.GlobalFunctions import iconForButton, HEADER_SEARCH_RESULTS_TABLE
 from mymodules.ModelsModule import SearchResultsTableModel
 
 
 class Search(QtWidgets.QWidget):
 
+    categories_changed = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
+
         self.search_input_label = QtWidgets.QLabel('Search for:')
         self.search_term_input = QtWidgets.QLineEdit()
         self.search_term_input.setPlaceholderText('Insert term to search')
@@ -27,9 +30,9 @@ class Search(QtWidgets.QWidget):
         self.found_search_label.hide()
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
-        self.found_results_table_model = ModelsModule.SearchResultsTableModel(pandas.DataFrame([], columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE))
-        # add sorting to table
+        self.found_results_table_model = ModelsModule.SearchResultsTableModel(pandas.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
 
+        # add sorting to table
         sortermodel_results = QSortFilterProxyModel()
         sortermodel_results.setSourceModel(self.found_results_table_model)
         sortermodel_results.setFilterKeyColumn(2)
@@ -47,13 +50,27 @@ class Search(QtWidgets.QWidget):
         search_input_section_layout.addStretch()
 
         self.categories_selector = CategoriesSelector('search_categories_', save_selection=False)
-        categories_layout = self.categories_selector.generateBox()
+        # categories box
+        self.categories_layout = self.categories_selector.generateBox()
+        self.categories_layout.addStrut(100)
+
+        self.load_default_categories = PushButton('Load preferred')
+        self.load_default_categories.clicked.connect(self.setPreferredCategoriesOnSearchForm)
+        buttons_layout = QtWidgets.QHBoxLayout()
+        buttons_layout.addWidget(self.load_default_categories)
+
+        # self.categories_layout.addLayout(buttons_layout)
+        self.checkboxes_group = QtWidgets.QGroupBox()
+        self.checkboxes_group.setLayout(self.categories_layout)
+
+        hlay = QtWidgets.QHBoxLayout()
+        hlay.addWidget(self.checkboxes_group)
+        hlay.addLayout(buttons_layout)
 
         # upper area layout
         top_layout = QtWidgets.QHBoxLayout()
         top_layout.addLayout(search_input_section_layout, 85)
-        top_layout.addLayout(categories_layout, 85)
-        # top_layout.addLayout(extensions_list_layout, 15)
+        top_layout.addLayout(hlay, 85)
 
         # container to maintain fixed height of top area
         container_search_top = QtWidgets.QWidget(self)
@@ -69,9 +86,16 @@ class Search(QtWidgets.QWidget):
         self.search_tab_layout.addWidget(container_search_top)
         self.search_tab_layout.addLayout(search_results_layout)
 
-    def extensionsForSearch(self):
-        pass
+        # prepare extensions for search
+        self.extensions_for_search = []
+        self.getExtensionsForSearch()
 
+        self.categories_selector.check_all_categories.clicked.connect(lambda :self.preferredCategoriesChanged())
+
+
+    @QtCore.pyqtSlot()
+    def preferredCategoriesChanged(self):
+        print("I know")
 
     @QtCore.pyqtSlot()
     def onSubmitted(self):
@@ -79,13 +103,9 @@ class Search(QtWidgets.QWidget):
         if not search_term:
             QtWidgets.QMessageBox.information(None, 'No term to search', 'Please write a term for search')
             return
-        extensions = self.categories_selector.getExtensionsForSearch()
-        print(extensions)
-        # extensions = []
-        # if len(self.categories_selector.extensions_for_search):
-        #     extensions = []
-        #     for extension in self.categories_selector.extensions_for_search:
-        #         extensions.append(extension.data())
+
+        self.getExtensionsForSearch()
+        extensions = self.extensions_for_search
         results = gdb.findFiles(search_term, extensions)
         count_results = len(results)
         self.found_search_label.show()
@@ -96,3 +116,31 @@ class Search(QtWidgets.QWidget):
         data = pandas.DataFrame(results, columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE)
         self.found_results_table.setModel(SearchResultsTableModel(data))
         self.update()
+
+    # load extensions when the search is started
+    # based on checked categories from search form
+    def getExtensionsForSearch(self):
+        selected_categories = []
+        checkboxes = self.checkboxes_group.findChildren(QtWidgets.QCheckBox)
+        for checkbox in checkboxes:
+            if checkbox.isChecked():
+                selected_categories.append(checkbox.text())
+        # with selected categories from search form
+        # take the list of extensions for selected categories
+        # and set them for searching
+        self.extensions_for_search = gdb.getExtensionsForCategories(selected_categories)
+
+    # synchronize search form categories with defaults
+    def setPreferredCategoriesOnSearchForm(self):
+        print('load defaulta')
+        categories = gdb.getAll('categories')
+        if categories:
+            selected = []
+            for category in categories:
+                if category['selected'] == 1:
+                    selected.append(category['category'])
+                checkboxes = self.checkboxes_group.findChildren(QtWidgets.QCheckBox)
+                for ckb in checkboxes:
+                    text = ckb.text()
+                    ckb.setChecked(True) if text in selected else ckb.setChecked(False)
+

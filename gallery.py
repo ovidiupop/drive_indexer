@@ -1,37 +1,24 @@
 import sys
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow
 
 from mymodules import GDBModule as gdb, TabsModule
-
-
-def iconForButton(name):
-    return QtWidgets.QApplication.style().standardIcon(getattr(QtWidgets.QStyle, name))
-
-
-def confirmationDialog(title, message):
-    msg_box = QtWidgets.QMessageBox()
-    msg_box.setIcon(QMessageBox.Warning)
-    msg_box.setText(message)
-    msg_box.setWindowTitle(title)
-    msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    return msg_box.exec() == QMessageBox.Ok
-
-
-def tabIndexByName(tab_widget, tab_name):
-    for index in range(tab_widget.count()):
-        if tab_name == tab_widget.tabText(index):
-            return index
+from mymodules.CategoriesModule import CategoriesSelector
+from mymodules.SearchModule import Search
 
 
 class IndexerWindow(QMainWindow):
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
         gdb.GDatabase()
+
+        # search = Search()
+        # categories_selector = CategoriesSelector(None)
+        # categories_selector.set_categories_on_search.connect(self.bla)
+
         # drives = gdb.getAll('extensions', ['extension'])
         # print(drives, len(drives))
-
 
         # remaining code
         self.statusbar = self.statusBar()

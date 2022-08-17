@@ -1,7 +1,6 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QTabWidget
 
-from gallery import tabIndexByName
 from mymodules import GDBModule as gdb, WorkerModule as wk
 from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView

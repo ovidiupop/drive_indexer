@@ -1,17 +1,15 @@
 from PyQt5 import QtWidgets, QtCore
 
 
-from gallery import iconForButton
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
+from mymodules.GlobalFunctions import iconForButton
 
 
 class Extensions(QtWidgets.QWidget):
     extension_added = QtCore.pyqtSignal()
     reindex_for_new_extension = QtCore.pyqtSignal()
-
     preselect_favorite_extensions = QtCore.pyqtSignal()
-
     update_view_extensions = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
