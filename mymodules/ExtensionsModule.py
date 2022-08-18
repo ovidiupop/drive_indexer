@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import QIcon
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
@@ -30,6 +31,8 @@ class Extensions(QtWidgets.QWidget):
         self.set_preferred_extension_button.setIcon(iconForButton('SP_FileDialogDetailedView'))
         self.remove_extension_button.setIcon(iconForButton('SP_DialogDiscardButton'))
         self.categories_combo = categoriesCombo()
+        icon = QIcon('logo.png')
+        self.categories_combo.setItemIcon(0, icon)
 
         self.add_extension_input.returnPressed.connect(lambda: self.addNewExtension())
         self.add_extension_button.clicked.connect(lambda: self.addNewExtension())
@@ -39,10 +42,12 @@ class Extensions(QtWidgets.QWidget):
 
         # """settings extension section"""
         layout_tab_extensions_buttons = QtWidgets.QVBoxLayout()
-        layout_tab_extensions_buttons.addWidget(self.set_preferred_extension_button)
+        layout_tab_extensions_buttons.addWidget(self.categories_combo)
+        layout_tab_extensions_buttons.addSpacing(20)
         layout_tab_extensions_buttons.addWidget(self.remove_extension_button)
         layout_tab_extensions_buttons.addWidget(self.add_extension_button)
-        layout_tab_extensions_buttons.addWidget(self.categories_combo)
+        layout_tab_extensions_buttons.addSpacing(20)
+        layout_tab_extensions_buttons.addWidget(self.set_preferred_extension_button)
         layout_tab_extensions_buttons.addStretch()
 
         layout_tab_extensions_list = QtWidgets.QVBoxLayout()
@@ -57,6 +62,23 @@ class Extensions(QtWidgets.QWidget):
         if index:
             extensions = gdb.getExtensionsForCategoryId(index)
             self.fillExtensions(extensions)
+
+    # def preselectFavoriteExtensions(self, ext_lists):
+    #     ext_lists = [self.settings_extensions_list]
+    #     extensions_db = gdb.getAll('extensions')
+    #     selected_extensions = gdb.preselectedExtensions()
+    #     self.entry = QtGui.QStandardItemModel()
+    #     for idx, ex in enumerate(extensions_db):
+    #         extension = ex['extension']
+    #         ext = QtGui.QStandardItem(extension)
+    #         self.entry.appendRow(ext)
+    #         # select preselected items
+    #         if extension in selected_extensions:
+    #             ix = self.entry.index(idx, 0)
+    #             sm = self.settings_extensions_list.selectionModel()
+    #             sm.select(ix, QtCore.QItemSelectionModel.Select)
+
+
 
     def setPreferredExtension(self):
         selected_ex = self.settings_extensions_list.selectedIndexes()

@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QLabel
 
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
-from mymodules.GlobalFunctions import iconForButton
+from mymodules.GlobalFunctions import iconForButton, confirmationDialog
 from mymodules.ModelsModule import DrivesTableModel, DrivesItemsDelegate, DrivesMapper
 from mymodules.SystemModule import System
 from mymodules import GDBModule as gdb
@@ -40,6 +40,8 @@ class Drives(QtWidgets.QWidget):
         self.drive_form_close = QtWidgets.QPushButton()
         self.drive_form_close.setMaximumWidth(30)
         self.combo_active_drives = QtWidgets.QComboBox()
+        self.combo_active_drives.setMaximumWidth(250)
+
         self.drive_form_close.setIcon(iconForButton('SP_DialogCloseButton'))
         self.add_drive_button.setIcon(iconForButton('SP_DriveHDIcon'))
         self.remove_drive_button.setIcon(iconForButton('SP_TrashIcon'))
@@ -134,10 +136,12 @@ class DrivesView(Drives):
         self.group_form.hide()
 
         layout_tab_drives_buttons = QtWidgets.QVBoxLayout()
+        layout_tab_drives_buttons.addWidget(self.combo_active_drives)
+        layout_tab_drives_buttons.addSpacing(20)
+        layout_tab_drives_buttons.addWidget(self.add_drive_button)
         layout_tab_drives_buttons.addWidget(self.remove_drive_button)
         layout_tab_drives_buttons.addWidget(self.show_id_drive_button)
-        layout_tab_drives_buttons.addWidget(self.combo_active_drives)
-        layout_tab_drives_buttons.addWidget(self.add_drive_button)
+
         layout_tab_drives_buttons.addWidget(self.group_form)
         layout_tab_drives_buttons.addStretch()
 

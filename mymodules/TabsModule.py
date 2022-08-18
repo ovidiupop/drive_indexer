@@ -118,7 +118,8 @@ class TabsWidget(QtWidgets.QWidget):
         # indexing for new extension
         if self.extensions.last_added_extension:
             self.indexer.remove_indexed = False
-            self.indexer.setExtensions([self.extensions.last_added_extension])
+            extensions = gdb.extensionsIdNameDict(self.extensions.last_added_extension)
+            self.indexer.setExtensions(extensions)
 
         selected = self.folders.folders_indexed.selectedIndexes()
         if selected:

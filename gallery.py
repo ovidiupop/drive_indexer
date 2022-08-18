@@ -4,14 +4,31 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow
 
 from mymodules import GDBModule as gdb, TabsModule
-from mymodules.CategoriesModule import CategoriesSelector
-from mymodules.SearchModule import Search
 
 
 class IndexerWindow(QMainWindow):
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
         gdb.GDatabase()
+
+        # notImportant()
+        # listOfNecessaryIcons()
+        # generateHumanListOfNecessary()
+
+        # icons = {}
+        # with open('files/mime_types.txt', 'r') as f:
+        #     data = f.read()
+        #     lines = data.splitlines()
+        #     for line in lines:
+        #         p = line.split(' ')
+        #         icon = p[0]
+        #         if len(p) > 1:
+        #             p.pop(0)
+        #             for ext in p:
+        #                 icons[ext] = icon
+        #
+        #     print(len(icons))
+
 
         # search = Search()
         # categories_selector = CategoriesSelector(None)

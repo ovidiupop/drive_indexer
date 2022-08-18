@@ -68,16 +68,31 @@ class CategoriesSelector(QtWidgets.QWidget):
         return v_main
 
     def checkAllCategories(self, is_checked):
-        for box in self.sender().parent().findChildren(QtWidgets.QCheckBox):
+        sender_parent = self.sender().parent()
+        for checkbox in sender_parent.findChildren(QtWidgets.QCheckBox):
             # this will trigger change for each button
-            box.setChecked(True) if is_checked else box.setChecked(False)
+            checkbox.setChecked(True) if is_checked else checkbox.setChecked(False)
+        self.statusButtonCheckAll(sender_parent)
 
-    def setPreferredCategory(self, btn):
-        text = btn.text()
+    def statusButtonCheckAll(self, sender_parent):
+        all_are_checked = True
+        for checkbox in sender_parent.findChildren(QtWidgets.QCheckBox):
+            if not checkbox.isChecked():
+                all_are_checked = False
+                break
+        text = 'Uncheck All' if all_are_checked else 'Check All'
+        self.check_all_categories.setText(text)
+        self.check_all_categories.setChecked(all_are_checked)
+
+    def setPreferredCategory(self, checkbox):
+        text = checkbox.text()
         if not self.parent_name:
             # come from settings tab
-            if gdb.categorySetSelected(text, btn.isChecked()):
+            if gdb.categorySetSelected(text, checkbox.isChecked()):
                 print("Success")
             else:
                 print("Fail")
+        self.statusButtonCheckAll(checkbox.parent())
+
+
 
