@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QFileDialog
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
-from mymodules.GlobalFunctions import iconForButton
+from mymodules.GlobalFunctions import iconForButton, confirmationDialog
 from mymodules.SystemModule import folderCanBeIndexed
 
 

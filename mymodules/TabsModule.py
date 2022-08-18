@@ -6,6 +6,7 @@ from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
+from mymodules.GlobalFunctions import tabIndexByName
 from mymodules.ModelsModule import ExtensionsModel
 from mymodules.SearchModule import Search
 
@@ -161,7 +162,7 @@ class TabsWidget(QtWidgets.QWidget):
 
 
 class TabsView(TabsWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super(TabsView, self).__init__(parent)
 
         layout_tab_categories = self.categories.layout_tab_categories

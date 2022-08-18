@@ -22,7 +22,9 @@ class IndexerWindow(QMainWindow):
 
         # remaining code
         self.statusbar = self.statusBar()
-        self.tabs = TabsModule.TabsView(self).tabs_main
+        tabs_view = TabsModule.TabsView(self)
+        self.tabs = tabs_view.tabs_main
+
         self.setCentralWidget(self.tabs)
         self.init_UI()
 

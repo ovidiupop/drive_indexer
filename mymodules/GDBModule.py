@@ -19,6 +19,9 @@ def printQueryErr(query, method_name=''):
     db_err = "Database Error: %s" % query.lastError().databaseText()
     errors = [db_err, query.lastError().text(), query.lastQuery(), query.executedQuery(), method_name]
     print(", ".join(errors))
+    list = query.boundValues()
+    for k, v in list.items():
+        print(k, ": ", v, "\n")
 
 
 # return column's name of a table

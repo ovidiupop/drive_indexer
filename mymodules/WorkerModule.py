@@ -125,6 +125,7 @@ class Indexer(QtCore.QObject):
             return True
         else:
             GDBModule.printQueryErr(query, 'addFile')
+            print(file)
 
     def folderId(self, path):
         """Get folder id inside of worker"""
