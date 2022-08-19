@@ -1,13 +1,10 @@
 # this class can be only imported
-import mimetypes
-from os.path import exists
-import pathlib
 from contextlib import redirect_stdout
 
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtCore import QMimeDatabase, QFileInfo
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtCore import QMimeDatabase
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMessageBox, QFileIconProvider
+from PyQt5.QtWidgets import QMessageBox, QTabWidget
 
 from mymodules import GDBModule as gdb
 
@@ -33,7 +30,7 @@ def getIcon(item: str, size: int = 24) -> object:
     mime_for_extension = getMimeTypeForExtension(item)
     icon = QtGui.QIcon.fromTheme(mime_for_extension)
     if icon.isNull():
-        icon = QtGui.QIcon(f':/images/mime/' + mime_for_extension + '.png')
+        icon = QtGui.QIcon(f':' + mime_for_extension + '.png')
     return icon.pixmap(size)
 
 
@@ -61,7 +58,7 @@ def putInFile(data: str, filename: str = 'out.txt') -> None:
             print(data)
 
 
-def iconForButton(name: str) -> object:
+def iconForButton(name: str) -> QIcon:
     """
     :param name:
     :return:
@@ -83,7 +80,7 @@ def confirmationDialog(title: str, message: str) -> object:
     return msg_box.exec() == QMessageBox.Ok
 
 
-def tabIndexByName(tab_widget: object, tab_name: str) -> int:
+def tabIndexByName(tab_widget: QTabWidget, tab_name: str) -> int:
     """
     :param tab_widget:
     :param tab_name:
@@ -104,18 +101,14 @@ def categoriesCombo():
 
 
 REQUIRED_TABLES = {'drives', 'folders', 'extensions', 'files', 'categories'}
-CATEGORIES = {'Audio': ':/images/app/32/music.png', 'Compressed': ':/images/app/32/compress.png',
-              'Disc and media': 'images/app/32/cd.png', 'Data and database': 'images/app/32/database.png',
-              'E-mail': ':/images/app/32/email.png', 'Executable': ':/images/app/32/lightning.png',
-              'Font': ':/images/app/32/font.png', 'Image': ':/images/app/32/image.png',
-              'Internet': ':/images/app/32/www_page.png', 'Presentation': ':/images/app/32/chart_pie.png',
-              'Programming': ':/images/app/32/page_white_code.png', 'Spreadsheet': ':/images/app/32/table_multiple.png',
-              'System': ':/images/app/32/application_osx_terminal.png', 'Video': ':/images/app/32/television.png',
-              'Word': ':/images/app/32/page_white_word.png'}
-
-# ['Audio', 'Compressed', 'Disc and media', 'Data and database', 'E-mail', 'Executable',
-#               'Font', 'Image', 'Internet', 'Presentation', 'Programming', 'Spreadsheet', 'System',
-#               'Video', 'Word']
+CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
+              'Disc and media': ':cd.png', 'Data and database': ':database.png',
+              'E-mail': ':email.png', 'Executable': ':lightning.png',
+              'Font': ':font.png', 'Image': ':image.png',
+              'Internet': ':www_page.png', 'Presentation': ':chart_pie.png',
+              'Programming': ':page_white_code.png', 'Spreadsheet': ':table_multiple.png',
+              'System': ':application_osx_terminal.png', 'Video': ':television.png',
+              'Word': ':page_white_word.png'}
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)",
@@ -151,5 +144,5 @@ default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0
                       ['rtf', 15, 0], ['tex', 15, 0], ['txt', 15, 0], ['wpd', 15, 0]]
 
 
-class Global():
+class Global:
     pass

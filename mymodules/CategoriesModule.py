@@ -67,7 +67,7 @@ class CategoriesSelector(QtWidgets.QWidget):
         v_main = QtWidgets.QVBoxLayout()
         v_main.addLayout(h_cats)
         v_main.addLayout(h_buttons)
-        v_main.addStretch(0)
+        v_main.addStretch()
         return v_main
 
     def checkAllCategories(self, is_checked):

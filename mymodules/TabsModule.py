@@ -35,8 +35,8 @@ class TabsWidget(QtWidgets.QWidget):
         self.tab_settings_group = QtWidgets.QGroupBox()
 
         self.tabs_main = QTabWidget()
-        self.tabs_main.addTab(self.tab_search_group, QtGui.QIcon(':/images/app/32/magnifier.png'), 'Search')
-        self.tabs_main.addTab(self.tab_settings_group, QtGui.QIcon(':/images/app/32/setting_tools.png'), 'Settings')
+        self.tabs_main.addTab(self.tab_search_group, QtGui.QIcon(':magnifier.png'), 'Search')
+        self.tabs_main.addTab(self.tab_settings_group, QtGui.QIcon(':setting_tools.png'), 'Settings')
         self.tabs_main.setMovable(True)
 
         self.tab_categories_group = QtWidgets.QGroupBox('Preferred categories for search')
@@ -50,10 +50,10 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.setTabShape(QTabWidget.Rounded)
         self.tabs_settings.setMovable(True)
 
-        self.tabs_settings.addTab(self.tab_folders_group, QtGui.QIcon(':/images/app/32/folder.png'), 'Folders')
-        self.tabs_settings.addTab(self.tab_drives_group, QtGui.QIcon(':/images/app/32/drive.png'), 'Drives')
-        self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':/images/app/32/accordion.png'), 'Categories')
-        self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':/images/app/32/file_extension_exe.png'), 'Extensions')
+        self.tabs_settings.addTab(self.tab_folders_group, QtGui.QIcon(':folder.png'), 'Folders')
+        self.tabs_settings.addTab(self.tab_drives_group, QtGui.QIcon(':drive.png'), 'Drives')
+        self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
+        self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
 
         self.setProgressBarToStatusBar()
 
@@ -169,6 +169,7 @@ class TabsView(TabsWidget):
 
         layout_tab_categories = self.categories.layout_tab_categories
         self.tab_categories_group.setLayout(layout_tab_categories)
+        self.tab_categories_group.setMaximumHeight(200)
 
         layout_tab_drives = self.drives.layout_tab_drives
         self.tab_drives_group.setLayout(layout_tab_drives)

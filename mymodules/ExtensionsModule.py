@@ -21,7 +21,8 @@ class Extensions(QtWidgets.QWidget):
         self.last_added_extension = None
 
         self.add_extension_input = QtWidgets.QLineEdit()
-        self.add_extension_input.setPlaceholderText('Insert new extension')
+        self.add_extension_input.setMaximumWidth(300)
+        self.add_extension_input.setPlaceholderText('Insert new extension in selected category')
         self.settings_extensions_list = QtWidgets.QListView()
         self.settings_extensions_list.setMaximumSize(300, 200)
         self.add_extension_button = PushButton('Add')
@@ -48,6 +49,7 @@ class Extensions(QtWidgets.QWidget):
         layout_tab_extensions_buttons.addWidget(self.categories_combo)
         layout_tab_extensions_buttons.addSpacing(20)
         layout_tab_extensions_buttons.addWidget(self.remove_extension_button)
+        layout_tab_extensions_buttons.addWidget(self.add_extension_input)
         layout_tab_extensions_buttons.addWidget(self.add_extension_button)
         layout_tab_extensions_buttons.addSpacing(20)
         # layout_tab_extensions_buttons.addWidget(self.set_preferred_extension_button)
@@ -55,11 +57,11 @@ class Extensions(QtWidgets.QWidget):
 
         layout_tab_extensions_list = QtWidgets.QVBoxLayout()
         layout_tab_extensions_list.addWidget(self.settings_extensions_list)
-        layout_tab_extensions_list.addWidget(self.add_extension_input)
         layout_tab_extensions_list.addStretch()
         self.layout_tab_extensions = QtWidgets.QHBoxLayout()
         self.layout_tab_extensions.addLayout(layout_tab_extensions_buttons)
         self.layout_tab_extensions.addLayout(layout_tab_extensions_list)
+        self.layout_tab_extensions.addStretch()
 
     @QtCore.pyqtSlot(int)
     def loadExtensionsForCategory(self, category_id):
@@ -104,3 +106,7 @@ class Extensions(QtWidgets.QWidget):
             category_id = gdb.categoryIdByText(category_text)
             gdb.removeExtensions(extensions)
             self.loadExtensionsForCategory(category_id)
+
+    def visibleButtons(self):
+        index = self.categories_combo.currentIndex()
+        if index > 0:
