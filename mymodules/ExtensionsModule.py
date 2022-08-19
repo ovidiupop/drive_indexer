@@ -64,6 +64,34 @@ class Extensions(QtWidgets.QWidget):
             self.settings_extensions_list.setModel(ExtensionsModel(extensions))
             # self.settings_extensions_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
 
+    @QtCore.pyqtSlot()
+    def addNewExtension(self):
+        new_extension = self.add_extension_input.text()
+        category_text = self.categories_combo.currentText()
+        category_id = gdb.categoryIdByText(category_text)
+        if not new_extension:
+            QtWidgets.QMessageBox.information(None, 'No Extension', 'Please insert the name of new extension!')
+            return
+        if gdb.extensionExists(new_extension):
+            QtWidgets.QMessageBox.information(None, 'Extension exists', 'The extension already exists!')
+            return
+        if gdb.addNewExtension(new_extension, category_id):
+            self.last_added_extension = new_extension
+            self.reindex_for_new_extension.emit()
+        else:
+            QtWidgets.QMessageBox.critical(None, 'Not added', 'The extension has not been added!')
+
+    def removeExtension(self):
+        selected_ex = self.settings_extensions_list.selectedIndexes()
+        extensions = []
+        if len(selected_ex):
+            extensions = []
+            for extension in selected_ex:
+                extensions.append(extension.data())
+        if extensions:
+            gdb.removeExtensions(extensions)
+
+
     # def preselectFavoriteExtensions(self, ext_lists):
     #     ext_lists = [self.settings_extensions_list]
     #     extensions_db = gdb.getAll('extensions')
@@ -91,32 +119,5 @@ class Extensions(QtWidgets.QWidget):
     #     if extensions:
     #         if gdb.setPreferredExtensions(extensions):
     #             QtWidgets.QMessageBox.information(None, 'Preferred set', 'Preferred extensions set!')
-
-    @QtCore.pyqtSlot()
-    def addNewExtension(self):
-        new_extension = self.add_extension_input.text()
-        category_id = self.categories_combo.currentIndexChanged()
-        if not new_extension:
-            QtWidgets.QMessageBox.information(None, 'No Extension', 'Please insert the name of new extension!')
-            return
-        if gdb.extensionExists(new_extension):
-            QtWidgets.QMessageBox.information(None, 'Extension exists', 'The extension already exists!')
-            return
-        if gdb.addNewExtension(new_extension, category_id):
-            self.last_added_extension = new_extension
-            self.reindex_for_new_extension.emit()
-        else:
-            QtWidgets.QMessageBox.critical(None, 'Not added', 'The extension has not been added!')
-
-    def removeExtension(self):
-        selected_ex = self.settings_extensions_list.selectedIndexes()
-        extensions = []
-        if len(selected_ex):
-            extensions = []
-            for extension in selected_ex:
-                extensions.append(extension.data())
-        if extensions:
-            gdb.removeExtensions(extensions)
-
 
 

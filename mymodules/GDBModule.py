@@ -115,6 +115,17 @@ def getExtensionsForCategories(categories: list) -> list:
         return ext
 
 
+def categoryIdByText(category_text):
+    query = QtSql.QSqlQuery()
+    query.prepare('SELECT id FROM categories WHERE category=:category')
+    query.bindValue(':category', category_text)
+    if query.exec():
+        query.first()
+        ret = query.value('id')
+        query.clear()
+        return ret
+
+
 def allCategoriesAreSelected() -> bool:
     query = QtSql.QSqlQuery('SELECT selected FROM categories WHERE selected=0')
     found = query.first()
@@ -290,12 +301,13 @@ def extensionExists(extension: str) -> bool:
     return ret
 
 
-def addNewExtension(extension: str) -> bool:
+def addNewExtension(extension: str, category_id: int) -> bool:
     if not extension or extensionExists(extension):
         return False
     query = QtSql.QSqlQuery()
-    query.prepare(""" INSERT INTO extensions (extension) VALUES (?)""")
+    query.prepare(""" INSERT INTO extensions (extension, category_id) VALUES (?, ?)""")
     query.addBindValue(extension)
+    query.addBindValue(category_id)
     ret = query.exec()
     query.clear()
     return ret

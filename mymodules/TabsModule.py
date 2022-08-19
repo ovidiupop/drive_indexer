@@ -95,7 +95,7 @@ class TabsWidget(QtWidgets.QWidget):
                   self.folders.folder_reindex_button,
                   self.extensions.add_extension_button,
                   self.extensions.remove_extension_button,
-                  self.extensions.set_preferred_extension_button,
+                  # self.extensions.set_preferred_extension_button,
                   self.extensions.add_extension_input
                   ]
         for my_input in inputs:
