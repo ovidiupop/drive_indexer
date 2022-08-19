@@ -86,14 +86,12 @@ class Indexer(QtCore.QObject):
                 self.percentage = percentage(self.checked_files, self.total_files)
 
             # check if we have matched extension (zip / tar.gz) or there is no any extension to match
-            file_ext = entry.suffix()
-            file_ext_complete = entry.completeSuffix()
-            if file_ext in self.extensions or file_ext_complete in self.extensions.values() or self.extensions == {}:
+            file_ext = entry.suffix() or entry.completeSuffix()
+            if file_ext in self.extensions.values() or self.extensions == {}:
+                # no extensions selected and file hasn't extension
                 extension_id = 0
                 if file_ext:
                     extension_id = self.extensionId(file_ext)
-                elif entry.completeSuffix():
-                    extension_id = self.extensionId(file_ext_complete)
                 item = {'dir': path, 'filename': entry.fileName(), 'size': entry.size(),
                         'extension_id': extension_id, 'folder_id': self.folder_id}
                 self.match_found.emit()
@@ -107,16 +105,6 @@ class Indexer(QtCore.QObject):
         for key, value in self.extensions.items():
             if extension == value:
                 return key
-
-        # """Get extension's id inside of worker"""
-        # query = QtSql.QSqlQuery(self.con)
-        # query.prepare(""" SELECT id FROM extensions WHERE extension=:extension """)
-        # query.bindValue(':extension', extension)
-        # if query.exec():
-        #     query.next()
-        #     return query.value(0)
-        # else:
-        #     GDBModule.printQueryErr(query, 'extensionId')
 
     def addFile(self, file):
         """Used by indexer thread with own connection

@@ -36,6 +36,7 @@ def folderCanBeIndexed(folder):
             return [False, path]
     return [False, None]
 
+
 # df /home/matricks/aacustom/Muzica/ => /dev/sda4      316212352 204173148  95906752  69% /home/matricks/aacustom
 # inxi -Dxx
 # lsblk -l -o type,fstype,kname,size,hotplug,serial,path,mountpoint,vendor,model | grep -e disk -e part
@@ -104,7 +105,6 @@ def getActiveUser():
     return pwd.getpwuid(os.getuid())[0]
 
 
-
 def mountedDrivesOld():
     disks = []
     s = subprocess.Popen(f'lsblk --nodeps -o type,name,serial,size,model', shell=True, stdin=None,
@@ -121,6 +121,7 @@ def mountedDrivesOld():
                 disks.append(disk)
     setActiveDriveDB(disks)
     return disks
+
 
 class System(QObject):
     def __init__(self):

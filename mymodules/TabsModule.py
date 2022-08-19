@@ -6,8 +6,6 @@ from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
-from mymodules.GlobalFunctions import tabIndexByName
-from mymodules.ModelsModule import ExtensionsModel
 from mymodules.SearchModule import Search
 
 
@@ -37,8 +35,8 @@ class TabsWidget(QtWidgets.QWidget):
         self.tab_settings_group = QtWidgets.QGroupBox()
 
         self.tabs_main = QTabWidget()
-        self.tabs_main.addTab(self.tab_search_group, 'Search')
-        self.tabs_main.addTab(self.tab_settings_group, 'Settings')
+        self.tabs_main.addTab(self.tab_search_group, QtGui.QIcon(':/images/app/32/magnifier.png'), 'Search')
+        self.tabs_main.addTab(self.tab_settings_group, QtGui.QIcon(':/images/app/32/setting_tools.png'), 'Settings')
         self.tabs_main.setMovable(True)
 
         self.tab_categories_group = QtWidgets.QGroupBox('Preferred categories for search')
@@ -51,10 +49,11 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.setTabPosition(QTabWidget.West)
         self.tabs_settings.setTabShape(QTabWidget.Rounded)
         self.tabs_settings.setMovable(True)
-        self.tabs_settings.addTab(self.tab_categories_group, 'Categories')
-        self.tabs_settings.addTab(self.tab_folders_group, 'Folders')
-        self.tabs_settings.addTab(self.tab_extensions_group, 'Extensions')
-        self.tabs_settings.addTab(self.tab_drives_group, 'Drives')
+
+        self.tabs_settings.addTab(self.tab_folders_group, QtGui.QIcon(':/images/app/32/folder.png'), 'Folders')
+        self.tabs_settings.addTab(self.tab_drives_group, QtGui.QIcon(':/images/app/32/drive.png'), 'Drives')
+        self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':/images/app/32/accordion.png'), 'Categories')
+        self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':/images/app/32/file_extension_exe.png'), 'Extensions')
 
         self.setProgressBarToStatusBar()
 
@@ -104,8 +103,9 @@ class TabsWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def reindexForNewExtension(self):
         self.folders.unselectFolderSources()
-        tab_folder_index = tabIndexByName(self.tabs_settings, 'Folders')
-        self.tabs_settings.setCurrentIndex(tab_folder_index)
+        # switch to folders tab
+        # tab_folder_index = tabIndexByName(self.tabs_settings, 'Folders')
+        # self.tabs_settings.setCurrentIndex(tab_folder_index)
         self.extensions.extension_added.emit()
 
     # here we create the thread
@@ -118,8 +118,9 @@ class TabsWidget(QtWidgets.QWidget):
         # indexing for new extension
         if self.extensions.last_added_extension:
             self.indexer.remove_indexed = False
-            extensions = gdb.extensionsIdNameDict(self.extensions.last_added_extension)
-            self.indexer.setExtensions(extensions)
+            extension = self.extensions.last_added_extension
+            ext_id = gdb.extensionId(extension)
+            self.indexer.setExtensions({ext_id: extension})
 
         selected = self.folders.folders_indexed.selectedIndexes()
         if selected:
@@ -184,7 +185,7 @@ class TabsView(TabsWidget):
 
         settings_tab_layout = QtWidgets.QVBoxLayout()
         settings_tab_layout.addWidget(self.tabs_settings)
-        settings_tab_layout.addStretch()
+        # settings_tab_layout.addStretch()
         self.tab_settings_group.setLayout(settings_tab_layout)
 
 

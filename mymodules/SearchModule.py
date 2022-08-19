@@ -116,7 +116,6 @@ class Search(QtWidgets.QWidget):
     # synchronize search form categories with defaults
     @QtCore.pyqtSlot()
     def setPreferredCategoriesOnSearchForm(self):
-        print('load defaulta')
         categories = gdb.getAll('categories')
         if categories:
             selected = []

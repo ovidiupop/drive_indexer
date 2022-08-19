@@ -404,5 +404,30 @@
 		<file>images/mime/x-office-presentation.png</file>
 		<file>images/mime/x-office-spreadsheet-template.png</file>
 		<file>images/mime/x-office-spreadsheet.png</file>
+		<file>images/app/32/accordion.png</file>
+		<file>images/app/32/application_osx_terminal.png</file>
+		<file>images/app/32/cd.png</file>
+		<file>images/app/32/chart_pie.png</file>
+		<file>images/app/32/compress.png</file>
+		<file>images/app/32/cross.png</file>
+		<file>images/app/32/database.png</file>
+		<file>images/app/32/dice.png</file>
+		<file>images/app/32/drive.png</file>
+		<file>images/app/32/email.png</file>
+		<file>images/app/32/file_extension_exe.png</file>
+		<file>images/app/32/folder.png</file>
+		<file>images/app/32/font.png</file>
+		<file>images/app/32/image.png</file>
+		<file>images/app/32/lightning.png</file>
+		<file>images/app/32/magnifier.png</file>
+		<file>images/app/32/music.png</file>
+		<file>images/app/32/page_white_code.png</file>
+		<file>images/app/32/page_white_word.png</file>
+		<file>images/app/32/setting_tools.png</file>
+		<file>images/app/32/table_multiple.png</file>
+		<file>images/app/32/television.png</file>
+		<file>images/app/32/tick.png</file>
+		<file>images/app/32/untick.png</file>
+		<file>images/app/32/www_page.png</file>
 	</qresource>
 </RCC>

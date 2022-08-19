@@ -1,0 +1,136 @@
+
+
+def prepareQrcFile():
+    current_directory = str(pathlib.Path(__file__).parent.absolute())
+    images_folder = current_directory + '/../images'
+    resource_file_path = current_directory + '/../resources.qrc'
+    path = QtCore.QDir(images_folder)
+    with open(resource_file_path, 'w') as f:
+        f.write('<RCC>\n')
+        recursiveFolders(path, f, True, '')
+        f.write('\t</qresource">\n')
+        f.write('</RCC>')
+
+# working but not perfect
+def recursiveFolders(path, f, start=True, last_folder_name=''):
+    directory = QtCore.QDir(path)
+    directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
+    last_folder_name = ''
+    occurences_of_slash = 0
+    prefix_tabs = ''
+    for entry in directory.entryInfoList():
+        if entry.isDir() and start:
+            last_folder_name += '/' + entry.fileName()
+            occurences_of_slash = last_folder_name.count('/')
+            prefix_tabs = '\t' * occurences_of_slash
+            f.write(f'{prefix_tabs}<qresource prefix="{last_folder_name}">\n')
+            start = False
+        if entry.isFile():
+            file_tabs = '\t' * (occurences_of_slash + 1)
+            f.write(f'{file_tabs}<file>{entry.fileName()}</file>\n')
+        if entry.isDir():
+            recursiveFolders(entry.filePath(), f, True, last_folder_name)
+
+
+# def getIcon(item, size=24):
+#     current_directory = str(pathlib.Path(__file__).parent.absolute())
+#     if item in icons_map.keys():
+#         name = icons_map[item]
+#         path = current_directory + '/../images/icons/' + name + '.png'
+#         print(item, path, exists(path))
+#         icon = QtGui.QIcon(path)
+#         return icon.pixmap(size)
+        # else:
+        #     mime = mimetypes.types_map
+        #     ext = '.'+item
+        #     if ext in mime.keys():
+        #         name = mime[ext].replace('/', '-')
+        #         icon = QtGui.QIcon.fromTheme(name)
+        #         if not icon.isNull():
+        #             return icon.pixmap(size)
+        #         else:
+        #             a = QMimeDatabase().allMimeTypes()
+        #             for mime in a:
+        #                 if mime.name() == 'text/' + item or mime.name() == 'application/x-' + item:
+        #                     name = mime.name().replace('/', '-')
+        #                     icon = QtGui.QIcon.fromTheme(name)
+        #                     if not icon.isNull():
+        #                         return icon.pixmap(size)
+
+
+
+
+
+
+    # def preselectFavoriteExtensions(self, ext_lists):
+    #     ext_lists = [self.settings_extensions_list]
+    #     extensions_db = gdb.getAll('extensions')
+    #     selected_extensions = gdb.preselectedExtensions()
+    #     self.entry = QtGui.QStandardItemModel()
+    #     for idx, ex in enumerate(extensions_db):
+    #         extension = ex['extension']
+    #         ext = QtGui.QStandardItem(extension)
+    #         self.entry.appendRow(ext)
+    #         # select preselected items
+    #         if extension in selected_extensions:
+    #             ix = self.entry.index(idx, 0)
+    #             sm = self.settings_extensions_list.selectionModel()
+    #             sm.select(ix, QtCore.QItemSelectionModel.Select)
+
+
+
+    # def setPreferredExtension(self):
+    #     selected_ex = self.settings_extensions_list.selectedIndexes()
+    #     extensions = []
+    #     if len(selected_ex):
+    #         extensions = []
+    #         for extension in selected_ex:
+    #             extensions.append(extension.data())
+    #     if extensions:
+    #         if gdb.setPreferredExtensions(extensions):
+    #             QtWidgets.QMessageBox.information(None, 'Preferred set', 'Preferred extensions set!')
+
+
+
+
+def preselectedExtensions() -> list:
+    """
+    :return:
+    DEPRECATED
+    """
+    selected = []
+    query = QtSql.QSqlQuery("SELECT extension FROM extensions where selected=1 ORDER BY id")
+    while query.next():
+        selected.append(query.value('extension'))
+    query.clear()
+    return selected
+
+
+
+def setPreferredExtensions(extensions: list) -> bool:
+    query = QtSql.QSqlQuery()
+    query.prepare("UPDATE extensions SET selected=0 WHERE 1")
+    if query.exec():
+        placeholder = ','.join("?" * len(extensions))
+        query.prepare('UPDATE extensions SET selected=1 WHERE extension IN (%s)' % placeholder)
+        for binder in extensions:
+            query.addBindValue(str(binder))
+        ret = query.exec()
+        query.clear()
+        return ret
+
+
+# def preselectFavoriteExtensions(self):
+#     ext_lists = [self.settings_extensions_list]
+#     extensions_db = gdb.getAll('extensions')
+#     selected_extensions = gdb.preselectedExtensions()
+#     self.entry = QtGui.QStandardItemModel()
+#     for idx, ex in enumerate(extensions_db):
+#         extension = ex['extension']
+#         ext = QtGui.QStandardItem(extension)
+#         self.entry.appendRow(ext)
+#         # select preselected items
+#         if extension in selected_extensions:
+#             ix = self.entry.index(idx, 0)
+#             sm = self.settings_extensions_list.selectionModel()
+#             sm.select(ix, QtCore.QItemSelectionModel.Select)

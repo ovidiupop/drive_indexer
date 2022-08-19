@@ -1,1 +1,0 @@
-['mpa', 'wpl', 'arj', 'pkg', 'tar.gz', 'z', 'toast', 'dat', 'db', 'dbf', 'log', 'sav', 'email', 'emlx', 'msg', 'oft', 'ost', 'pst', 'cgi', 'gadget', 'wsf', 'fnt', 'fon', 'asp', 'aspx', 'cfm', 'jsp', 'part', 'pptx', 'cs', 'swift', 'vb', 'cfg', 'cpl', 'cur', 'dmp', 'drv', 'icns', 'ini', 'lnk', 'sys', 'tmp', '3g2', 'h264', 'm4v', 'vob', 'sub']

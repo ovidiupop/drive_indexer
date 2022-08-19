@@ -2,13 +2,17 @@ import sys
 from PyQt5 import QtWidgets, QtSql
 from PyQt5.QtCore import qDebug
 
-from mymodules.GlobalFunctions import default_extensions
+from mymodules.GlobalFunctions import default_extensions, REQUIRED_TABLES, CATEGORIES
 from mymodules.HumanReadableSize import HumanBytes
 
 DATABASE_NAME = 'indexer.db'
 
 
-def connection(name):
+def connection(name: str):
+    """
+    :param name:
+    :return:
+    """
     driver = 'QSQLITE'
     database = DATABASE_NAME
     db = QtSql.QSqlDatabase.addDatabase(driver, name)
@@ -17,6 +21,11 @@ def connection(name):
 
 
 def printQueryErr(query, method_name=''):
+    """
+    :param query:
+    :param method_name:
+    :return:
+    """
     db_err = "Database Error: %s" % query.lastError().databaseText()
     errors = [db_err, query.lastError().text(), query.lastQuery(), query.executedQuery(), method_name]
     print(", ".join(errors))
@@ -25,8 +34,12 @@ def printQueryErr(query, method_name=''):
         print(k, ": ", v, "\n")
 
 
-# return column's name of a table
-def tables_columns(table):
+def tables_columns(table: str) -> list:
+    """
+    :param table:
+    :return:
+    return column's name of a table
+    """
     columns = []
     query = QtSql.QSqlQuery(f"PRAGMA table_info({table})")
     while query.next():
@@ -35,13 +48,18 @@ def tables_columns(table):
     return columns
 
 
-# get all records from table
-# if only_fields is set, return a list of choosen fields
-# ex: ['aif', 'doc', 'docx', 'odt', 'pdf', 'rtf', 'tex', 'txt', 'wpd']
-# else return a list of dict with all fields of table
-# ex:[{'serial': 'S2R6NX0H703355N', 'name': 'Samsung_SSD_850_EVO_250GB', 'label': 'Samsung_SSD_850_EVO_250GB'},
-# {'serial': '4990779F50C0', 'name': 'XPG_EX500', 'label': 'XPG_EX500'}]
 def getAll(table: str, only_field: list = None) -> list:
+    """
+    :param table:
+    :param only_field:
+    :return:
+    get all records from table
+    if only_fields is set, return a list of choosen fields
+    ex: ['aif', 'doc', 'docx', 'odt', 'pdf', 'rtf', 'tex', 'txt', 'wpd']
+    else return a list of dict with all fields of table
+    ex:[{'serial': 'S2R6NX0H703355N', 'name': 'Samsung_SSD_850_EVO_250GB', 'label': 'Samsung_SSD_850_EVO_250GB'},
+    {'serial': '4990779F50C0', 'name': 'XPG_EX500', 'label': 'XPG_EX500'}]
+    """
     return_array = []
     tables = tables_columns(table) if not only_field else only_field
     fields = ','.join(tables)
@@ -60,6 +78,10 @@ def getAll(table: str, only_field: list = None) -> list:
 
 
 def allFolders(hide_inactive=True) -> list:
+    """
+    :param hide_inactive:
+    :return:
+    """
     folders = []
     if hide_inactive:
         command = "SELECT fo.path FROM folders fo " \
@@ -75,20 +97,11 @@ def allFolders(hide_inactive=True) -> list:
         return folders
 
 
-def setSelectedExtensionsByCategories():
-    query = QtSql.QSqlQuery("update extensions set selected=0")
-    query.exec()
-    query = QtSql.QSqlQuery("update extensions set selected=1"
-                            " where category_id in ("
-                            "select c.id from categories c"
-                            " left join extensions e on c.id=e.category_id"
-                            " where c.selected = 1)")
-    ret = query.exec()
-    query.clear()
-    return ret
-
-
 def getExtensionsForCategoryId(category: int) -> list:
+    """
+    :param category:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare('SELECT extension from extensions WHERE category_id=:category_id')
     query.bindValue(':category_id', category)
@@ -101,6 +114,10 @@ def getExtensionsForCategoryId(category: int) -> list:
 
 
 def getExtensionsForCategories(categories: list) -> list:
+    """
+    :param categories:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     placeholder = ','.join("?" * len(categories))
     query.prepare('SELECT extension from extensions WHERE category_id IN (SELECT id from categories where category in '
@@ -115,7 +132,12 @@ def getExtensionsForCategories(categories: list) -> list:
         return ext
 
 
-def categoryIdByText(category_text):
+def categoryIdByText(category_text: str) -> int:
+    """
+    :param category_text:
+    :return:
+    return category ID
+    """
     query = QtSql.QSqlQuery()
     query.prepare('SELECT id FROM categories WHERE category=:category')
     query.bindValue(':category', category_text)
@@ -127,14 +149,21 @@ def categoryIdByText(category_text):
 
 
 def allCategoriesAreSelected() -> bool:
+    """
+    :return:
+    """
     query = QtSql.QSqlQuery('SELECT selected FROM categories WHERE selected=0')
     found = query.first()
     return not found
 
 
-# set category selected and also if success
-# set selected for related extensions
-def categorySetSelected(category, selected):
+def setCategorySelected(category: str, selected: int) -> bool:
+    """
+    :param category:
+    :param selected:
+    :return:
+    set category selected and also if success set selected for related extensions
+    """
     query = QtSql.QSqlQuery()
     query.prepare("UPDATE categories SET selected=:selected WHERE category=:category")
     query.bindValue(':selected', int(selected))
@@ -144,16 +173,28 @@ def categorySetSelected(category, selected):
         return setSelectedExtensionsByCategories()
 
 
-def preselectedExtensions() -> list:
-    selected = []
-    query = QtSql.QSqlQuery("SELECT extension FROM extensions where selected=1 ORDER BY id")
-    while query.next():
-        selected.append(query.value('extension'))
+def setSelectedExtensionsByCategories() -> bool:
+    """
+    :return:
+    """
+    query = QtSql.QSqlQuery("update extensions set selected=0")
+    query.exec()
+    query = QtSql.QSqlQuery("update extensions set selected=1"
+                            " where category_id in ("
+                            "select c.id from categories c"
+                            " left join extensions e on c.id=e.category_id"
+                            " where c.selected = 1)")
+    ret = query.exec()
     query.clear()
-    return selected
+    return ret
 
 
 def folderExists(folder: str) -> bool:
+    """
+    :param folder:
+    :return:
+    check if a folder exists
+    """
     query = QtSql.QSqlQuery()
     query.prepare("SELECT path FROM folders where path=:path limit 1")
     query.bindValue(':path', folder)
@@ -163,6 +204,11 @@ def folderExists(folder: str) -> bool:
 
 
 def addFolder(folder: str, serial: str) -> bool:
+    """
+    :param folder:
+    :param serial:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare(""" INSERT INTO folders (path, drive_id) VALUES (?,?) """)
     query.addBindValue(folder)
@@ -173,6 +219,10 @@ def addFolder(folder: str, serial: str) -> bool:
 
 
 def deleteFoldersDB(paths: list) -> bool:
+    """
+    :param paths:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     for path in paths:
         folder_id = folderId(path)
@@ -188,6 +238,10 @@ def deleteFoldersDB(paths: list) -> bool:
 
 
 def deleteFilesDB(folder_id: int) -> bool:
+    """
+    :param folder_id:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare("""Delete from files where folder_id=:folder_id""")
     query.bindValue(':folder_id', folder_id)
@@ -198,7 +252,28 @@ def deleteFilesDB(folder_id: int) -> bool:
         printQueryErr(query, 'clearFiles')
 
 
+def extensionId(extension: str) -> int:
+    """
+    :param extension:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    query.prepare("select id from extensions where extension=:extension")
+    query.bindValue(':extension', extension)
+    if query.exec():
+        while query.next():
+            ret = query.value('id')
+            query.clear()
+            return ret
+    else:
+        printQueryErr(query, 'extensionId')
+
+
 def folderId(path: str) -> int:
+    """
+    :param path:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare("select id from folders where path=:path")
     query.bindValue(':path', path)
@@ -212,6 +287,11 @@ def folderId(path: str) -> int:
 
 
 def extensionsToInt(extensions_list_string: list) -> list:
+    """
+    :param extensions_list_string:
+    :return:
+    get a list of string and return a list of integers (IDS)
+    """
     query = QtSql.QSqlQuery()
     placeholder = ','.join("?" * len(extensions_list_string))
     query.prepare('SELECT id FROM extensions WHERE extension IN (%s)' % placeholder)
@@ -229,6 +309,11 @@ def extensionsToInt(extensions_list_string: list) -> list:
 
 
 def extensionsIdNameDict(extensions_name_list: list) -> dict:
+    """
+    :param extensions_name_list:
+    :return:
+    return a dict of extensions key=id, value=extension
+    """
     query = QtSql.QSqlQuery()
     placeholder = ','.join("?" * len(extensions_name_list))
     query.prepare('SELECT id, extension FROM extensions WHERE extension IN (%s)' % placeholder)
@@ -237,12 +322,18 @@ def extensionsIdNameDict(extensions_name_list: list) -> dict:
     if query.exec():
         extensions = {}
         while query.next():
-            extension[query.value(0)] = query.value(1)
+            extensions[query.value(0)] = query.value(1)
         query.clear()
         return extensions
 
 
 def findFiles(search_term: str, extensions: list) -> list:
+    """
+    :param search_term:
+    :param extensions:
+    :return:
+    search for a term
+    """
     extensions_list_ids = extensionsToInt(extensions) or []
     placeholder = ','.join("?" * len(extensions_list_ids))
     query = QtSql.QSqlQuery()
@@ -281,6 +372,9 @@ def findFiles(search_term: str, extensions: list) -> list:
 
 
 def setDrivesActive(drives: list) -> None:
+    """
+    :param drives:
+    """
     query = QtSql.QSqlQuery()
     query.prepare("UPDATE drives SET active=0, path='unmounted'")
     if query.exec():
@@ -293,6 +387,10 @@ def setDrivesActive(drives: list) -> None:
 
 
 def extensionExists(extension: str) -> bool:
+    """
+    :param extension:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare("SELECT extension FROM extensions WHERE extension=:extension")
     query.bindValue(":extension", str(extension))
@@ -302,31 +400,28 @@ def extensionExists(extension: str) -> bool:
 
 
 def addNewExtension(extension: str, category_id: int) -> bool:
+    """
+    :param extension:
+    :param category_id:
+    :return:
+    """
     if not extension or extensionExists(extension):
         return False
     query = QtSql.QSqlQuery()
     query.prepare(""" INSERT INTO extensions (extension, category_id) VALUES (?, ?)""")
     query.addBindValue(extension)
     query.addBindValue(category_id)
-    ret = query.exec()
-    query.clear()
-    return ret
-
-
-def setPreferredExtensions(extensions: list) -> bool:
-    query = QtSql.QSqlQuery()
-    query.prepare("UPDATE extensions SET selected=0 WHERE 1")
     if query.exec():
-        placeholder = ','.join("?" * len(extensions))
-        query.prepare('UPDATE extensions SET selected=1 WHERE extension IN (%s)' % placeholder)
-        for binder in extensions:
-            query.addBindValue(str(binder))
-        ret = query.exec()
+        ret = query.lastInsertId()
         query.clear()
         return ret
 
 
 def removeExtensions(extensions: list) -> bool:
+    """
+    :param extensions:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     exts_id = extensionsToInt(extensions)
     # clear indexed files with extension
@@ -347,6 +442,10 @@ def removeExtensions(extensions: list) -> bool:
 
 
 def getDriveByPath(path: str) -> str:
+    """
+    :param path:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare("SELECT serial FROM drives WHERE path=:path and active=1")
     query.bindValue(":path", str(path))
@@ -358,6 +457,10 @@ def getDriveByPath(path: str) -> str:
 
 
 def driveSerialExists(serial: str) -> bool:
+    """
+    :param serial:
+    :return:
+    """
     query = QtSql.QSqlQuery()
     query.prepare("SELECT * FROM drives WHERE serial=:serial")
     query.bindValue(":serial", str(serial))
@@ -366,6 +469,7 @@ def driveSerialExists(serial: str) -> bool:
         query.clear()
         return ret
     return False
+
 
 def dummyDataResult():
     results = []
@@ -391,14 +495,11 @@ class GDatabase:
         database = DATABASE_NAME
         self.con = QtSql.QSqlDatabase.addDatabase(driver)
         self.con.setDatabaseName(database)
-        # self.default_drive = {'name': 'tecra', 'size': 500}  # size in gigabytes
-        self.required_tables = {'drives', 'folders', 'extensions', 'files', 'categories'}
-        self.categories = ['Audio', 'Compressed', 'Disc and media', 'Data and database', 'E-mail', 'Executable',
-                           'Font', 'Image', 'Internet', 'Presentation', 'Programming', 'Spreadsheet', 'System',
-                           'Video', 'Word']
+        self.required_tables = REQUIRED_TABLES
+        self.categories = CATEGORIES
         self.default_extensions = default_extensions
         self.checkDatabaseConnection()
-        self.ensureData()
+        self.tablesExists()
 
     def checkDatabaseConnection(self):
         if not self.con.open():
@@ -407,10 +508,6 @@ class GDatabase:
                 'Could not open database: '
                 f'{self.con.lastError().databaseText()}')
             sys.exit(1)
-
-    def ensureData(self):
-        self.tablesExists()
-        return True
 
     def tablesExists(self):
         required_tables = self.required_tables
@@ -426,7 +523,7 @@ class GDatabase:
             'DROP TABLE IF EXISTS folders',
             'DROP TABLE IF EXISTS extensions',
             'DROP TABLE IF EXISTS files',
-            'CREATE TABLE categories (id INTEGER PRIMARY KEY, category TEXT NOT NULL, selected INT NOT NULL DEFAULT 0)',
+            'CREATE TABLE categories (id INTEGER PRIMARY KEY, category TEXT NOT NULL, icon TEXT NOT NULL, selected INT NOT NULL DEFAULT 0)',
             'CREATE TABLE drives ( serial TEXT PRIMARY KEY, name TEXT NOT NULL, label TEXT NOT NULL, size FLOAT NOT NULL, active INTEGER DEFAULT 0, partitions TEXT NOT NULL, path TEXT NOT NULL)',
             'CREATE TABLE folders ( id INTEGER PRIMARY KEY, path TEXT NOT NULL, drive_id TEXT, FOREIGN KEY(drive_id) REFERENCES drives(serial))',
             'CREATE TABLE extensions ( id INTEGER PRIMARY KEY, extension TEXT NOT NULL, category_id INTEGER NOT NULL, selected INTEGER DEFAULT 0, FOREIGN KEY(category_id) REFERENCES categories(id))',
@@ -452,9 +549,10 @@ class GDatabase:
             sys.exit(1)
 
         # populate categories
-        for category in self.categories:
-            query.prepare("""INSERT INTO categories (category) VALUES (?)""")
+        for category, icon  in self.categories.items():
+            query.prepare("""INSERT INTO categories (category, icon) VALUES (?, ?)""")
             query.addBindValue(category)
+            query.addBindValue(icon)
             query.exec()
 
         # populate tables with default values

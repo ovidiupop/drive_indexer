@@ -31,17 +31,7 @@ in parent do:
 # select distinct and sort all used extensions in a linux system
 find . -type f | perl -ne 'print $1 if m/\.([^.\/]+)$/' | sort -u > used_extensions.txt
 
-# def preselectFavoriteExtensions(self):
-#     ext_lists = [self.settings_extensions_list]
-#     extensions_db = gdb.getAll('extensions')
-#     selected_extensions = gdb.preselectedExtensions()
-#     self.entry = QtGui.QStandardItemModel()
-#     for idx, ex in enumerate(extensions_db):
-#         extension = ex['extension']
-#         ext = QtGui.QStandardItem(extension)
-#         self.entry.appendRow(ext)
-#         # select preselected items
-#         if extension in selected_extensions:
-#             ix = self.entry.index(idx, 0)
-#             sm = self.settings_extensions_list.selectionModel()
-#             sm.select(ix, QtCore.QItemSelectionModel.Select)
+
+
+    current_directory = str(pathlib.Path(__file__).parent.absolute())
+

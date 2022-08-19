@@ -5,7 +5,6 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
 
 from mymodules import GDBModule as gdb, TabsModule
-from mymodules.GlobalFunctions import prepareQrcFile
 
 
 class IndexerWindow(QMainWindow):

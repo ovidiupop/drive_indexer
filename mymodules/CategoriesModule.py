@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
+from mymodules.GlobalFunctions import iconForButton
 
 
 class Categories(QtWidgets.QWidget):
@@ -24,7 +25,9 @@ class CategoriesSelector(QtWidgets.QWidget):
         self.column_splitter = 3
         self.categories = gdb.getAll('categories')
         self.check_all_categories = PushButton('Check all')
+        self.check_all_categories.setIcon(iconForButton('SP_DialogApplyButton'))
         self.parent_load_default_categories = PushButton('Reload preferred')
+        self.parent_load_default_categories.setIcon(iconForButton('SP_BrowserReload'))
 
         # Only Search set the parent because it has different behavior than Category
         # On Search selected categories are not saved as preferred, but used only for current search
@@ -88,10 +91,7 @@ class CategoriesSelector(QtWidgets.QWidget):
         text = checkbox.text()
         if not self.parent_name:
             # come from settings tab
-            if gdb.categorySetSelected(text, checkbox.isChecked()):
-                print("Success")
-            else:
-                print("Fail")
+            gdb.setCategorySelected(text, checkbox.isChecked())
         self.statusButtonCheckAll(checkbox.parent())
 
 
