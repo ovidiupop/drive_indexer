@@ -19,6 +19,7 @@ class Search(QtWidgets.QWidget):
         self.search_term_input = QtWidgets.QLineEdit()
         self.search_term_input.setPlaceholderText('Insert term to search')
         self.search_button = PushButton('Search')
+        self.search_button.setMinimumWidth(200)
         self.search_button.setIcon(iconForButton('SP_FileDialogContentsView'))
 
         self.search_term_input.returnPressed.connect(self.onSubmitted)

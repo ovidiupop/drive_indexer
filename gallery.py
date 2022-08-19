@@ -1,15 +1,21 @@
 import sys
+import resources
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
 
 from mymodules import GDBModule as gdb, TabsModule
+from mymodules.GlobalFunctions import prepareQrcFile
 
 
 class IndexerWindow(QMainWindow):
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
         gdb.GDatabase()
+
+        # prepareQrcFile()
+        # for path in QtGui.QIcon.themeSearchPaths():
+        #     print("%s/%s" % (path, QtGui.QIcon.themeName()))
 
         # notImportant()
         # listOfNecessaryIcons()

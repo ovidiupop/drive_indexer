@@ -4,11 +4,150 @@ from os.path import exists
 import pathlib
 from contextlib import redirect_stdout
 
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QMimeDatabase
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtCore import QMimeDatabase, QFileInfo
+from PyQt5.QtWidgets import QMessageBox, QFileIconProvider
 
 from mymodules import GDBModule as gdb
+
+
+def getMimeTypeForExtension(extension_name):
+    mt = QMimeDatabase()
+    z = mt.mimeTypeForFile(f'*.{extension_name}')
+    return z.iconName()
+
+
+def getIcon(item, size=16):
+    current_directory = str(pathlib.Path(__file__).parent.absolute())
+    mime_for_extension = getMimeTypeForExtension(item)
+    icon = QtGui.QIcon.fromTheme(mime_for_extension)
+    if icon.isNull():
+        icon = QtGui.QIcon(f':/images/mime/' + mime_for_extension + '.png')
+        print('resource', item, mime_for_extension)
+    else:
+        print('found in theme', item, mime_for_extension)
+    return icon.pixmap(size)
+
+    # fill = '.'+item
+    # mt = QMimeDatabase().mimeTypeForName(fill)
+    # print(mt.iconName())
+    #
+    # a = QMimeDatabase().allMimeTypes()
+    # for mime in a:
+    #     if mime.name() == 'text/' + item or mime.name() == 'application/x-' + item:
+    #         name = mime.name().replace('/', '-')
+    #         icon = QtGui.QIcon.fromTheme(name)
+    #         if not icon.isNull():
+    #             return icon.pixmap(size)
+
+
+def prepareQrcFile():
+    current_directory = str(pathlib.Path(__file__).parent.absolute())
+    images_folder = current_directory + '/../images'
+    resource_file_path = current_directory + '/../resources.qrc'
+    path = QtCore.QDir(images_folder)
+    with open(resource_file_path, 'w') as f:
+        f.write('<RCC>\n')
+        recursiveFolders(path, f, True, '')
+        f.write('\t</qresource">\n')
+        f.write('</RCC>')
+
+# working but not perfect
+def recursiveFolders(path, f, start=True, last_folder_name=''):
+    directory = QtCore.QDir(path)
+    directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
+    last_folder_name = ''
+    occurences_of_slash = 0
+    prefix_tabs = ''
+    for entry in directory.entryInfoList():
+        if entry.isDir() and start:
+            last_folder_name += '/' + entry.fileName()
+            occurences_of_slash = last_folder_name.count('/')
+            prefix_tabs = '\t' * occurences_of_slash
+            f.write(f'{prefix_tabs}<qresource prefix="{last_folder_name}">\n')
+            start = False
+        if entry.isFile():
+            file_tabs = '\t' * (occurences_of_slash + 1)
+            f.write(f'{file_tabs}<file>{entry.fileName()}</file>\n')
+        if entry.isDir():
+            recursiveFolders(entry.filePath(), f, True, last_folder_name)
+
+
+# def getIcon(item, size=24):
+#     current_directory = str(pathlib.Path(__file__).parent.absolute())
+#     if item in icons_map.keys():
+#         name = icons_map[item]
+#         path = current_directory + '/../images/icons/' + name + '.png'
+#         print(item, path, exists(path))
+#         icon = QtGui.QIcon(path)
+#         return icon.pixmap(size)
+        # else:
+        #     mime = mimetypes.types_map
+        #     ext = '.'+item
+        #     if ext in mime.keys():
+        #         name = mime[ext].replace('/', '-')
+        #         icon = QtGui.QIcon.fromTheme(name)
+        #         if not icon.isNull():
+        #             return icon.pixmap(size)
+        #         else:
+        #             a = QMimeDatabase().allMimeTypes()
+        #             for mime in a:
+        #                 if mime.name() == 'text/' + item or mime.name() == 'application/x-' + item:
+        #                     name = mime.name().replace('/', '-')
+        #                     icon = QtGui.QIcon.fromTheme(name)
+        #                     if not icon.isNull():
+        #                         return icon.pixmap(size)
+
+
+
+def file_exists(path_of_file):
+    return exists(path_of_file)
+
+def formatDictToHuman(d):
+    lista = []
+    for k, v in d.items():
+        item = k + ' : ' + v
+        lista.append(item)
+    human_list = "\n".join(lista)
+    return human_list
+
+
+def putInFile(data, filename='out.txt'):
+    with open(filename, 'w') as f:
+        with redirect_stdout(f):
+            print(data)
+
+
+def iconForButton(name):
+    return QtWidgets.QApplication.style().standardIcon(getattr(QtWidgets.QStyle, name))
+
+
+def confirmationDialog(title, message):
+    msg_box = QtWidgets.QMessageBox()
+    msg_box.setIcon(QMessageBox.Warning)
+    msg_box.setText(message)
+    msg_box.setWindowTitle(title)
+    msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+    return msg_box.exec() == QMessageBox.Ok
+
+
+def tabIndexByName(tab_widget, tab_name):
+    for index in range(tab_widget.count()):
+        if tab_name == tab_widget.tabText(index):
+            return index
+
+
+def categoriesCombo():
+    categories = gdb.getAll('categories')
+    combo = QtWidgets.QComboBox()
+    categories_name = []
+    for item in categories:
+        categories_name.append(item['category'])
+    categories_name.insert(0, '--Categories--')
+    combo.addItems(categories_name)
+    return combo
+
+
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)",
@@ -258,81 +397,6 @@ default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0
                       ['rm', 14, 0], ['swf', 14, 0], ['vob', 14, 0], ['wmv', 14, 1], ['srt', 14, 1],
                       ['sub', 14, 1], ['doc', 15, 1], ['docx', 15, 1], ['odt', 15, 1], ['pdf', 15, 1],
                       ['rtf', 15, 0], ['tex', 15, 0], ['txt', 15, 0], ['wpd', 15, 0]]
-
-
-def getIcon(item, size=24):
-    current_directory = str(pathlib.Path(__file__).parent.absolute())
-    if item in icons_map.keys():
-        name = icons_map[item]
-        path = current_directory + '/../images/icons/' + name + '.png'
-        print(item, path, exists(path))
-        icon = QtGui.QIcon(path)
-        return icon.pixmap(size)
-        # else:
-        #     mime = mimetypes.types_map
-        #     ext = '.'+item
-        #     if ext in mime.keys():
-        #         name = mime[ext].replace('/', '-')
-        #         icon = QtGui.QIcon.fromTheme(name)
-        #         if not icon.isNull():
-        #             return icon.pixmap(size)
-        #         else:
-        #             a = QMimeDatabase().allMimeTypes()
-        #             for mime in a:
-        #                 if mime.name() == 'text/' + item or mime.name() == 'application/x-' + item:
-        #                     name = mime.name().replace('/', '-')
-        #                     icon = QtGui.QIcon.fromTheme(name)
-        #                     if not icon.isNull():
-        #                         return icon.pixmap(size)
-
-
-def file_exists(path_of_file):
-    return exists(path_of_file)
-
-def formatDictToHuman(d):
-    lista = []
-    for k, v in d.items():
-        item = k + ' : ' + v
-        lista.append(item)
-    human_list = "\n".join(lista)
-    return human_list
-
-
-def putInFile(data, filename='out.txt'):
-    with open(filename, 'w') as f:
-        with redirect_stdout(f):
-            print(data)
-
-
-def iconForButton(name):
-    return QtWidgets.QApplication.style().standardIcon(getattr(QtWidgets.QStyle, name))
-
-
-def confirmationDialog(title, message):
-    msg_box = QtWidgets.QMessageBox()
-    msg_box.setIcon(QMessageBox.Warning)
-    msg_box.setText(message)
-    msg_box.setWindowTitle(title)
-    msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    return msg_box.exec() == QMessageBox.Ok
-
-
-def tabIndexByName(tab_widget, tab_name):
-    for index in range(tab_widget.count()):
-        if tab_name == tab_widget.tabText(index):
-            return index
-
-
-def categoriesCombo():
-    categories = gdb.getAll('categories')
-    combo = QtWidgets.QComboBox()
-    categories_name = []
-    for item in categories:
-        categories_name.append(item['category'])
-    categories_name.insert(0, '--Categories--')
-    combo.addItems(categories_name)
-    return combo
-
 
 class Global():
     pass
