@@ -40,7 +40,7 @@ class Drives(QtWidgets.QWidget):
         self.drive_form_close = QtWidgets.QPushButton()
         self.drive_form_close.setMaximumWidth(30)
         self.combo_active_drives = QtWidgets.QComboBox()
-        self.combo_active_drives.setMaximumWidth(250)
+        self.combo_active_drives.setFixedWidth(330)
 
         self.drive_form_close.setIcon(iconForButton('SP_DialogCloseButton'))
         self.add_drive_button.setIcon(iconForButton('SP_DriveHDIcon'))

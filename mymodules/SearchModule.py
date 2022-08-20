@@ -15,6 +15,8 @@ class Search(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
 
+        self.last_search_configuration = {}
+
         self.search_input_label = QtWidgets.QLabel('Search for:')
         self.search_term_input = QtWidgets.QLineEdit()
         self.search_term_input.setPlaceholderText('Insert term to search')
@@ -27,6 +29,9 @@ class Search(QtWidgets.QWidget):
 
         self.found_search_label = QtWidgets.QLabel('Found')
         self.found_search_label.hide()
+        self.export_results_button = PushButton('Export to CSV')
+        self.export_results_button.clicked.connect(self.exportToCsv)
+
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
         self.found_results_table_model = ModelsModule.SearchResultsTableModel(pandas.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
@@ -64,7 +69,12 @@ class Search(QtWidgets.QWidget):
 
         # search results section
         search_results_layout = QtWidgets.QVBoxLayout()
-        search_results_layout.addWidget(self.found_search_label)
+        row_over_table = QtWidgets.QHBoxLayout()
+        row_over_table.addWidget(self.found_search_label, 0, Qt.AlignLeft)
+        row_over_table.addStretch()
+        row_over_table.addWidget(self.export_results_button, 0, Qt.AlignLeft)
+
+        search_results_layout.addLayout(row_over_table)
         search_results_layout.addWidget(self.found_results_table)
 
         v_col_general.addLayout(search_results_layout)
@@ -89,6 +99,8 @@ class Search(QtWidgets.QWidget):
 
         self.getExtensionsForSearch()
         extensions = self.extensions_for_search
+        self.last_search_configuration = {'term': search_term, 'extensions':extensions}
+
         results = gdb.findFiles(search_term, extensions)
         count_results = len(results)
         self.found_search_label.show()
@@ -127,3 +139,32 @@ class Search(QtWidgets.QWidget):
                     text = ckb.text()
                     ckb.setChecked(True) if text in selected else ckb.setChecked(False)
 
+
+
+    def exportToCsv(self):
+
+        textData = ''
+        selected = self.found_results_table.selectionModel()
+        if selected.hasSelection():
+            rows = selected.selectedRows()
+            columns = selected.selectedColumns()
+            model = selected.model()
+            for i in range(0, len(rows)):
+                for j in range(0, len(columns)):
+                    textData += model.data(model.createIndex(i, j))
+                    textData += ' '
+                textData += "\n"
+
+
+        print(textData)
+
+
+        # last_search_configuration = self.last_search_configuration
+        # search_term = self.last_search_configuration['term']
+        # extensions = self.last_search_configuration['extensions']
+        # results = gdb.findFiles(search_term, extensions)
+        # x = results
+        # header = ",".join(HEADER_SEARCH_RESULTS_TABLE)
+        #
+        # for row in results:
+        #     line = " ".join(row)+"\n"
