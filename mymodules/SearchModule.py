@@ -151,7 +151,6 @@ class Search(QtWidgets.QWidget):
 
     def prepareSelectedAsCSV(self, column_separator, line_separator, checked=False):
         model = self.found_results_table.model()
-        rows = model.rowCount()
         columns = model.columnCount()
         indexes = self.found_results_table.selectionModel().selectedRows()
         if not len(indexes):
@@ -171,9 +170,6 @@ class Search(QtWidgets.QWidget):
             results.append(line)
         return self.putInFile(results)
 
-        # display = line_separator.join(results)
-        # return self.putInFile(display)
-
     def tableToCSV(self, checked=False, column_separator=" ", line_separator="\n"):
         model = self.found_results_table.model()
         columns = model.columnCount()
@@ -191,8 +187,6 @@ class Search(QtWidgets.QWidget):
             line = column_separator.join(one_line)
             results.append(line)
         return results
-        # display = line_separator.join(results)
-        # return display
 
     # we have to pass data as list
     def putInFile(self, data, line_separator):

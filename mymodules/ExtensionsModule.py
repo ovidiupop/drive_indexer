@@ -1,5 +1,4 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QIcon
+from PyQt5 import QtWidgets, QtCore
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
@@ -28,29 +27,22 @@ class Extensions(QtWidgets.QWidget):
         self.settings_extensions_list.setMaximumSize(300, 200)
         self.add_extension_button = PushButton('Add')
         self.add_extension_button.setVisible(False)
-        # self.set_preferred_extension_button = PushButton('Preferred')
         self.remove_extension_button = PushButton('Remove')
         self.remove_extension_button.setVisible(False)
         self.remove_extension_button.setEnabled(False)
 
         self.add_extension_button.setIcon(iconForButton('SP_FileDialogNewFolder'))
-        # self.set_preferred_extension_button.setIcon(iconForButton('SP_FileDialogDetailedView'))
         self.remove_extension_button.setIcon(iconForButton('SP_DialogDiscardButton'))
 
         self.categories_combo = categoriesCombo()
         self.categories_combo.setFixedWidth(300)
 
-        # icon = QIcon('logo.png')
-        # self.categories_combo.setItemIcon(0, icon)
-
         self.add_extension_input.returnPressed.connect(lambda: self.addNewExtension())
         self.add_extension_button.clicked.connect(lambda: self.addNewExtension())
-        # self.set_preferred_extension_button.clicked.connect(lambda: self.setPreferredExtension())
         self.remove_extension_button.clicked.connect(lambda: self.removeExtension())
         self.categories_combo.currentIndexChanged.connect(self.loadExtensionsForCategory)
         self.categories_combo.currentIndexChanged.connect(self.visibleButtons)
         self.settings_extensions_list.clicked.connect(self.enableRemoveButton)
-
 
         # """settings extension section"""
         layout_tab_extensions_buttons = QtWidgets.QVBoxLayout()
@@ -60,7 +52,6 @@ class Extensions(QtWidgets.QWidget):
         layout_tab_extensions_buttons.addWidget(self.add_extension_input)
         layout_tab_extensions_buttons.addWidget(self.add_extension_button)
         layout_tab_extensions_buttons.addSpacing(20)
-        # layout_tab_extensions_buttons.addWidget(self.set_preferred_extension_button)
         layout_tab_extensions_buttons.addStretch()
 
         layout_tab_extensions_list = QtWidgets.QVBoxLayout()
@@ -79,7 +70,6 @@ class Extensions(QtWidgets.QWidget):
             self.settings_extensions_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
         else:
             self.settings_extensions_list.setModel(ExtensionsModel([]))
-
 
     @QtCore.pyqtSlot()
     def addNewExtension(self):

@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QTabWidget
 
-from mymodules import GDBModule as gdb, WorkerModule as wk
+from mymodules import GDBModule as gdb, IndexerModule as wk
 from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions

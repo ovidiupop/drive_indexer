@@ -56,9 +56,17 @@ class IndexerWindow(QMainWindow):
     def init_UI(self):
         self.resize(1000, 800)
         self.setWindowTitle("File Indexer")
+        self.setMenu()
 
+        # End main UI code
+        self.show()
+
+
+
+    def setMenu(self):
         # MENU
         file_menu = self.menuBar()
+
         file_menu = file_menu.addMenu('&File')
 
         open_action = file_menu.addAction('&Open')
@@ -67,17 +75,14 @@ class IndexerWindow(QMainWindow):
         quit_action = file_menu.addAction('&Quit', self.close)
 
         settings_menu = self.menuBar()
-        settings_menu = settings_menu .addMenu('Settings')
+        settings_menu = settings_menu.addMenu('Settings')
         settings_extensions_action = settings_menu.addAction('Extensions')
         settings_folders_action = settings_menu.addAction('Folders')
         settings_drives_action = settings_menu.addAction('Drives')
 
         help_menu = self.menuBar()
-        help_menu = help_menu .addMenu('Help')
+        help_menu = help_menu.addMenu('Help')
         about_action = help_menu.addAction('About')
-
-        # End main UI code
-        self.show()
 
 
 def set_print_number(self, number):
