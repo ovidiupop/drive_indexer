@@ -77,6 +77,7 @@ class IndexerWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.resize(1000, 800)
         self.setWindowTitle("File Indexer")
+        self.setWindowIcon(QIcon(":app_logo_32.png"))
         self._createActions()
         self._createMenuBar()
         self._connectActions()
@@ -102,7 +103,12 @@ class IndexerWindow(QMainWindow):
         pass
 
     def about(self):
-        pass
+        QtWidgets.QMessageBox.about(self, 'About Indexer',
+            "<h4>Find all your files in a single place</h4><br>"
+            "Index all your drives and find anything in Indexer<br><br>"
+            "This application was developed as study project while I began to learn Python and Qt, so it's code can be improved and also new features can be added to it!\n\n<br><br>"
+           "2022 © Ovidiu Pop"
+                                    )
 
 
 if __name__ == '__main__':

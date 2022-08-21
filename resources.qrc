@@ -35,6 +35,11 @@
 		<file alias="tick.png">/images/app/32/tick.png</file>
 		<file alias="untick.png">/images/app/32/untick.png</file>
 		<file alias="www_page.png">/images/app/32/www_page.png</file>
+		<file alias="app_logo_16.png">/images/logo/app_logo_16.png</file>
+		<file alias="app_logo_22.png">/images/logo/app_logo_22.png</file>
+		<file alias="app_logo_32.png">/images/logo/app_logo_32.png</file>
+		<file alias="app_logo_48.png">/images/logo/app_logo_48.png</file>
+		<file alias="app_logo_64.png">/images/logo/app_logo_64.png</file>
 		<file alias="application-atom+xml.png">/images/mime/application-atom+xml.png</file>
 		<file alias="application-certificate.png">/images/mime/application-certificate.png</file>
 		<file alias="application-epub+zip.png">/images/mime/application-epub+zip.png</file>
