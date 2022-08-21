@@ -105,9 +105,11 @@ class IndexerWindow(QMainWindow):
     def about(self):
         QtWidgets.QMessageBox.about(self, 'About Indexer',
             "<h4>Find all your files in a single place</h4><br>"
-            "Index all your drives and find anything in Indexer<br><br>"
-            "This application was developed as study project while I began to learn Python and Qt, so it's code can be improved and also new features can be added to it!\n\n<br><br>"
-           "2022 © Ovidiu Pop"
+            "Index your entire drive collection in one place and find anything in a second!<br><br>"
+            "This app was developed as a study project when I started learning Python and Qt,"
+            "so its code can be improved and also new features can be added!<br><br>"
+            "Any suggestions and criticisms are welcome!<br><br>"
+            "© 2022 Ovidiu Pop"
                                     )
 
 
