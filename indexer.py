@@ -14,7 +14,6 @@ class IndexerWindow(QMainWindow):
         super(IndexerWindow, self).__init__(parent)
         gdb.GDatabase()
         res = resources
-
         self.init_UI()
 
     def _createActions(self):
