@@ -25,6 +25,7 @@ class Extensions(QtWidgets.QWidget):
         self.add_extension_input.setVisible(False)
         self.settings_extensions_list = QtWidgets.QListView()
         self.settings_extensions_list.setMaximumSize(300, 200)
+        self.settings_extensions_list.hide()
         self.add_extension_button = PushButton('Add')
         self.add_extension_button.setVisible(False)
         self.remove_extension_button = PushButton('Remove')
@@ -109,7 +110,7 @@ class Extensions(QtWidgets.QWidget):
             self.loadExtensionsForCategory(category_id)
 
     def visibleButtons(self):
-        group = [self.add_extension_input, self.add_extension_button, self.remove_extension_button]
+        group = [self.add_extension_input, self.add_extension_button, self.remove_extension_button, self.settings_extensions_list]
         index = self.categories_combo.currentIndex()
         for control in group:
             control.setVisible(index > 0)

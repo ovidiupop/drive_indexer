@@ -9,15 +9,20 @@ from mymodules import ComponentsModule, ModelsModule
 from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import CategoriesSelector
 from mymodules.ComponentsModule import PushButton
-from mymodules.GlobalFunctions import iconForButton, HEADER_SEARCH_RESULTS_TABLE, CSV_COLUMN_SEPARATOR, \
-    CSV_LINE_SEPARATOR, DEFAULT_DIR
+from mymodules.GlobalFunctions import *
 from mymodules.ModelsModule import SearchResultsTableModel
 
 
 class Search(QtWidgets.QWidget):
 
+    export_all_results_signal = QtCore.pyqtSignal()
+    export_selected_results_signal = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
+
+        self.export_all_results_signal.connect(self.exportAllResultsToCSV)
+        self.export_selected_results_signal.connect(self.exportSelectedResultsToCSV)
 
         self.last_search_configuration = {}
 
@@ -34,9 +39,7 @@ class Search(QtWidgets.QWidget):
         self.found_search_label = QtWidgets.QLabel('Found')
         self.found_search_label.hide()
         self.export_results_button = PushButton('Export to CSV')
-        self.export_results_button.clicked.connect(
-            lambda: self.prepareSelectedAsCSV(
-                checked=False, column_separator=CSV_COLUMN_SEPARATOR, line_separator=CSV_LINE_SEPARATOR))
+        self.export_results_button.clicked.connect(self.prepareSelectedAsCSV)
 
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
@@ -149,13 +152,48 @@ class Search(QtWidgets.QWidget):
                     text = ckb.text()
                     ckb.setChecked(True) if text in selected else ckb.setChecked(False)
 
-    def prepareSelectedAsCSV(self, column_separator, line_separator, checked=False):
+
+    def exportSelectedResultsToCSV(self):
+        model = self.found_results_table.model()
+        columns = model.columnCount()
+        indexes = self.found_results_table.selectionModel().selectedRows()
+        results = []
+        for index in indexes:
+            one_line = []
+            for col in range(0, columns):
+                val = model.data(model.index(index.row(), col), Qt.DisplayRole)
+                # we have to convert values to string if we wish to concatenate them
+                if not isinstance(val, str):
+                    val = '%s' % val
+                one_line.append(val)
+            line = CSV_COLUMN_SEPARATOR.join(one_line)
+            results.append(line)
+        return self.putInFile(results)
+
+    def exportAllResultsToCSV(self):
+        model = self.found_results_table.model()
+        columns = model.columnCount()
+        rows = model.rowCount()
+        results = []
+        for row in range(0, rows):
+            one_line = []
+            for col in range(0, columns):
+                val = model.data(model.index(row, col), Qt.DisplayRole)
+                # we have to convert values to string if we wish to concatenate them
+                if not isinstance(val, str):
+                    val = '%s' % val
+                one_line.append(val)
+            line = CSV_COLUMN_SEPARATOR.join(one_line)
+            results.append(line)
+        return self.putInFile(results)
+
+    def prepareSelectedAsCSV(self):
         model = self.found_results_table.model()
         columns = model.columnCount()
         indexes = self.found_results_table.selectionModel().selectedRows()
         if not len(indexes):
-            display = self.tableToCSV(checked, column_separator, line_separator)
-            return self.putInFile(display, line_separator)
+            display = self.tableToCSV()
+            return self.putInFile(display)
 
         results = []
         for index in indexes:
@@ -166,15 +204,14 @@ class Search(QtWidgets.QWidget):
                 if not isinstance(val, str):
                     val = '%s' % val
                 one_line.append(val)
-            line = column_separator.join(one_line)
+            line = CSV_COLUMN_SEPARATOR.join(one_line)
             results.append(line)
         return self.putInFile(results)
 
-    def tableToCSV(self, checked=False, column_separator=" ", line_separator="\n"):
+    def tableToCSV(self):
         model = self.found_results_table.model()
         columns = model.columnCount()
         rows = model.rowCount()
-
         results = []
         for row in range(0, rows):
             one_line = []
@@ -184,12 +221,12 @@ class Search(QtWidgets.QWidget):
                 if not isinstance(val, str):
                     val = '%s' % val
                 one_line.append(val)
-            line = column_separator.join(one_line)
+            line = CSV_COLUMN_SEPARATOR.join(one_line)
             results.append(line)
         return results
 
     # we have to pass data as list
-    def putInFile(self, data, line_separator):
+    def putInFile(self, data):
         default_dir = DEFAULT_DIR
         default_filename = os.path.join(default_dir, "")
         filename, _ = QFileDialog.getSaveFileName(
@@ -197,7 +234,7 @@ class Search(QtWidgets.QWidget):
         )
         if filename:
             file = open(filename, 'w')
-            text = line_separator.join(data)
+            text = CSV_LINE_SEPARATOR.join(data)
             file.write(text)
             file.close()
             QtWidgets.QMessageBox.information(None, 'Export CSV', 'Exported successfully!')
