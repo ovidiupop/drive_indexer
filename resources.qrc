@@ -1,5 +1,15 @@
 <RCC>
 	<qresource>
+		<file alias="all-results.svg">/images/actions/all-results.svg</file>
+		<file alias="application-exit.svg">/images/actions/application-exit.svg</file>
+		<file alias="categories.svg">/images/actions/categories.svg</file>
+		<file alias="drives.svg">/images/actions/drives.svg</file>
+		<file alias="export.svg">/images/actions/export.svg</file>
+		<file alias="extensions.svg">/images/actions/extensions.svg</file>
+		<file alias="folders.svg">/images/actions/folders.svg</file>
+		<file alias="help-about.svg">/images/actions/help-about.svg</file>
+		<file alias="help-contents.svg">/images/actions/help-contents.svg</file>
+		<file alias="selected-results.svg">/images/actions/selected-results.svg</file>
 		<file alias="accordion.png">/images/app/32/accordion.png</file>
 		<file alias="application_osx_terminal.png">/images/app/32/application_osx_terminal.png</file>
 		<file alias="cd.png">/images/app/32/cd.png</file>

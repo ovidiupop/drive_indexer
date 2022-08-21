@@ -1,4 +1,5 @@
 import sys
+import resources
 
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
@@ -12,22 +13,23 @@ class IndexerWindow(QMainWindow):
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
         gdb.GDatabase()
+        res = resources
 
         self.init_UI()
 
     def _createActions(self):
         # # Creating action using the first constructor
-        self.export_all_action = QAction("&All Search Results", self)
-        self.export_selected_action = QAction("&Selected Search Results", self)
-        self.exit_action = QAction(QIcon(":application-exit.png"), "&Exit", self)
+        self.export_all_action = QAction(QIcon(":all-results.svg"), "&All Search Results", self)
+        self.export_selected_action = QAction(QIcon(":selected-results.svg"), "&Selected Search Results", self)
+        self.exit_action = QAction(QIcon(":application-exit.svg"), "E&xit", self)
 
-        self.settings_drives_action = QAction("&Drives", self)
-        self.settings_categories_action = QAction("&Categories", self)
-        self.settings_folders_action = QAction("&Folders", self)
-        self.settings_extensions_actions = QAction("&Extensions", self)
+        self.settings_drives_action = QAction(QIcon(":drives.svg"), "&Drives", self)
+        self.settings_categories_action = QAction(QIcon(":categories.svg"), "&Categories", self)
+        self.settings_folders_action = QAction(QIcon(":folders.svg"), "&Folders", self)
+        self.settings_extensions_actions = QAction(QIcon(":extensions.svg"), "&Extensions", self)
 
-        self.help_content_action = QAction(QIcon(":help-contents.png"), "&Help Content", self)
-        self.about_action = QAction(QIcon(":help-about.png"), "&About", self)
+        self.help_content_action = QAction(QIcon(":help-contents.svg"), "&Help Content", self)
+        self.about_action = QAction(QIcon(":help-about.svg"), "&About", self)
 
     def _connectActions(self):
         # Connect File actions
@@ -47,7 +49,7 @@ class IndexerWindow(QMainWindow):
         self.menu_bar = self.menuBar()
 
         self.file_menu = self.menu_bar.addMenu("&File")
-        self.export_menu = self.file_menu.addMenu("CSV &Export")
+        self.export_menu = self.file_menu.addMenu(QIcon(":export.svg"), "CSV &Export")
         self.export_menu.addAction(self.export_all_action)
         self.export_menu.addAction(self.export_selected_action)
         self.file_menu.addSeparator()
@@ -75,9 +77,9 @@ class IndexerWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.resize(1000, 800)
         self.setWindowTitle("File Indexer")
-        # self._createActions()
-        # self._createMenuBar()
-        # self._connectActions()
+        self._createActions()
+        self._createMenuBar()
+        self._connectActions()
         self._createStatusBar()
         self.show()
 
