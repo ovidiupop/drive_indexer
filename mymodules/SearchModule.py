@@ -1,12 +1,16 @@
+import os
+
 import pandas
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt
+from PyQt5.QtWidgets import QTableView, QAbstractItemView, QFileDialog
 
 from mymodules import ComponentsModule, ModelsModule
 from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import CategoriesSelector
 from mymodules.ComponentsModule import PushButton
-from mymodules.GlobalFunctions import iconForButton, HEADER_SEARCH_RESULTS_TABLE
+from mymodules.GlobalFunctions import iconForButton, HEADER_SEARCH_RESULTS_TABLE, CSV_COLUMN_SEPARATOR, \
+    CSV_LINE_SEPARATOR, DEFAULT_DIR
 from mymodules.ModelsModule import SearchResultsTableModel
 
 
@@ -31,11 +35,13 @@ class Search(QtWidgets.QWidget):
         self.found_search_label.hide()
         self.export_results_button = PushButton('Export to CSV')
         self.export_results_button.clicked.connect(
-            lambda: self.prepareSelectedAsCSV(checked=False, column_separator=" ", line_separator="\n"))
+            lambda: self.prepareSelectedAsCSV(
+                checked=False, column_separator=CSV_COLUMN_SEPARATOR, line_separator=CSV_LINE_SEPARATOR))
 
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
-        self.found_results_table_model = ModelsModule.SearchResultsTableModel(pandas.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
+        self.found_results_table_model = ModelsModule.SearchResultsTableModel(
+            pandas.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
 
         # add sorting to table
         sortermodel_results = QSortFilterProxyModel()
@@ -45,6 +51,7 @@ class Search(QtWidgets.QWidget):
         self.found_results_table.setModel(sortermodel_results)
         self.found_results_table.setSortingEnabled(True)
         self.found_results_table.sortByColumn(2, Qt.AscendingOrder)
+        self.found_results_table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         # categories box
         self.categories_selector_search = CategoriesSelector(parent=self)
@@ -90,7 +97,6 @@ class Search(QtWidgets.QWidget):
         self.extensions_for_search = []
         self.getExtensionsForSearch()
 
-
     @QtCore.pyqtSlot()
     def onSubmitted(self):
         search_term = self.search_term_input.text()
@@ -100,8 +106,11 @@ class Search(QtWidgets.QWidget):
 
         self.getExtensionsForSearch()
         extensions = self.extensions_for_search
-        self.last_search_configuration = {'term': search_term, 'extensions':extensions}
+        if not len(extensions):
+            QtWidgets.QMessageBox.information(None, 'No one category', 'Please check at least a category!')
+            return
 
+        self.last_search_configuration = {'term': search_term, 'extensions': extensions}
         results = gdb.findFiles(search_term, extensions)
         count_results = len(results)
         self.found_search_label.show()
@@ -140,30 +149,14 @@ class Search(QtWidgets.QWidget):
                     text = ckb.text()
                     ckb.setChecked(True) if text in selected else ckb.setChecked(False)
 
-
-
-    def exportToCsv(self):
-
-        textData = ''
-        selected = self.found_results_table.selectionModel()
-        if selected.hasSelection():
-            rows = selected.selectedRows()
-            columns = selected.selectedColumns()
-            model = selected.model()
-            for i in range(0, len(rows)):
-                for j in range(0, len(columns)):
-                    textData += model.data(model.createIndex(i, j))
-                    textData += ' '
-                textData += "\n"
-        print(textData)
-
-    def prepareSelectedAsCSV(self, checked=False, column_separator=" ", line_separator="\n"):
+    def prepareSelectedAsCSV(self, column_separator, line_separator, checked=False):
         model = self.found_results_table.model()
-        columns = model.columnCount(0)
+        rows = model.rowCount()
+        columns = model.columnCount()
         indexes = self.found_results_table.selectionModel().selectedRows()
         if not len(indexes):
             display = self.tableToCSV(checked, column_separator, line_separator)
-            return self.putInFile(display)
+            return self.putInFile(display, line_separator)
 
         results = []
         for index in indexes:
@@ -183,8 +176,8 @@ class Search(QtWidgets.QWidget):
 
     def tableToCSV(self, checked=False, column_separator=" ", line_separator="\n"):
         model = self.found_results_table.model()
-        columns = model.columnCount(0)
-        rows = model.rowCount(0)
+        columns = model.columnCount()
+        rows = model.rowCount()
 
         results = []
         for row in range(0, rows):
@@ -201,9 +194,17 @@ class Search(QtWidgets.QWidget):
         # display = line_separator.join(results)
         # return display
 
-        # we have to pass data as list
-
-    def putInFile(self, data):
-        with open('my.csv', 'w') as f:
-            f.write('\n'.join(data))
-        return True
+    # we have to pass data as list
+    def putInFile(self, data, line_separator):
+        default_dir = DEFAULT_DIR
+        default_filename = os.path.join(default_dir, "")
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Save CSV", default_filename, "CSV Files (*.csv)"
+        )
+        if filename:
+            file = open(filename, 'w')
+            text = line_separator.join(data)
+            file.write(text)
+            file.close()
+            QtWidgets.QMessageBox.information(None, 'Export CSV', 'Exported successfully!')
+            return

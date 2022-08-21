@@ -100,6 +100,11 @@ def categoriesCombo():
     return combo
 
 
+DEFAULT_DIR = "/home/matricks"
+
+CSV_COLUMN_SEPARATOR = ','
+CSV_LINE_SEPARATOR = '\n'
+
 REQUIRED_TABLES = {'drives', 'folders', 'extensions', 'files', 'categories'}
 CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
               'Disc and media': ':cd.png', 'Data and database': ':database.png',
