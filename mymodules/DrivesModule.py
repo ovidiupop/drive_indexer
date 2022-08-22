@@ -13,7 +13,6 @@ COLUMN_SIZE_ID_HIDDEN = [0.10, 0.40, 0.20, 0.20, 0.09, 0.10]
 
 
 class Drives(QtWidgets.QWidget):
-
     check_add_button = QtCore.pyqtSignal()
 
     def __init__(self, parent):
@@ -46,7 +45,6 @@ class Drives(QtWidgets.QWidget):
         self.add_drive_button.setIcon(iconForButton('SP_DriveHDIcon'))
         self.remove_drive_button.setIcon(iconForButton('SP_TrashIcon'))
         self.show_id_drive_button.setIcon(iconForButton('SP_FileDialogListView'))
-
 
     def partitionsAsListSerialKey(self):
         drives = gdb.getAll('drives')
