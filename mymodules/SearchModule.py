@@ -1,6 +1,6 @@
 import os
 
-import pandas
+import pandas as pd
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt
 from PyQt5.QtWidgets import QTableView, QAbstractItemView, QFileDialog
@@ -42,7 +42,7 @@ class Search(QtWidgets.QWidget):
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
         self.found_results_table_model = ModelsModule.SearchResultsTableModel(
-            pandas.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
+            pd.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
 
         # add sorting to table
         sortermodel_results = QSortFilterProxyModel()
@@ -118,7 +118,7 @@ class Search(QtWidgets.QWidget):
         self.updateResults(results)
 
     def updateResults(self, results):
-        data = pandas.DataFrame(results, columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE)
+        data = pd.DataFrame(results, columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE)
         self.found_results_table.setModel(SearchResultsTableModel(data))
         self.update()
 
