@@ -1,7 +1,7 @@
 import platform
 import subprocess
-
 import win32api
+
 from PyQt5.QtCore import QObject
 
 from mymodules import GDBModule as gdb
@@ -35,17 +35,38 @@ def folderCanBeIndexed(folder):
     return [False, None]
 
 
+def mountedDrivesWindows():
+    disks = []
+    drives = subprocess.Popen(f'wmic diskdrive get model,interfaceType,serialNumber,size', shell=True, stdin=None,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    lines_drives = drives.stdout.readlines()
+    lines_drives.pop(0)
+    count = len(lines_drives)
+    lines_drives.pop(count - 1)
+    if lines_drives:
+        for line_drive in lines_drives:
+            x = line_drive.decode('ascii').strip()
+            disk = {'serial': x[1], 'path': x[2], 'size': sizeToGb(x[3]), 'name': x[5]}
+            disks.append(disk)
+
+    if disks:
+        setActiveDriveDB(disks)
+    return disks
+
+
+
+
 # df /home/matricks/aacustom/Muzica/ => /dev/sda4      316212352 204173148  95906752  69% /home/matricks/aacustom
 # inxi -Dxx
 # lsblk -l -o type,fstype,kname,size,hotplug,serial,path,mountpoint,vendor,model | grep -e disk -e part
 def mountedDrivesLinux():
     disks = []
-    dpartitions = {}
-    partitions = subprocess.Popen(f'lsblk -l -o type,path,mountpoint | grep -e part', shell=True, stdin=None,
+    dpart = {}
+    disk_parts = subprocess.Popen(f'lsblk -l -o type,path,mountpoint | grep -e part', shell=True, stdin=None,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    lines_partitions = partitions.stdout.readlines()
-    if lines_partitions:
-        for line_partition in lines_partitions:
+    lines_disk_parts = disk_parts.stdout.readlines()
+    if lines_disk_parts:
+        for line_partition in lines_disk_parts:
             line_partition = line_partition.decode('ascii').strip()
             parts = line_partition.split(' ')
             while "" in parts:
@@ -53,10 +74,10 @@ def mountedDrivesLinux():
             parent = parts[1].rstrip('0123456789').strip()
             if len(parts) > 2:
                 mount_point = parts[2]
-                if parent in dpartitions:
-                    dpartitions[parent].append(mount_point)
+                if parent in dpart:
+                    dpart[parent].append(mount_point)
                 else:
-                    dpartitions[parent] = [mount_point]
+                    dpart[parent] = [mount_point]
 
     drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model,vendor | grep -e disk', shell=True, stdin=None,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -68,7 +89,7 @@ def mountedDrivesLinux():
             while "" in x:
                 x.remove("")
             if x[0] == 'disk':
-                disk = {'serial': x[1], 'path': x[2], 'size': sizeToGb(x[3]), 'hotplug': x[4], 'name': x[5], 'vendor': x[6], 'partitions': ','.join(dpartitions[x[2]])}
+                disk = {'serial': x[1], 'path': x[2], 'size': sizeToGb(x[3]), 'hotplug': x[4], 'name': x[5], 'vendor': x[6]}
                 disks.append(disk)
             else:  # is partition
                 pass
@@ -76,51 +97,10 @@ def mountedDrivesLinux():
         setActiveDriveDB(disks)
     return disks
     # return this
-    # [{'serial': 'S3Z2NB2KA50740N', 'path': '/dev/sda', 'size': 465.8, 'hotplug': '0', 'name': 'Samsung_SSD_860_EVO_500GB', 'vendor': 'ATA', 'partitions': '/boot/efi,/,/home,/home/matricks/aacustom'},
-    # {'serial': 'Z9AX3YM7', 'path': '/dev/sdc', 'size': 931.5, 'hotplug': '1', 'name': 'ST1000DM010-2EP102', 'vendor': 'ST1000DM', 'partitions': '/home/matricks/aacustom/myoneterra'},
-    # {'serial': 'WD-WMC4N0404141', 'path': '/dev/sdd', 'size': 2700.0, 'hotplug': '1', 'name': 'WDC_WD30EZRX-00D8PB0', 'vendor': 'WDC', 'partitions': '/home/matricks/aacustom/mybook'},
-    # {'serial': '4990779F50C0', 'path': '/dev/sde', 'size': 931.5, 'hotplug': '1', 'name': 'XPG_EX500', 'vendor': 'ADATA', 'partitions': '/home/matricks/aacustom/myseriale'}]
-
-
-def mountedDrivesWindows():
-    disks = []
-    dpartitions = {}
-    partitions = subprocess.Popen(f'lsblk -l -o type,path,mountpoint | grep -e part', shell=True, stdin=None,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    lines_partitions = partitions.stdout.readlines()
-    if lines_partitions:
-        for line_partition in lines_partitions:
-            line_partition = line_partition.decode('ascii').strip()
-            parts = line_partition.split(' ')
-            while "" in parts:
-                parts.remove("")
-            parent = parts[1].rstrip('0123456789').strip()
-            if len(parts) > 2:
-                mount_point = parts[2]
-                if parent in dpartitions:
-                    dpartitions[parent].append(mount_point)
-                else:
-                    dpartitions[parent] = [mount_point]
-
-    drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model,vendor | grep -e disk', shell=True,
-                              stdin=None,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    lines_drives = drives.stdout.readlines()
-    if lines_drives:
-        for line_drive in lines_drives:
-            line_drive = line_drive.decode('ascii').strip()
-            x = line_drive.split(' ')
-            while "" in x:
-                x.remove("")
-            if x[0] == 'disk':
-                disk = {'serial': x[1], 'path': x[2], 'size': sizeToGb(x[3]), 'hotplug': x[4], 'name': x[5],
-                        'vendor': x[6], 'partitions': ','.join(dpartitions[x[2]])}
-                disks.append(disk)
-            else:  # is partition
-                pass
-    if disks:
-        setActiveDriveDB(disks)
-    return disks
+    # [{'serial': 'S3Z2NB2KA50740N', 'path': '/dev/sda', 'size': 465.8, 'hotplug': '0', 'name': 'Samsung_SSD_860_EVO_500GB', 'vendor': 'ATA'},
+    # {'serial': 'Z9AX3YM7', 'path': '/dev/sdc', 'size': 931.5, 'hotplug': '1', 'name': 'ST1000DM010-2EP102', 'vendor': 'ST1000DM'},
+    # {'serial': 'WD-WMC4N0404141', 'path': '/dev/sdd', 'size': 2700.0, 'hotplug': '1', 'name': 'WDC_WD30EZRX-00D8PB0', 'vendor': 'WDC'},
+    # {'serial': '4990779F50C0', 'path': '/dev/sde', 'size': 931.5, 'hotplug': '1', 'name': 'XPG_EX500', 'vendor': 'ADATA'}]
 
 
 def sizeToGb(size):

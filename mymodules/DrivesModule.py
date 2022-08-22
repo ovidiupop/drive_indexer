@@ -18,8 +18,6 @@ class Drives(QtWidgets.QWidget):
     def __init__(self, parent):
         super(Drives, self).__init__(parent)
 
-        self.partitions_as_list_partition_key = self.partitionsAsListPartitionKey()
-        self.partitions_as_list_serial_key = self.partitionsAsListSerialKey()
         self.drive_serial_input = QtWidgets.QLineEdit()
         self.drive_serial_input.setDisabled(True)
         self.drive_name_input = QtWidgets.QLineEdit()
@@ -45,27 +43,6 @@ class Drives(QtWidgets.QWidget):
         self.add_drive_button.setIcon(iconForButton('SP_DriveHDIcon'))
         self.remove_drive_button.setIcon(iconForButton('SP_TrashIcon'))
         self.show_id_drive_button.setIcon(iconForButton('SP_FileDialogListView'))
-
-    def partitionsAsListSerialKey(self):
-        drives = gdb.getAll('drives')
-        partitions = {}
-        if drives:
-            for drive in drives:
-                serial = drive['serial']
-                dpartitions = drive['partitions'].split(',')
-                partitions[serial] = dpartitions
-        return partitions
-
-    def partitionsAsListPartitionKey(self):
-        drives = gdb.getAll('drives')
-        partitions = {}
-        if drives:
-            for drive in drives:
-                serial = drive['serial']
-                dpartitions = drive['partitions'].split(',')
-                for partition in dpartitions:
-                    partitions[partition] = serial
-        return partitions
 
 
 class DrivesView(Drives):
@@ -196,7 +173,6 @@ class DrivesView(Drives):
                     'label': drive['name'],
                     'size': float(drive['size']),
                     'active': int(1),
-                    'partitions': drive['partitions'],
                     'path': drive['path']
                 }
 
