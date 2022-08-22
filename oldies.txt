@@ -134,3 +134,63 @@ def setPreferredExtensions(extensions: list) -> bool:
 #             ix = self.entry.index(idx, 0)
 #             sm = self.settings_extensions_list.selectionModel()
 #             sm.select(ix, QtCore.QItemSelectionModel.Select)
+
+
+
+    # unused (root)
+    def backToNormalUser(self):
+        cmd = f'su - {self.normal_user}'
+        os.system(cmd)
+
+    # unused (root)
+    def connectAsRoot(self):
+        # *nix system
+        if os.name == 'posix' and not os.getuid() == 0:
+            # save actual user
+            self.normal_user = getActiveUser()
+            print('not logged as root')
+            passwd, ok = QInputDialog.getText(None, 'Root Password', 'Please enter root password:',
+                                              QtWidgets.QLineEdit.Password)
+            if ok:
+                answer = os.system("echo '" + passwd + "' |sudo -S echo 'checking passwd'  ")
+                while answer != 0:
+                    passwd, ok = QInputDialog.getText(None, 'Root Password', 'Wrong Password!\nTry again!',
+                                                      QtWidgets.QLineEdit.Password)
+                    if ok:
+                        answer = os.system("echo '" + passwd + "' |sudo -S echo 'checking passwd'  ")
+                    else:
+                        ok = False
+                        break
+                if ok:
+                    print('You are root now!')
+                    return True
+            print("Loging as root failed!")
+            return False
+        else:
+            print("Not unix or already logged")
+            return True
+
+
+
+
+def getActiveUser():
+    return pwd.getpwuid(os.getuid())[0]
+
+
+def mountedDrivesOld():
+    disks = []
+    s = subprocess.Popen(f'lsblk --nodeps -o type,name,serial,size,model', shell=True, stdin=None,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    lines = s.stdout.readlines()
+    if lines:
+        for line in lines:
+            line = line.decode('ascii').strip()
+            x = line.split(' ')
+            while "" in x:
+                x.remove("")
+            if x[0] == 'disk':
+                disk = {'mounted': x[1], 'name': x[4], 'serial': x[2], 'size': sizeToGb(x[3])}
+                disks.append(disk)
+    setActiveDriveDB(disks)
+    return disks
+

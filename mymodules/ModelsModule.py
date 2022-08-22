@@ -138,7 +138,7 @@ class DrivesItemsDelegate(QStyledItemDelegate):
                 return name
 
     def createEditor(self, parent, option, index):
-        disabled = ['serial', 'name', 'active', 'partitions']
+        disabled = ['serial', 'name', 'active']
         if self.nameOfColumn(index.column()) in disabled:
             editor = QLineEdit(parent)
             editor.setDisabled(True)
