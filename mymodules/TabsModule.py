@@ -6,11 +6,11 @@ from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
+from mymodules.GlobalFunctions import tabIndexByName
 from mymodules.SearchModule import Search
 
 
 class TabsWidget(QtWidgets.QWidget):
-
     reindex_folder = QtCore.pyqtSignal(object)
 
     def __init__(self, parent):
@@ -55,7 +55,13 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
         self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
 
+        self.tabs_settings.currentChanged.connect(self.tabSettingsChanged)
+
         self.setProgressBarToStatusBar()
+
+    def tabSettingsChanged(self, tab_index):
+        if tab_index == 1:
+            self.drives.comboActiveDrives()
 
     def setDefaultActions(self):
         self.folders.folder_reindex_button.clicked.connect(self.startThreadIndexer)
@@ -188,5 +194,3 @@ class TabsView(TabsWidget):
         settings_tab_layout.addWidget(self.tabs_settings)
         # settings_tab_layout.addStretch()
         self.tab_settings_group.setLayout(settings_tab_layout)
-
-

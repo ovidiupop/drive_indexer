@@ -39,6 +39,8 @@ class Drives(QtWidgets.QWidget):
         self.drive_form_close.setMaximumWidth(30)
         self.combo_active_drives = QtWidgets.QComboBox()
         self.combo_active_drives.setFixedWidth(330)
+        self.refresh_drives_combo = PushButton()
+        self.refresh_drives_combo.setIcon(iconForButton('SP_BrowserReload'))
 
         self.drive_form_close.setIcon(iconForButton('SP_DialogCloseButton'))
         self.add_drive_button.setIcon(iconForButton('SP_DriveHDIcon'))
@@ -56,6 +58,7 @@ class DrivesView(Drives):
 
         self.drives_table_model = DrivesTableModel()
         # self.drives_table_model.dataChanged.connect(self.validateData)
+
         self.drives_table_model.select()
         self.drives_table = TableViewAutoCols(None)
         self.drives_table.setColumns(COLUMN_SIZE)
@@ -63,9 +66,12 @@ class DrivesView(Drives):
 
         self.drives_table_model.dataChanged.connect(self.validateData)
         self.drives_table_model.select()
+
         self.drives_table.setModel(self.drives_table_model)
         self.drives_table.setColumnHidden(self.drives_table_model.fieldIndex("serial"), True)
         self.drives_table_model.setTableSorter(self.drives_table_model.fieldIndex('size'), self.drives_table)
+        self.drives_table.setModel(self.drives_table_model)
+        self.drives_table_model.select()
         self.drives_table.setItemDelegate(DrivesItemsDelegate(self))
 
         form_drives = QtWidgets.QFormLayout()
@@ -112,7 +118,10 @@ class DrivesView(Drives):
         self.group_form.hide()
 
         layout_tab_drives_buttons = QtWidgets.QVBoxLayout()
-        layout_tab_drives_buttons.addWidget(self.combo_active_drives)
+        hlay = QtWidgets.QHBoxLayout()
+        hlay.addWidget(self.combo_active_drives)
+        hlay.addWidget(self.refresh_drives_combo)
+        layout_tab_drives_buttons.addLayout(hlay)
         layout_tab_drives_buttons.addSpacing(20)
         layout_tab_drives_buttons.addWidget(self.add_drive_button)
         layout_tab_drives_buttons.addWidget(self.remove_drive_button)
@@ -138,6 +147,7 @@ class DrivesView(Drives):
         self.show_id_drive_button.clicked.connect(self.toggleIdDrive)
         self.combo_active_drives.currentIndexChanged.connect(self.check_add_button)
         self.check_add_button.connect(self.disableAddButtonForExisting)
+        self.refresh_drives_combo.clicked.connect(self.comboActiveDrives)
 
     def validateData(self):
         pass
@@ -202,8 +212,9 @@ class DrivesView(Drives):
         self.drive_mapper.setCurrentIndex(drives_table_index.row())
 
     def comboActiveDrives(self):
-        active_drives = System().mounted_drives
+        self.combo_active_drives.clear()
         items = []
+        active_drives = System().mounted_drives
         if active_drives:
             for drive in active_drives:
                 item = drive['name']
