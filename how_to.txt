@@ -1,4 +1,5 @@
 To deploy
     pip3.8 install cx_freeze
     cxfreeze indexer.py
+    or cxfreeze indexer.py --icon=indexer.ico
 

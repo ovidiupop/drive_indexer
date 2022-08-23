@@ -77,6 +77,7 @@ class Folders(QtWidgets.QWidget):
         self.results_progress_group.hide()
 
     def fillPreferredFolders(self):
+        self.folders_indexed.clear()
         self.folders_indexed.setSelectionMode(QtWidgets.QListWidget.ExtendedSelection)
         self.folders_indexed.addItems(gdb.allFolders())
 

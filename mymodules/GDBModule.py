@@ -447,7 +447,7 @@ def getDriveByPath(path: str) -> str:
     :return:
     """
     query = QtSql.QSqlQuery()
-    query.prepare("SELECT serial FROM drives WHERE path=:path and active=1")
+    query.prepare("SELECT serial FROM drives WHERE path=:path")
     query.bindValue(":path", str(path))
     if query.exec():
         query.first()
@@ -463,6 +463,21 @@ def driveSerialExists(serial: str) -> bool:
     """
     query = QtSql.QSqlQuery()
     query.prepare("SELECT * FROM drives WHERE serial=:serial")
+    query.bindValue(":serial", str(serial))
+    if query.exec():
+        ret = query.first()
+        query.clear()
+        return ret
+    return False
+
+
+def driveSerialIsMounted(serial: str) -> bool:
+    """
+    :param serial:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT * FROM drives WHERE serial=:serial and active=1")
     query.bindValue(":serial", str(serial))
     if query.exec():
         ret = query.first()

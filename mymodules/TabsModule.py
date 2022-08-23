@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QTabWidget
 
-from mymodules import GDBModule as gdb, IndexerModule as wk
+from mymodules import GDBModule as gdb, IndexerModule as wk, DevicesMonitorModule as dc
 from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
@@ -55,13 +55,16 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
         self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
 
-        self.tabs_settings.currentChanged.connect(self.tabSettingsChanged)
+        # self.tabs_settings.currentChanged.connect(self.tabSettingsChanged)
 
         self.setProgressBarToStatusBar()
+        self.startThreadDevices()
 
-    def tabSettingsChanged(self, tab_index):
-        if tab_index == 1:
-            self.drives.comboActiveDrives()
+    # def tabSettingsChanged(self, tab_index):
+    #     if tab_index == 1:
+    #         self.drives.comboActiveDrives()
+    #     if tab_index == 0:
+    #         self.folders.fillPreferredFolders()
 
     def setDefaultActions(self):
         self.folders.folder_reindex_button.clicked.connect(self.startThreadIndexer)
@@ -168,6 +171,19 @@ class TabsWidget(QtWidgets.QWidget):
         else:
             self.folders.indexing_progress_bar.hide()
 
+    def startThreadDevices(self):
+        self.devices_changes = dc.Devices()
+        self.devices_changes_thread = QtCore.QThread()
+        self.devices_changes.moveToThread(self.devices_changes_thread)
+        self.devices_changes_thread.start()
+        self.devices_changes.configuration_changed.connect(lambda: self.deviceListChanged())
+
+    @QtCore.pyqtSlot()
+    def deviceListChanged(self):
+        # print('refill')
+        self.drives.comboActiveDrives()
+        self.folders.fillPreferredFolders()
+
 
 class TabsView(TabsWidget):
     def __init__(self, parent=None):
@@ -194,3 +210,6 @@ class TabsView(TabsWidget):
         settings_tab_layout.addWidget(self.tabs_settings)
         # settings_tab_layout.addStretch()
         self.tab_settings_group.setLayout(settings_tab_layout)
+
+
+
