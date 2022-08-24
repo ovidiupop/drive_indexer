@@ -1,9 +1,10 @@
-from PyQt5 import QtCore, QtSql
+from PyQt5 import QtCore, QtSql, QtGui
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QItemDelegate, QLineEdit, \
     QDataWidgetMapper
 
 from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE
+from mymodules import GDBModule as gdb
 
 
 class ExtensionsModel(QtCore.QAbstractListModel):
@@ -60,6 +61,12 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
             if role == Qt.TextAlignmentRole:
                 if index.column() == 2 or index.column() == 3:
                     return Qt.AlignRight
+            if role == Qt.ForegroundRole:
+                if index.column() == 4:
+                    value = str(self._data.iloc[index.row()][index.column()])
+                    is_active = gdb.isDriveActiveByLabel(value)
+                    if not is_active:
+                        return QtGui.QColor('red')
         return None
 
     def rowCount(self, parent=None):

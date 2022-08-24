@@ -85,8 +85,7 @@ def sizeToGb(size):
     return 0
 
 
-class System(QObject):
+class SystemClass(QObject):
     def __init__(self):
-        super(System, self).__init__()
-        self.normal_user = None
+        super(SystemClass, self).__init__()
         self.mounted_drives = None or mountedDrives()

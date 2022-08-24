@@ -1,23 +1,11 @@
 import sys
-from PyQt5 import QtWidgets, QtSql
-from PyQt5.QtCore import qDebug
 
-from mymodules.GlobalFunctions import default_extensions, REQUIRED_TABLES, CATEGORIES
+from PyQt5 import QtWidgets, QtSql
+from PyQt5.QtCore import qDebug, QStandardPaths, QCoreApplication, QFile, QDir
+
+from mymodules.GlobalFunctions import *
 from mymodules.HumanReadableSize import HumanBytes
 
-DATABASE_NAME = 'indexer.db'
-
-
-def connection(name: str):
-    """
-    :param name:
-    :return:
-    """
-    driver = 'QSQLITE'
-    database = DATABASE_NAME
-    db = QtSql.QSqlDatabase.addDatabase(driver, name)
-    db.setDatabaseName(database)
-    return db
 
 
 def printQueryErr(query, method_name=''):
@@ -485,6 +473,19 @@ def driveSerialIsMounted(serial: str) -> bool:
         return ret
     return False
 
+def isDriveActiveByLabel(label: str) -> bool:
+    """
+    :param serial:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT * FROM drives WHERE label=:label and active=1")
+    query.bindValue(":label", str(label))
+    if query.exec():
+        ret = query.first()
+        query.clear()
+        return ret
+    return False
 
 def dummyDataResult():
     results = []
@@ -503,13 +504,25 @@ def dummyDataResult():
     return results
 
 
+def connection(name: str):
+    """
+    :param name:
+    :return:
+    """
+    db = QtSql.QSqlDatabase.addDatabase(DATABASE_DRIVER, name)
+    db.setDatabaseName(getDatabaseLocation())
+    return db
+
+
 class GDatabase:
     def __init__(self):
         super().__init__()
-        driver = 'QSQLITE'
-        database = DATABASE_NAME
-        self.con = QtSql.QSqlDatabase.addDatabase(driver)
-        self.con.setDatabaseName(database)
+        local_path = getAppLocation()
+        if not QDir(local_path).exists():
+            QDir().mkdir(local_path)
+        database_path = getDatabaseLocation()
+        self.con = QtSql.QSqlDatabase.addDatabase(DATABASE_DRIVER)
+        self.con.setDatabaseName(database_path)
         self.required_tables = REQUIRED_TABLES
         self.categories = CATEGORIES
         self.default_extensions = default_extensions

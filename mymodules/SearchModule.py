@@ -187,7 +187,7 @@ class Search(QtWidgets.QWidget):
 
     # we have to pass data as list
     def putInFile(self, data):
-        default_dir = DEFAULT_DIR
+        default_dir = getDefaultDir()
         default_filename = os.path.join(default_dir, "")
         filename, _ = QFileDialog.getSaveFileName(
             self, "Save CSV", default_filename, "CSV Files (*.csv)"

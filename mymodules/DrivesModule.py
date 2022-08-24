@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QLabel
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
 from mymodules.GlobalFunctions import iconForButton, confirmationDialog
 from mymodules.ModelsModule import DrivesTableModel, DrivesItemsDelegate, DrivesMapper
-from mymodules.SystemModule import System
+from mymodules.SystemModule import SystemClass
 from mymodules import GDBModule as gdb
 
 COLUMN_SIZE = [0.10, 0.30, 0.20, 0.20, 0.10, 0.10]
@@ -172,7 +172,7 @@ class DrivesView(Drives):
         self.check_add_button.emit()
 
     def getSelectedDriveComboData(self):
-        mounted_drives = System().mounted_drives
+        mounted_drives = SystemClass().mounted_drives
         c = self.combo_active_drives.currentText()
         parts = c.split(' ')
         serial = parts[-1]
@@ -214,7 +214,7 @@ class DrivesView(Drives):
     def comboActiveDrives(self):
         self.combo_active_drives.clear()
         items = []
-        active_drives = System().mounted_drives
+        active_drives = SystemClass().mounted_drives
         if active_drives:
             for drive in active_drives:
                 item = drive['name']
