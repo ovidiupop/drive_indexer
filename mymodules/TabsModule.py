@@ -23,7 +23,7 @@ class TabsWidget(QtWidgets.QWidget):
         # importing Drives Module
         self.drives = DrivesView()
         # import Search Module
-        self.search = Search()
+        self.search = Search(self)
         # import Extensions Module
         self.extensions = Extensions()
         # import Folders Module
@@ -182,6 +182,8 @@ class TabsWidget(QtWidgets.QWidget):
     def deviceListChanged(self):
         # print('refill')
         self.drives.comboActiveDrives()
+        # self.drives.drives_table_model.dataChanged.connect(self.validateData)
+        self.drives.drives_table_model.select()
         self.folders.fillPreferredFolders()
 
 

@@ -54,6 +54,20 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
         super(SearchResultsTableModel, self).__init__()
         self._data = data
 
+    def hasMountedDrive(self, index):
+        index_column = self.colIndexByName('Drive')
+        value = str(self._data.iloc[index.row()][index_column])
+        return gdb.isDriveActiveByLabel(value)
+
+    def rowData(self, index):
+        row_data = []
+        for idx in enumerate(HEADER_SEARCH_RESULTS_TABLE):
+            row_data.append(str(self._data.iloc[index.row()][idx[0]]))
+        return row_data
+
+    def colIndexByName(self, name):
+        return [ix for ix, col in enumerate(HEADER_SEARCH_RESULTS_TABLE) if col == name][0]
+
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
@@ -61,8 +75,9 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
             if role == Qt.TextAlignmentRole:
                 if index.column() == 2 or index.column() == 3:
                     return Qt.AlignRight
+
             if role == Qt.ForegroundRole:
-                if index.column() == 4:
+                if index.column() == self.colIndexByName('Drive'):
                     value = str(self._data.iloc[index.row()][index.column()])
                     is_active = gdb.isDriveActiveByLabel(value)
                     if not is_active:
@@ -122,6 +137,17 @@ class SortFilterProxyModel(QSortFilterProxyModel):
         return True
 
 
+class SearchResultsTableItemsDelegate(QStyledItemDelegate):
+    def __init__(self, parent):
+        QStyledItemDelegate.__init__(self, parent)
+
+    def nameOfColumn(self, index):
+        return [col for idx, col in enumerate(HEADER_SEARCH_RESULTS_TABLE) if idx == index][0]
+
+    def createEditor(self, parent, option, index):
+        return None
+
+
 class DrivesMapper(QDataWidgetMapper):
     def __init__(self, parent):
         super().__init__(parent)
@@ -145,7 +171,7 @@ class DrivesItemsDelegate(QStyledItemDelegate):
                 return name
 
     def createEditor(self, parent, option, index):
-        disabled = ['serial', 'name', 'active']
+        disabled = ['serial', 'name', 'active', 'path']
         if self.nameOfColumn(index.column()) in disabled:
             editor = QLineEdit(parent)
             editor.setDisabled(True)
@@ -161,28 +187,28 @@ class DrivesItemsDelegate(QStyledItemDelegate):
             spinbox.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             return spinbox
         else:
-            return QItemDelegate.createEditor(self, parent, option, index)
+            return None
 
 # KEEP THIS FOR EXAMPLE
-        # elif index.column() == OWNER:
-        #     combobox = QComboBox(parent)
-        #     combobox.addItems(sorted(index.model().owners))
-        #     combobox.setEditable(True)
-        #     return combobox
-        #     elif index.column() == COUNTRY:
-        #     combobox = QComboBox(parent)
-        #     combobox.addItems(sorted(index.model().countries))
-        #     combobox.setEditable(True)
-        #     return combobox
-        # elif index.column() == NAME:
-        #     editor = QLineEdit(parent)
-        #     self.connect(editor, SIGNAL("returnPressed()"),
-        #                  self.commitAndCloseEditor)
-        #     return editor
-        #     elif index.column() == DESCRIPTION:
-        #     editor = richtextlineedit.RichTextLineEdit(parent)
-        #     self.connect(editor, SIGNAL("returnPressed()"),
-        #                  self.commitAndCloseEditor)
-        #     return editor
-        # else:
-        #     return QItemDelegate.createEditor(self, parent, option, index)
+# elif index.column() == OWNER:
+#     combobox = QComboBox(parent)
+#     combobox.addItems(sorted(index.model().owners))
+#     combobox.setEditable(True)
+#     return combobox
+#     elif index.column() == COUNTRY:
+#     combobox = QComboBox(parent)
+#     combobox.addItems(sorted(index.model().countries))
+#     combobox.setEditable(True)
+#     return combobox
+# elif index.column() == NAME:
+#     editor = QLineEdit(parent)
+#     self.connect(editor, SIGNAL("returnPressed()"),
+#                  self.commitAndCloseEditor)
+#     return editor
+#     elif index.column() == DESCRIPTION:
+#     editor = richtextlineedit.RichTextLineEdit(parent)
+#     self.connect(editor, SIGNAL("returnPressed()"),
+#                  self.commitAndCloseEditor)
+#     return editor
+# else:
+#     return QItemDelegate.createEditor(self, parent, option, index)

@@ -7,7 +7,6 @@ from mymodules.GlobalFunctions import *
 from mymodules.HumanReadableSize import HumanBytes
 
 
-
 def printQueryErr(query, method_name=''):
     """
     :param query:
@@ -63,6 +62,22 @@ def getAll(table: str, only_field: list = None) -> list:
             return_array.append(row)
     query.clear()
     return return_array
+
+
+def getExtensionsCategories():
+    """
+    :param extension:
+    :return:
+    """
+    ext_cat = {}
+    query = QtSql.QSqlQuery()
+    query.prepare('SELECT extension, category from extensions e'
+                  ' left join categories c on c.id=e.category_id')
+    if query.exec():
+        while query.next():
+            ext_cat[query.value(0)] = query.value(1)
+    query.clear()
+    return ext_cat
 
 
 def allFolders(hide_inactive=True) -> list:

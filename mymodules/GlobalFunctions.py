@@ -1,5 +1,7 @@
 # this class can be only imported
 import shutil
+import subprocess
+import sys
 from contextlib import redirect_stdout
 
 from PyQt5 import QtWidgets, QtGui
@@ -24,7 +26,7 @@ CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
               'Font': ':font.png', 'Image': ':image.png',
               'Internet': ':www_page.png', 'Presentation': ':chart_pie.png',
               'Programming': ':page_white_code.png', 'Spreadsheet': ':table_multiple.png',
-              'SystemClass': ':application_osx_terminal.png', 'Video': ':television.png',
+              'System': ':application_osx_terminal.png', 'Video': ':television.png',
               'Word': ':page_white_word.png'}
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
@@ -200,3 +202,19 @@ def isValidSQLiteDatabase( database_file_path):
     while b := f.read(15):
         if b.decode('ascii') == 'SQLite format 3':
             return True
+
+
+def goToFileBrowser(path):
+    if sys.platform == 'win32':
+        subprocess.Popen(['start', path], shell=True)
+
+    elif sys.platform == 'darwin':
+        subprocess.Popen(['open', path])
+
+    else:
+        try:
+            # xdg-open *should* be supported by recent Gnome, KDE, Xfce
+            subprocess.Popen(['xdg-open', path])
+        except OSError:
+            pass
+        # er, think of something else to try

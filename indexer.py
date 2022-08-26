@@ -1,5 +1,7 @@
+import os
 import sys
 
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import QMainWindow, QAction
 
 import resources
@@ -10,8 +12,8 @@ from mymodules.GlobalFunctions import *
 class IndexerWindow(QMainWindow):
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
-        gdb.GDatabase()
         res = resources
+        gdb.GDatabase()
         self.init_UI()
 
     def setStatusBar(self, text):
@@ -122,6 +124,6 @@ class IndexerWindow(QMainWindow):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    print(getAppLocation())
     mw = IndexerWindow()
     sys.exit(app.exec())
+

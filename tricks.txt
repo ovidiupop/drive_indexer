@@ -44,3 +44,14 @@ The simplest way to get value of a cell from table is: here row and col need to 
 
 REMOVE ALL DIGITS to RIGHT
 path = parts[0].rstrip('0123456789').strip()
+
+
+# QDIALOG
+# add minimize, maximize and the other flags for manipulating window
+self.setWindowFlags(Qt.Window)
+
+ADD ICON
+    label = QLabel(self)
+    pixmap = QPixmap(':sound.png')
+    label.setPixmap(pixmap)
+    self.resize(16, 16)

@@ -1,22 +1,22 @@
 import os
 
 import pandas as pd
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QSortFilterProxyModel, Qt
-from PyQt5.QtWidgets import QTableView, QAbstractItemView, QFileDialog
+from PyQt5 import QtCore
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, QFileInfo
+from PyQt5.QtWidgets import QAbstractItemView
 
 from mymodules import ComponentsModule, ModelsModule
-from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import CategoriesSelector
 from mymodules.ComponentsModule import PushButton
 from mymodules.GlobalFunctions import *
-from mymodules.ModelsModule import SearchResultsTableModel
+from mymodules.ModelsModule import SearchResultsTableModel, SearchResultsTableItemsDelegate
+from mymodules.PreviewFileModule import FileDetailDialog
 
 
 class Search(QtWidgets.QWidget):
-
     export_all_results_signal = QtCore.pyqtSignal()
     export_selected_results_signal = QtCore.pyqtSignal()
+    double_clicked_result_row = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
@@ -39,8 +39,12 @@ class Search(QtWidgets.QWidget):
         self.found_search_label = QtWidgets.QLabel('Found')
         self.found_search_label.hide()
 
+        # set table for results
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
+        self.found_results_table.doubleClicked.connect(self.double_clicked_result_row)
+        self.found_results_table.setItemDelegate(SearchResultsTableItemsDelegate(self))
+
         self.found_results_table_model = ModelsModule.SearchResultsTableModel(
             pd.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
 
@@ -96,6 +100,16 @@ class Search(QtWidgets.QWidget):
         # prepare extensions for search
         self.extensions_for_search = []
         self.getExtensionsForSearch()
+        self.double_clicked_result_row.connect(self.doubleClickedResultRow)
+
+    @QtCore.pyqtSlot()
+    def doubleClickedResultRow(self):
+        # check if row belongs to a mounted drive
+        selected = self.found_results_table.currentIndex()
+        if self.found_results_table.model().hasMountedDrive(selected):
+            self.prepareFileDetailDialog(self.found_results_table)
+        else:
+            QtWidgets.QMessageBox.information(None, 'No file preview', 'The drive is not mounted in system!')
 
     @QtCore.pyqtSlot()
     def onSubmitted(self):
@@ -199,3 +213,13 @@ class Search(QtWidgets.QWidget):
             file.close()
             QtWidgets.QMessageBox.information(None, 'Export CSV', 'Exported successfully!')
             return
+
+    def prepareFileDetailDialog(self, table):
+        ext_cat = gdb.getExtensionsCategories()
+        data = table.model().rowData(table.currentIndex())
+        file_path = data[0] + '/' + data[1]
+        info = QFileInfo(file_path)
+        extension = info.suffix()
+        category = ext_cat[extension]
+        FileDetailDialog(category, data, self)
+

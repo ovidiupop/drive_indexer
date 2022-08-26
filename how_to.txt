@@ -3,3 +3,4 @@ To deploy
     cxfreeze indexer.py
     or cxfreeze indexer.py --icon=indexer.ico
 
+pyinstaller --name="Indexer" --windowed --onefile indexer.py
