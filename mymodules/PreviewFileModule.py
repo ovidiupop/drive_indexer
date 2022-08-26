@@ -1,11 +1,13 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QSlider, QStyle, QVBoxLayout, QWidget, QStatusBar, QTextEdit
 from PyQt5.QtCore import Qt, QUrl, QSize, QFileInfo
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from mymodules.GlobalFunctions import goToFileBrowser, HEADER_SEARCH_RESULTS_TABLE
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QSlider, QStyle, QVBoxLayout, QWidget, QStatusBar, QTextEdit
+
+from mymodules.GlobalFunctions import goToFileBrowser, HEADER_SEARCH_RESULTS_TABLE, findMainWindow
 from mymodules.HumanReadableSize import HumanBytes
+from mymodules.SystemModule import getFileEncoding, getFileData
 
 
 class FileDetailDialog(QtWidgets.QDialog):
@@ -16,17 +18,27 @@ class FileDetailDialog(QtWidgets.QDialog):
         super(FileDetailDialog, self).__init__(parent)
         self.setWindowTitle('File Detail')
         self.setModal(True)
+
         # needed for media player
         self.can_close = True
-        self.file_details = None
+        self.mw = findMainWindow()
         self.text_preview_extensions = ['txt', 'srt', 'sub']
+
         # assign each column's value to class attribute
         [setattr(self, column.lower(), data[index]) for index, column in enumerate(HEADER_SEARCH_RESULTS_TABLE)]
+
         self.file_path = self.directory + '/' + self.filename
         info = QFileInfo(self.file_path)
+        self.file_data = getFileData(self.file_path)
         self.layout = QtWidgets.QVBoxLayout()
-        self.file_info_widget = FileInfoWidget(category, self.drive, info, self)
+        self.file_info_widget = DetailsFileWidget(category, self.drive, info, self)
         self.dispatcher(category)
+
+        self.status_bar = QStatusBar()
+        self.status_bar.setFixedHeight(14)
+        self.layout.addWidget(self.status_bar)
+        self.status_bar.showMessage(self.file_data)
+
         self.setLayout(self.layout)
         self.show()
 
@@ -40,28 +52,22 @@ class FileDetailDialog(QtWidgets.QDialog):
             # add minimize, maximize and the other flags for manipulating window
             self.setWindowFlags(Qt.Window)
             self.setMinimumSize(600, 800)
-            self.player = MediaPlayer('Video', self)
-            self.media_player(self.file_path)
+            self.player = MediaPlayer('Video', self.file_path, self)
         elif category == 'Audio':
             self.setMaximumHeight(200)
             self.can_close = False
-            self.player = MediaPlayer('Audio', self)
-            self.media_player(self.file_path)
+            self.player = MediaPlayer('Audio', self.file_path, self)
         elif category == 'Programming' or self.extension in self.text_preview_extensions:
+            encoding = getFileEncoding(self.file_path)
             self.setWindowFlags(Qt.Window)
-            Editor(self.file_path, self)
+            Editor(self.file_path, encoding, self)
         elif category == 'Image':
             self.setWindowFlags(Qt.Window)
-            Image(self.file_path, self)
+            WImage(self.file_path, self)
         else:
             self.setMaximumHeight(130)
 
-    def media_player(self, file_path):
-        mp_lay = QtWidgets.QHBoxLayout()
-        mp_lay.addLayout(self.player.layout)
-        self.layout.addLayout(mp_lay)
-        self.player.set_source(file_path)
-        self.player.show()
+        self.mw.statusbar.showMessage('')
 
     def closeEvent(self, ev):
         if self.can_close:
@@ -74,9 +80,9 @@ class FileDetailDialog(QtWidgets.QDialog):
             super(FileDetailDialog, self).closeEvent(ev)
 
 
-class FileInfoWidget(QtWidgets.QWidget):
+class DetailsFileWidget(QtWidgets.QWidget):
     def __init__(self, category: str, drive: str, file: QFileInfo, parent=None):
-        super(FileInfoWidget, self).__init__(parent)
+        super(DetailsFileWidget, self).__init__(parent)
 
         self.layout_info = QtWidgets.QVBoxLayout()
 
@@ -98,9 +104,7 @@ class FileInfoWidget(QtWidgets.QWidget):
                     'Filename': [':file.png', file.fileName()],
                     'Size': [':size.png', HumanBytes.format(file.size(), True)]
                     }
-
         folder = self.map['Folder Path'][1]
-
         for k, v in self.map.items():
             self.rowInfo(k, v[0], v[1])
 
@@ -150,9 +154,9 @@ class FileInfoWidget(QtWidgets.QWidget):
             self.layout_cat_and_drive.addLayout(layout)
 
 
-class Image(QtWidgets.QWidget):
+class WImage(QtWidgets.QWidget):
     def __init__(self, file, parent=None):
-        super(Image, self).__init__(parent)
+        super(WImage, self).__init__(parent)
         self.file = file
         self.file_size = self.parent().size
         self.resize(800, 600)
@@ -168,16 +172,7 @@ class Image(QtWidgets.QWidget):
         self.layout = QtWidgets.QHBoxLayout()
         self.layout.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(self.label)
-        self.status_bar = QStatusBar()
-        self.status_bar.setFixedHeight(14)
-        image_size = str(self.image_width) + ' X ' + str(self.image_height) + '  ' + self.file_size
-        status_bar_message = file + ' ' + image_size
-        self.status_bar.showMessage(status_bar_message)
-        self.status_bar_layout = QtWidgets.QVBoxLayout()
-        self.status_bar_layout.addLayout(self.layout)
-        self.status_bar_layout.addWidget(self.status_bar)
-
-        self.parent().layout.addLayout(self.status_bar_layout)
+        self.parent().layout.addLayout(self.layout)
         self.parent().resized.connect(self.parentResizeEvent)
 
     def parentResizeEvent(self):
@@ -194,14 +189,13 @@ class Image(QtWidgets.QWidget):
 
 class MediaPlayer(QWidget):
 
-    def __init__(self, media_type,  parent=None):
+    def __init__(self, media_type, file_path, parent=None):
         super(MediaPlayer, self).__init__(parent)
         video_widget = QVideoWidget()
         video_widget.setMinimumSize(100, 100)
         btn_size = QSize(16, 16)
         self.media_player = QMediaPlayer()
         self.media_player.setVolume(50)
-
         if media_type == 'Video':
             self.media_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
 
@@ -221,10 +215,6 @@ class MediaPlayer(QWidget):
         self.volume_slider.setValue(50)
         self.volume_slider.setFixedHeight(50)
         self.volume_slider.sliderMoved.connect(self.setVolume)
-
-        self.status_bar = QStatusBar()
-        self.status_bar.setFixedHeight(14)
-
         self.mute_button = QPushButton()
         self.mute_button.setCheckable(True)
         self.mute_button.setFixedHeight(24)
@@ -240,28 +230,25 @@ class MediaPlayer(QWidget):
         control_layout.addWidget(self.volume_slider)
 
         self.layout = QVBoxLayout()
-
         if media_type == 'Video':
             self.layout.addWidget(video_widget)
             self.media_player.setVideoOutput(video_widget)
-
         self.layout.addLayout(control_layout)
-        self.layout.addWidget(self.status_bar)
-
         self.media_player.stateChanged.connect(self.mediaStateChanged)
         self.media_player.positionChanged.connect(self.positionChanged)
         self.media_player.durationChanged.connect(self.durationChanged)
         self.media_player.error.connect(self.handleError)
-        self.status_bar.showMessage("Ready")
-
+        mp_lay = QtWidgets.QHBoxLayout()
+        mp_lay.addLayout(self.layout)
+        self.parent().layout.addLayout(mp_lay)
+        self.setSource(file_path)
         self.show()
 
-    def set_source(self, filename):
+    def setSource(self, filename):
         if filename != '':
             self.media_player.setMedia(
                     QMediaContent(QUrl.fromLocalFile(filename)))
             self.play_button.setEnabled(True)
-            self.status_bar.showMessage(filename)
 
     def play(self):
         if self.media_player.state() == QMediaPlayer.PlayingState:
@@ -288,12 +275,12 @@ class MediaPlayer(QWidget):
 
     def handleError(self):
         self.play_button.setEnabled(False)
-        self.status_bar.showMessage("Error: " + self.media_player.errorString())
+        self.parent().status_bar.showMessage("Error: " + self.media_player.errorString())
 
     def setVolume(self, position):
         self.media_player.setVolume(position)
 
-    def muteVolume(self, is_checked):
+    def muteVolume(self, _is_checked):
         self.media_player.setMuted(not self.media_player.isMuted())
         if self.media_player.isMuted():
             self.mute_button.setIcon(self.style().standardIcon(QStyle.SP_MediaVolumeMuted))
@@ -303,16 +290,16 @@ class MediaPlayer(QWidget):
 
 class Editor(QTextEdit):
 
-    def __init__(self, file,  parent=None):
+    def __init__(self, file, encoding, parent=None):
         super(Editor, self).__init__(parent)
-        self.file = file
         self.setReadOnly(True)
-        text = open(self.file).read()
+        text = 'Sorry! I could not read the file:\n' + file
+        try:
+            text = open(file, encoding=encoding).read()
+        except Exception as e:
+            print(e)
         self.setText(text)
-
-        layout_editor = QtWidgets.QHBoxLayout()
+        layout_editor = QtWidgets.QVBoxLayout()
         layout_editor.addWidget(self)
         self.parent().layout.addLayout(layout_editor)
-
-
 

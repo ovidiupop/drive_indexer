@@ -1,9 +1,31 @@
 import subprocess
 import sys
-
 from PyQt5.QtCore import QObject
-
 from mymodules import GDBModule as gdb
+
+
+def getFileEncoding(file):
+    if 'linux' in sys.platform:
+        command = f'file --mime-encoding "{file}" | ' + "awk '{print $NF}'"
+        response = subprocess.Popen(command, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        lines = response.stdout.readlines()
+        encoding = lines[0].decode('ascii').strip()
+        if encoding == 'us-ascii':
+            return 'utf-8'
+        return encoding
+    if 'win' in sys.platform:
+        print("implement first")
+
+
+def getFileData(file):
+    if 'linux' in sys.platform:
+        command = f'file -b "{file}"'
+        response = subprocess.Popen(command, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        lines = response.stdout.readlines()
+        data = lines[0].decode('ascii').strip()
+        return data
+    if 'win' in sys.platform:
+        print("implement first")
 
 
 # set active all drives existing when the app is started

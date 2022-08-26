@@ -1,7 +1,5 @@
-import os
-
 import pandas as pd
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtTest
 from PyQt5.QtCore import QSortFilterProxyModel, Qt, QFileInfo
 from PyQt5.QtWidgets import QAbstractItemView
 
@@ -20,6 +18,7 @@ class Search(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
+        self.mw = findMainWindow()
 
         self.export_all_results_signal.connect(self.exportAllResultsToCSV)
         self.export_selected_results_signal.connect(self.exportSelectedResultsToCSV)
@@ -29,6 +28,8 @@ class Search(QtWidgets.QWidget):
         self.search_input_label = QtWidgets.QLabel('Search for:')
         self.search_term_input = QtWidgets.QLineEdit()
         self.search_term_input.setPlaceholderText('Insert term to search')
+        self.search_term_input.setFocus(Qt.OtherFocusReason)
+
         self.search_button = PushButton('Search')
         self.search_button.setMinimumWidth(200)
         self.search_button.setIcon(iconForButton('SP_FileDialogContentsView'))
@@ -71,7 +72,7 @@ class Search(QtWidgets.QWidget):
 
         h_categories_row = QtWidgets.QHBoxLayout()
         self.checkboxes_group = QtWidgets.QGroupBox()
-        self.checkboxes_group.setMaximumHeight(120)
+        self.checkboxes_group.setMaximumHeight(100)
         self.checkboxes_group.setLayout(self.categories_layout)
         h_categories_row.addWidget(self.checkboxes_group)
 
@@ -102,14 +103,21 @@ class Search(QtWidgets.QWidget):
         self.getExtensionsForSearch()
         self.double_clicked_result_row.connect(self.doubleClickedResultRow)
 
+
     @QtCore.pyqtSlot()
     def doubleClickedResultRow(self):
         # check if row belongs to a mounted drive
         selected = self.found_results_table.currentIndex()
         if self.found_results_table.model().hasMountedDrive(selected):
-            self.prepareFileDetailDialog(self.found_results_table)
+            if self.setStatusBar():
+                self.prepareFileDetailDialog(self.found_results_table)
         else:
             QtWidgets.QMessageBox.information(None, 'No file preview', 'The drive is not mounted in system!')
+
+    def setStatusBar(self):
+        self.mw.statusbar.showMessage('Please wait while drive is initialized...')
+        QtTest.QTest.qWait(100)
+        return True
 
     @QtCore.pyqtSlot()
     def onSubmitted(self):
