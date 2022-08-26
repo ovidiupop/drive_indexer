@@ -14,7 +14,7 @@ def getFileEncoding(file):
             return 'utf-8'
         return encoding
     if 'win' in sys.platform:
-        print("implement first")
+        print("Please implement SystemModule.getFileEncoding")
 
 
 def getFileData(file):
@@ -25,7 +25,8 @@ def getFileData(file):
         data = lines[0].decode('ascii').strip()
         return data
     if 'win' in sys.platform:
-        print("implement first")
+        return ''
+        # print("implement first")
 
 
 # set active all drives existing when the app is started
@@ -66,8 +67,8 @@ def serialDriveIsMounted(serial):
 def mountedDrives():
     if 'linux' in sys.platform:
         disks = []
-        drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model | grep -e disk', shell=True, stdin=None,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model | grep -e disk', shell=True,
+                                  stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         lines_drives = drives.stdout.readlines()
         if lines_drives:
             for line_drive in lines_drives:
