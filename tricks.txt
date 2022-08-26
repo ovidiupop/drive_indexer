@@ -55,3 +55,20 @@ ADD ICON
     pixmap = QPixmap(':sound.png')
     label.setPixmap(pixmap)
     self.resize(16, 16)
+
+When generate same type of object in loop, to assign individual values, we have to instantiate a new pointer
+for that value, else all the objects will get the last used value
+SEE val=x
+        for idx, cat in enumerate(self.categories):
+            ..............
+            x = cat_name
+            cat_name.stateChanged.connect(lambda checked, val=x: self.setPreferredCategory(val))
+
+
+Set attribute to class using a string
+    setattr
+    setattr(self, string, value)
+    ex.
+    [setattr(self, column.lower(), data[index]) for index, column in enumerate(HEADER_SEARCH_RESULTS_TABLE)]
+To get attribute by string
+    getattr(self, attribute)

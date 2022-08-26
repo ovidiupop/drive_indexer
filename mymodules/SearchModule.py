@@ -71,7 +71,7 @@ class Search(QtWidgets.QWidget):
 
         h_categories_row = QtWidgets.QHBoxLayout()
         self.checkboxes_group = QtWidgets.QGroupBox()
-        self.checkboxes_group.setMaximumHeight(140)
+        self.checkboxes_group.setMaximumHeight(120)
         self.checkboxes_group.setLayout(self.categories_layout)
         h_categories_row.addWidget(self.checkboxes_group)
 

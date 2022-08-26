@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
@@ -8,11 +8,8 @@ from mymodules.GlobalFunctions import iconForButton
 class Categories(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Categories, self).__init__(parent)
-
         self.categories = gdb.getAll('categories')
-        categories_selector = CategoriesSelector()
-        categories_layout = categories_selector.generateBox()
-
+        categories_layout = CategoriesSelector().generateBox()
         self.layout_tab_categories = QtWidgets.QHBoxLayout()
         self.layout_tab_categories.addLayout(categories_layout)
 
@@ -43,30 +40,30 @@ class CategoriesSelector(QtWidgets.QWidget):
             x = cat_name
             cat_name.stateChanged.connect(lambda checked, val=x: self.setPreferredCategory(val))
             if idx % self.column_splitter == 0:
-                column = QtWidgets.QVBoxLayout()
-                columns.append(column)
-            # add cat_name to previous column
-            column.addWidget(cat_name)
+                column_v_layout = QtWidgets.QVBoxLayout()
+                columns.append(column_v_layout)
+            # add cat_name to previous column_v_layout
+            column_v_layout.addWidget(cat_name)
 
         h_cats = QtWidgets.QHBoxLayout()
-        for column in columns:
-            column.addStretch()
-            h_cats.addLayout(column)
+        for column_v_layout in columns:
+            column_v_layout.addStretch()
+            h_cats.addLayout(column_v_layout)
 
         self.check_all_categories.setCheckable(True)
         self.check_all_categories.setChecked(gdb.allCategoriesAreSelected())
         self.check_all_categories.clicked.connect(lambda: self.checkAllCategories(self.check_all_categories.isChecked()))
 
-        h_buttons = QtWidgets.QHBoxLayout()
+        h_buttons = QtWidgets.QVBoxLayout()
         h_buttons.addWidget(self.check_all_categories)
         if self.parent_name:
             h_buttons.addWidget(self.parent_load_default_categories)
             self.parent_load_default_categories.clicked.connect(lambda: self.parent().setPreferredCategoriesOnSearchForm())
-        h_buttons.addStretch()
 
+        h_cats.addLayout(h_buttons)
         v_main = QtWidgets.QVBoxLayout()
         v_main.addLayout(h_cats)
-        v_main.addLayout(h_buttons)
+
         v_main.addStretch()
         return v_main
 
