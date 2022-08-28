@@ -187,11 +187,6 @@ class Search(QtWidgets.QWidget):
                 one_line.append(val)
             line = CSV_COLUMN_SEPARATOR.join(one_line)
             results.append(line)
-
-        if int(getPreference('header_to_csv')):
-            header = CSV_COLUMN_SEPARATOR.join(HEADER_SEARCH_RESULTS_TABLE)
-            results.insert(0, header)
-
         return self.putInFile(results)
 
     @QtCore.pyqtSlot()
@@ -214,6 +209,15 @@ class Search(QtWidgets.QWidget):
 
     # we have to pass data as list
     def putInFile(self, data):
+        if not data:
+            QtWidgets.QMessageBox.information(self, 'Nothing to export', "There is nothing to export<br><br>Search for "
+                                                                     "something!")
+            return False
+
+        if int(getPreference('header_to_csv')):
+            header = CSV_COLUMN_SEPARATOR.join(HEADER_SEARCH_RESULTS_TABLE)
+            data.insert(0, header)
+
         default_dir = getDefaultDir()
         default_filename = os.path.join(default_dir, "")
         filename, _ = QFileDialog.getSaveFileName(
