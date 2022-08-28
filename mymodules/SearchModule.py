@@ -187,6 +187,11 @@ class Search(QtWidgets.QWidget):
                 one_line.append(val)
             line = CSV_COLUMN_SEPARATOR.join(one_line)
             results.append(line)
+
+        if int(getPreference('header_to_csv')):
+            header = CSV_COLUMN_SEPARATOR.join(HEADER_SEARCH_RESULTS_TABLE)
+            results.insert(0, header)
+
         return self.putInFile(results)
 
     @QtCore.pyqtSlot()

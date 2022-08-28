@@ -72,3 +72,12 @@ Set attribute to class using a string
     [setattr(self, column.lower(), data[index]) for index, column in enumerate(HEADER_SEARCH_RESULTS_TABLE)]
 To get attribute by string
     getattr(self, attribute)
+
+Call the instance of a class by its name
+    import Module where the class is if not in the same module
+    class_name = 'ClassName'
+variant 1
+    obj = globals()[class_name]
+    instance = obj()
+variant 2
+    instance = globals()[class_name]()

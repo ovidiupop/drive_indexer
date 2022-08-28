@@ -11,6 +11,7 @@
 		<file alias="help-about.svg">/images/actions/help-about.svg</file>
 		<file alias="help-contents.svg">/images/actions/help-contents.svg</file>
 		<file alias="import.svg">/images/actions/import.svg</file>
+		<file alias="preferences.svg">/images/actions/preferences.svg</file>
 		<file alias="selected-results.svg">/images/actions/selected-results.svg</file>
 		<file alias="accordion.png">/images/app/32/accordion.png</file>
 		<file alias="application_osx_terminal.png">/images/app/32/application_osx_terminal.png</file>
@@ -34,6 +35,7 @@
 		<file alias="music.png">/images/app/32/music.png</file>
 		<file alias="page_white_code.png">/images/app/32/page_white_code.png</file>
 		<file alias="page_white_word.png">/images/app/32/page_white_word.png</file>
+		<file alias="preferences.png">/images/app/32/preferences.png</file>
 		<file alias="setting_tools.png">/images/app/32/setting_tools.png</file>
 		<file alias="size.png">/images/app/32/size.png</file>
 		<file alias="sound.png">/images/app/32/sound.png</file>

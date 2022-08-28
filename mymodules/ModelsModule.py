@@ -1,10 +1,10 @@
 from PyQt5 import QtCore, QtSql, QtGui
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
-from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QItemDelegate, QLineEdit, \
+from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, \
     QDataWidgetMapper
 
-from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE
 from mymodules import GDBModule as gdb
+from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE
 
 
 class ExtensionsModel(QtCore.QAbstractListModel):

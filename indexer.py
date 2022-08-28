@@ -1,8 +1,4 @@
-import os
-import sys
-
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QMainWindow, QAction
+from PyQt5.QtWidgets import QAction
 
 import resources
 from mymodules import TabsModule
@@ -16,6 +12,11 @@ class IndexerWindow(QMainWindow):
         gdb.GDatabase()
         self.init_UI()
 
+    def closeEvent(self, _ev):
+        sizes = [str(self.size().width()), str(self.size().height())]
+        preference = ', '.join(sizes)
+        setPreferenceByName('window_size', preference)
+
     def setStatusBar(self, text):
         self.statusbar.showMessage(text)
 
@@ -26,7 +27,8 @@ class IndexerWindow(QMainWindow):
     def init_UI(self):
         self._createTabs()
         self.setCentralWidget(self.tabs)
-        self.resize(1000, 800)
+        window_size = getPreference('window_size').split(', ')
+        self.resize(int(window_size[0]), int(window_size[1]))
         self.setWindowTitle("File Indexer")
         self.setWindowIcon(QIcon(":app_logo_32.png"))
         self._createStatusBar()
@@ -57,7 +59,7 @@ class IndexerWindow(QMainWindow):
         QtWidgets.QMessageBox.about(self, 'About Indexer',
             "<h4>Find all your files in a single place</h4><br>"
             "Index your entire drive collection in one place and find anything in a second!<br><br>"
-            "This app was developed as a study project when I started learning Python and Qt,"
+            "This app was developed as a study project when I started learning Python and Qt, "
             "so its code can be improved and also new features can be added!<br><br>"
             "Any suggestions and criticisms are welcome!<br><br>"
             "© 2022 Ovidiu Pop")
@@ -75,6 +77,7 @@ class IndexerWindow(QMainWindow):
         self.settings_categories_action = QAction(QIcon(":categories.svg"), "&Categories", self)
         self.settings_folders_action = QAction(QIcon(":folders.svg"), "&Folders", self)
         self.settings_extensions_actions = QAction(QIcon(":extensions.svg"), "&Extensions", self)
+        self.settings_preferences_actions = QAction(QIcon(":preferences.svg"), "&Preferences", self)
 
         self.help_content_action = QAction(QIcon(":help-contents.svg"), "&Help Content", self)
         self.about_action = QAction(QIcon(":help-about.svg"), "&About", self)
@@ -91,6 +94,7 @@ class IndexerWindow(QMainWindow):
         self.settings_categories_action.triggered.connect(lambda: self.switchTab('Categories'))
         self.settings_folders_action.triggered.connect(lambda: self.switchTab('Folders'))
         self.settings_extensions_actions.triggered.connect(lambda: self.switchTab('Extensions'))
+        self.settings_preferences_actions.triggered.connect(lambda: self.switchTab('Preferences'))
         # Connect Help actions
         self.help_content_action.triggered.connect(self.helpContent)
         self.about_action.triggered.connect(self.about)
@@ -115,6 +119,7 @@ class IndexerWindow(QMainWindow):
         self.settings_menu.addAction(self.settings_categories_action)
         self.settings_menu.addAction(self.settings_folders_action)
         self.settings_menu.addAction(self.settings_extensions_actions)
+        self.settings_menu.addAction(self.settings_preferences_actions)
 
         self.help_menu = self.menu_bar.addMenu('&Help')
         self.help_menu.addAction(self.help_content_action)

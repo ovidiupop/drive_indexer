@@ -7,6 +7,7 @@ from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
 from mymodules.GlobalFunctions import tabIndexByName
+from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
 
 
@@ -28,6 +29,9 @@ class TabsWidget(QtWidgets.QWidget):
         self.extensions = Extensions()
         # import Folders Module
         self.folders = Folders()
+        # import Preferences Module
+        self.preferences = Preferences()
+
 
         self.setDefaultActions()
 
@@ -43,6 +47,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.tab_folders_group = QtWidgets.QGroupBox('Folders')
         self.tab_extensions_group = QtWidgets.QGroupBox('Extensions')
         self.tab_drives_group = QtWidgets.QGroupBox('Drives')
+        self.tab_preferences_group = QtWidgets.QGroupBox('Preferences')
 
         # tabs inside Settings tab
         self.tabs_settings = QTabWidget()
@@ -54,6 +59,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.addTab(self.tab_drives_group, QtGui.QIcon(':drive.png'), 'Drives')
         self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
         self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
+        self.tabs_settings.addTab(self.tab_preferences_group, QtGui.QIcon(':preferences.png'), 'Preferences')
 
         # self.tabs_settings.currentChanged.connect(self.tabSettingsChanged)
 
@@ -204,6 +210,9 @@ class TabsView(TabsWidget):
 
         layout_tab_extensions = self.extensions.layout_tab_extensions
         self.tab_extensions_group.setLayout(layout_tab_extensions)
+
+        preferences_section_layout = self.preferences.layout_tab_preferences
+        self.tab_preferences_group.setLayout(preferences_section_layout)
 
         folders_section_layout = self.folders.folders_section_layout
         self.tab_folders_group.setLayout(folders_section_layout)

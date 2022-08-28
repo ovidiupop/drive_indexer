@@ -5,7 +5,7 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QSlider, QStyle, QVBoxLayout, QWidget, QStatusBar, QTextEdit
 
-from mymodules.GlobalFunctions import goToFileBrowser, HEADER_SEARCH_RESULTS_TABLE, findMainWindow
+from mymodules.GlobalFunctions import goToFileBrowser, HEADER_SEARCH_RESULTS_TABLE, findMainWindow, getPreference
 from mymodules.HumanReadableSize import HumanBytes
 from mymodules.SystemModule import getFileEncoding, getFileData
 
@@ -17,7 +17,9 @@ class FileDetailDialog(QtWidgets.QDialog):
     def __init__(self, category, data, parent=None):
         super(FileDetailDialog, self).__init__(parent)
         self.setWindowTitle('File Detail')
-        self.setModal(True)
+        is_modal = int(getPreference('file_dialog_modal'))
+        if is_modal:
+            self.setModal(True)
 
         # needed for media player
         self.can_close = True
