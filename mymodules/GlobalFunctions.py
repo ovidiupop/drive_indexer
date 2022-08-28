@@ -221,7 +221,8 @@ def importDataBase():
         return
     filename = QFileDialog.getOpenFileName(None, "Select database", getDefaultDir(),
                                            filter="SQLITE Files (*.sqlite)")
-    if filename:
+
+    if filename[0] and filename[1]:
         if isValidSQLiteDatabase(filename[0]):
             shutil.copyfile(filename[0], getDatabaseLocation())
             QtWidgets.QMessageBox.information(None, 'Database imported',
