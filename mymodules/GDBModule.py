@@ -73,8 +73,6 @@ def foldersOfDrive(serial):
         query.clear()
         return folders
 
-
-
 def getExtensionsCategories():
     """
     :param extension:
@@ -633,6 +631,7 @@ class GDatabase:
             '   id INTEGER PRIMARY KEY, '
             '   path TEXT NOT NULL, '
             '   drive_id TEXT, '
+            '   status INTEGER NOT NULL DEFAULT 1, '
             '   FOREIGN KEY(drive_id) REFERENCES drives(serial))',
 
             'CREATE TABLE extensions('

@@ -1,9 +1,11 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, QModelIndex
+from PyQt5.QtWidgets import QFileDialog, QAbstractItemView
 
 from mymodules import GDBModule as gdb
-from mymodules.ComponentsModule import PushButton
+from mymodules.ComponentsModule import PushButton, TableViewAutoCols
 from mymodules.GlobalFunctions import iconForButton, confirmationDialog
+from mymodules.ModelsModule import FoldersModel
 from mymodules.SystemModule import folderCanBeIndexed
 
 
@@ -25,8 +27,12 @@ class Folders(QtWidgets.QWidget):
         self.report_indexed_path_label = QtWidgets.QLabel('')
         self.total_folders_indexed_label = QtWidgets.QLabel('')
 
-        self.folders_indexed = QtWidgets.QListWidget()
-        self.folders_indexed.setMaximumHeight(200)
+        self.folders_indexed_table = TableViewAutoCols(None)
+        self.folders_indexed_table_model = FoldersModel(self.folders_indexed_table)
+        self.folders_indexed_table.setModel(self.folders_indexed_table_model)
+        self.folders_indexed_table.setColumnHidden(self.folders_indexed_table_model.fieldIndex("id"), True)
+        self.folders_indexed_table.setColumns([0.1, 0.75, 0.14, 0.10])
+        self.folders_indexed_table.setMaximumHeight(200)
 
         self.results_progress_group = QtWidgets.QGroupBox('Results')
         self.results_progress_group.hide()
@@ -51,7 +57,7 @@ class Folders(QtWidgets.QWidget):
         buttons_column_layout.addStretch()
         # folders and progress of indexing
         folders_column_layout = QtWidgets.QVBoxLayout()
-        folders_column_layout.addWidget(self.folders_indexed)
+        folders_column_layout.addWidget(self.folders_indexed_table)
         folders_column_layout.addWidget(self.results_progress_group)
         folders_column_layout.addStretch()
 
@@ -61,6 +67,10 @@ class Folders(QtWidgets.QWidget):
 
         self.closeButtonAfterIndex()
         self.fillPreferredFolders()
+
+    def refreshTable(self):
+        self.folders_indexed_table.setModel(self.folders_indexed_table_model)
+        self.folders_indexed_table_model.select()
 
     def closeButtonAfterIndex(self):
         # close button for indexing report box
@@ -77,26 +87,26 @@ class Folders(QtWidgets.QWidget):
         self.results_progress_group.hide()
 
     def fillPreferredFolders(self):
-        self.folders_indexed.clear()
-        self.folders_indexed.setSelectionMode(QtWidgets.QListWidget.ExtendedSelection)
-        self.folders_indexed.addItems(gdb.allFolders())
+        self.folders_indexed_table.clearSelection()
+        # self.refreshTable()
 
+    # table
     def removeAllFolders(self):
-        self.folders_indexed.selectAll()
+        self.folders_indexed_table.selectAll()
         self.removeFolders()
 
+    # table
     def removeFolders(self):
-        items = self.folders_indexed.selectedIndexes()
-        count = len(items)
+        indexes = self.folders_indexed_table.selectedIndexes()
+        count = len(indexes)
         if count > 0:
-            names = [name.data() for name in items]
+            names = [self.folders_indexed_table.model().data(index) for index in indexes if index.column() == 1]
             confirmation_text = f"Next folders will be removed:<br><br>{'<br>'.join(names)}! <br><br>Do you proceed?"
             confirm = confirmationDialog("Do you remove?", confirmation_text)
             if not confirm:
                 return
             if gdb.deleteFoldersDB(names):
-                for _item in items:
-                    self.folders_indexed.takeItem(self.folders_indexed.currentRow())
+                self.refreshTable()
                 message = f'Removed folder <br><br> {names[0]}' if count == 1 \
                     else f"Removed folders <br><br>{'<br>'.join(names)}"
                 QtWidgets.QMessageBox.information(self.parent(), 'Folder removes', message)
@@ -104,11 +114,12 @@ class Folders(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.critical(self.parent(), 'Error', "Database wasn't cleaned!")
 
     def unselectFolderSources(self):
-        self.folders_indexed.clearSelection()
+        # TODO Check
+        self.folders_indexed_table.clearSelection()
 
     def selectLastItemFolderSources(self):
-        items = self.folders_indexed.count()
-        self.folders_indexed.setCurrentRow(int(items) - 1)
+        items = self.folders_indexed_table_model.rowCount()
+        self.folders_indexed_table.selectRow(int(items) - 1)
 
     def selectAndAddNewFolder(self):
         self.unselectFolderSources()
@@ -125,11 +136,11 @@ class Folders(QtWidgets.QWidget):
                     if self.alreadyIndexed(folder_name, serial):
                         return None
                     if gdb.addFolder(folder_name, serial):
-                        self.folders_indexed.addItem(folder_name)
-                        # select last inserted row
+                        self.refreshTable()
                         self.selectLastItemFolderSources()
                         # start indexing of new folder
                         self.folder_added.emit()
+                        self.refreshTable()
                 else:
                     QtWidgets.QMessageBox.critical(self.parent(),
                                                    'Error!',

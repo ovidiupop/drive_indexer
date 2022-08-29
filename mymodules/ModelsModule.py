@@ -1,12 +1,44 @@
 from PyQt5 import QtCore, QtSql, QtGui
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QIcon
-from PyQt5.QtSql import QSqlTableModel
+from PyQt5.QtSql import QSqlTableModel, QSqlRelation
 from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, \
-    QDataWidgetMapper
+    QDataWidgetMapper, QAbstractItemView
 
 from mymodules import GDBModule as gdb
-from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE
+from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
+
+
+def sorter(model_obj, table_obj, filter_key):
+    # add sorting to table
+    sortermodel = QSortFilterProxyModel()
+    sortermodel.setSourceModel(model_obj)
+    sortermodel.setFilterKeyColumn(filter_key)
+
+    # use sorter as model for table
+    table_obj.setModel(sortermodel)
+    table_obj.setSortingEnabled(True)
+    table_obj.sortByColumn(filter_key, Qt.DescendingOrder)
+    table_obj.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+
+class SortFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        QSortFilterProxyModel.__init__(self, *args, **kwargs)
+        self.filters = {}
+
+    def setFilterByColumn(self, regex, column):
+        self.filters[column] = regex
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        for key, regex in self.filters.items():
+            ix = self.sourceModel().index(source_row, key, source_parent)
+            if ix.isValid():
+                text = self.sourceModel().data(ix).toString()
+                if not text.contains(regex):
+                    return False
+        return True
 
 
 class ExtensionsModel(QtCore.QAbstractListModel):
@@ -26,10 +58,58 @@ class ExtensionsModel(QtCore.QAbstractListModel):
     def rowCount(self, index):
         return len(self.extensions)
 
+
+class FoldersModel(QtSql.QSqlRelationalTableModel):
+    def __init__(self, parent=None):
+        super(FoldersModel, self).__init__(parent)
+        self.setTable('folders')
+        self.setRelation(2, QSqlRelation("drives", "serial", "label"))
+        self.setEditStrategy(self.OnRowChange)
+        self.setColumnsName()
+        self.setSort(self.fieldIndex("drive_id"), Qt.DescendingOrder)
+        sorter(self, self.parent(), 2)
+        self.parent().setItemDelegate(FoldersItemsDelegate(self))
+        self.select()
+
+    def setColumnsName(self):
+        for k, v in HEADER_FOLDERS_TABLE.items():
+            idx = self.fieldIndex(k)
+            self.setHeaderData(idx, Qt.Horizontal, v)
+
+    def nameOfColumn(self, index):
+        return [col for idx, col in enumerate(HEADER_FOLDERS_TABLE) if idx == index][0]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+
+        column_name = self.nameOfColumn(index.column())
+        if role == Qt.DisplayRole:
+            if column_name == 'status':
+                return None
+
+        if role == Qt.DecorationRole:
+            if column_name == 'status':
+                if QSqlTableModel.data(self, index) == 1:
+                    return QIcon(':tick.png')
+                else:
+                    return QIcon(':cross.png')
+        return QSqlTableModel.data(self, index, role)
+
+
+class FoldersItemsDelegate(QStyledItemDelegate):
+    def __init__(self, parent):
+        QStyledItemDelegate.__init__(self, parent)
+
+    def createEditor(self, parent, option, index):
+        return None
+
+
 class SearchResultsTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, data):
-        super(SearchResultsTableModel, self).__init__()
+    def __init__(self, data, parent):
+        super(SearchResultsTableModel, self).__init__(parent)
         self._data = data
+        sorter(self, self.parent(), 2)
 
     def hasMountedDrive(self, index):
         index_column = self.colIndexByName('Drive')
@@ -95,25 +175,6 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
             print(e)
 
 
-class SortFilterProxyModel(QSortFilterProxyModel):
-    def __init__(self, *args, **kwargs):
-        QSortFilterProxyModel.__init__(self, *args, **kwargs)
-        self.filters = {}
-
-    def setFilterByColumn(self, regex, column):
-        self.filters[column] = regex
-        self.invalidateFilter()
-
-    def filterAcceptsRow(self, source_row, source_parent):
-        for key, regex in self.filters.items():
-            ix = self.sourceModel().index(source_row, key, source_parent)
-            if ix.isValid():
-                text = self.sourceModel().data(ix).toString()
-                if not text.contains(regex):
-                    return False
-        return True
-
-
 class SearchResultsTableItemsDelegate(QStyledItemDelegate):
     def __init__(self, parent):
         QStyledItemDelegate.__init__(self, parent)
@@ -139,10 +200,8 @@ class DrivesTableModel(QtSql.QSqlTableModel):
         if not index.isValid():
             return None
 
-        column = index.column()
         column_name = nameOfColumn(index.column())
         if role == Qt.DisplayRole:
-
             if column_name == 'active':
                 return None
 
@@ -156,7 +215,6 @@ class DrivesTableModel(QtSql.QSqlTableModel):
         if role == Qt.TextAlignmentRole:
             if column_name == 'size':
                 return Qt.AlignVCenter + Qt.AlignRight
-
         # default, no specific condition found
         return QSqlTableModel.data(self, index, role)
 
@@ -218,24 +276,24 @@ class DrivesItemsDelegate(QStyledItemDelegate):
 
 # KEEP THIS FOR EXAMPLE
 # elif index.column() == OWNER:
-#     combobox = QComboBox(parent)
+#     combobox = QComboBox(table_obj)
 #     combobox.addItems(sorted(index.model().owners))
 #     combobox.setEditable(True)
 #     return combobox
 #     elif index.column() == COUNTRY:
-#     combobox = QComboBox(parent)
+#     combobox = QComboBox(table_obj)
 #     combobox.addItems(sorted(index.model().countries))
 #     combobox.setEditable(True)
 #     return combobox
 # elif index.column() == NAME:
-#     editor = QLineEdit(parent)
+#     editor = QLineEdit(table_obj)
 #     self.connect(editor, SIGNAL("returnPressed()"),
 #                  self.commitAndCloseEditor)
 #     return editor
 #     elif index.column() == DESCRIPTION:
-#     editor = richtextlineedit.RichTextLineEdit(parent)
+#     editor = richtextlineedit.RichTextLineEdit(table_obj)
 #     self.connect(editor, SIGNAL("returnPressed()"),
 #                  self.commitAndCloseEditor)
 #     return editor
 # else:
-#     return QItemDelegate.createEditor(self, parent, option, index)
+#     return QItemDelegate.createEditor(self, table_obj, option, index)

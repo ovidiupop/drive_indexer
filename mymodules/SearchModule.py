@@ -46,17 +46,7 @@ class Search(QtWidgets.QWidget):
         self.found_results_table.setItemDelegate(SearchResultsTableItemsDelegate(self))
 
         self.found_results_table_model = ModelsModule.SearchResultsTableModel(
-            pd.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
-
-        # add sorting to table
-        sortermodel_results = QSortFilterProxyModel()
-        sortermodel_results.setSourceModel(self.found_results_table_model)
-        sortermodel_results.setFilterKeyColumn(2)
-        # use sorter as model for table
-        self.found_results_table.setModel(sortermodel_results)
-        self.found_results_table.setSortingEnabled(True)
-        self.found_results_table.sortByColumn(2, Qt.AscendingOrder)
-        self.found_results_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+            pd.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE), self.found_results_table)
 
         # categories box
         self.categories_selector_search = CategoriesSelector(parent=self)
@@ -134,7 +124,7 @@ class Search(QtWidgets.QWidget):
 
     def updateResults(self, results):
         data = pd.DataFrame(results, columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE)
-        self.found_results_table.setModel(SearchResultsTableModel(data))
+        self.found_results_table.setModel(SearchResultsTableModel(data, self.found_results_table))
         self.update()
 
     # load extensions when the search is started

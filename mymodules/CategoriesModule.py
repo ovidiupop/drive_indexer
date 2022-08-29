@@ -26,7 +26,7 @@ class CategoriesSelector(QtWidgets.QWidget):
         self.parent_load_default_categories = PushButton('Reload preferred')
         self.parent_load_default_categories.setIcon(iconForButton('SP_BrowserReload'))
 
-        # Only Search set the parent because it has different behavior than Category
+        # Only Search set the table_obj because it has different behavior than Category
         # On Search selected categories are not saved as preferred, but used only for current search
         self.parent_name = self.parent().metaObject().className() if self.parent() else None
 

@@ -1,6 +1,7 @@
 import os
 from PyQt5 import QtCore, QtSql
 from mymodules import GDBModule
+from mymodules.FoldersModule import Folders
 
 
 def percentage(part, whole):
@@ -26,6 +27,7 @@ class Indexer(QtCore.QObject):
     match_found = QtCore.pyqtSignal()
     directory_changed = QtCore.pyqtSignal(str)
     finished = QtCore.pyqtSignal()
+    status_folder_changed = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -39,6 +41,7 @@ class Indexer(QtCore.QObject):
         self.percentage = 0
         self.folder_id = 0
         self.remove_indexed = True
+        self.folders = Folders()
 
     def getExtensionsList(self):
         extensions = {}
@@ -59,10 +62,23 @@ class Indexer(QtCore.QObject):
             self.folder_id = self.folderId(folder)
             if self.remove_indexed:
                 self.removeFilesBeforeReindex(self.folder_id)
+            self.setStatusFolder(folder, 0)
+            self.status_folder_changed.emit()
             self._index(folder)
+            self.setStatusFolder(folder, 1)
+            self.status_folder_changed.emit()
         # finish the thread
         self.con.close()
         self.finished.emit()
+
+    def setStatusFolder(self, path, status):
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare("UPDATE folders SET status=:status WHERE path=:path")
+        query.bindValue(':path', path)
+        query.bindValue(':status', int(status))
+        if query.exec():
+            query.clear()
+        return True
 
     def removeFilesBeforeReindex(self, folder_id):
         """ before reindex a folder, remove old indexed files from that folder
