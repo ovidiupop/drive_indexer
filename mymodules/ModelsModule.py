@@ -93,7 +93,7 @@ class FoldersModel(QtSql.QSqlRelationalTableModel):
                 if QSqlTableModel.data(self, index) == 1:
                     return QIcon(':tick.png')
                 else:
-                    return QIcon(':cross.png')
+                    return QIcon(':exclamation.png')
         return QSqlTableModel.data(self, index, role)
 
 

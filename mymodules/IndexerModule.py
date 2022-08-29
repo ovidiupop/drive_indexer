@@ -1,7 +1,9 @@
 import os
+
 from PyQt5 import QtCore, QtSql
+from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
+
 from mymodules import GDBModule
-from mymodules.FoldersModule import Folders
 
 
 def percentage(part, whole):
@@ -20,17 +22,27 @@ def countTotalFiles(roots):
     return count
 
 
-class Indexer(QtCore.QObject):
-    """ Indexer class
-    The worker responsible with indexing of files to database
-    """
+class WorkerKilledException(Exception):
+    pass
+
+
+# we need this WorkerSignals, because QRunnable hasn't signals
+# WorkerSignals is derived from Object and have signals
+class WorkerSignals(QObject):
+    progress = pyqtSignal(int)
     match_found = QtCore.pyqtSignal()
     directory_changed = QtCore.pyqtSignal(str)
     finished = QtCore.pyqtSignal()
     status_folder_changed = QtCore.pyqtSignal()
 
+
+class JobRunner(QRunnable):
+    signals = WorkerSignals()
+
     def __init__(self):
         super().__init__()
+        self.is_killed = False
+
         self.con = GDBModule.connection('indexer_connection')
         self.con.open()
         self.extensions = self.getExtensionsList()
@@ -41,7 +53,62 @@ class Indexer(QtCore.QObject):
         self.percentage = 0
         self.folder_id = 0
         self.remove_indexed = True
-        self.folders = Folders()
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            self.total_files = countTotalFiles(self.folders_to_index)
+            for folder in self.folders_to_index:
+                self.folder_id = self.folderId(folder)
+                if self.remove_indexed:
+                    self.removeFilesBeforeReindex(self.folder_id)
+                self.setStatusFolder(folder, 0)
+                self.signals.status_folder_changed.emit()
+                self._index(folder)
+                self.setStatusFolder(folder, 1)
+                self.signals.status_folder_changed.emit()
+
+            self.finishThread()
+        except WorkerKilledException:
+            pass
+
+    def _index(self, path):
+        if self.is_killed:
+            self.finishThread()
+            raise WorkerKilledException
+
+        """recursive method for indexing files"""
+        self.signals.directory_changed.emit(path)
+        # switch to new directory (root or recursive)
+        directory = QtCore.QDir(path)
+        directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
+        for entry in directory.entryInfoList():
+            if entry.isFile():
+                self.checked_files += 1
+                self.percentage = percentage(self.checked_files, self.total_files)
+
+            # check if we have matched extension (zip / tar.gz) or there is no any extension to match
+            file_ext = entry.suffix() or entry.completeSuffix()
+            if file_ext in self.extensions.values() or self.extensions == {}:
+                # no extensions selected and file hasn't extension
+                extension_id = 0
+                if file_ext:
+                    extension_id = self.extensionId(file_ext)
+                item = {'dir': path, 'filename': entry.fileName(), 'size': entry.size(),
+                        'extension_id': extension_id, 'folder_id': self.folder_id}
+                self.signals.match_found.emit()
+
+                # insert file in database
+                self.addFile(item)
+            if entry.isDir():
+                self._index(entry.filePath())
+
+    def finishThread(self):
+        self.con.close()
+        self.signals.finished.emit()
+
+    def kill(self):
+        self.is_killed = True
 
     def getExtensionsList(self):
         extensions = {}
@@ -52,24 +119,6 @@ class Indexer(QtCore.QObject):
 
     def setExtensions(self, extensions):
         self.extensions = extensions
-
-    # use the @QtCore.pyqtSlot() decorator to
-    # make the worker's methods into true Qt slots
-    @QtCore.pyqtSlot()
-    def doIndex(self):
-        self.total_files = countTotalFiles(self.folders_to_index)
-        for folder in self.folders_to_index:
-            self.folder_id = self.folderId(folder)
-            if self.remove_indexed:
-                self.removeFilesBeforeReindex(self.folder_id)
-            self.setStatusFolder(folder, 0)
-            self.status_folder_changed.emit()
-            self._index(folder)
-            self.setStatusFolder(folder, 1)
-            self.status_folder_changed.emit()
-        # finish the thread
-        self.con.close()
-        self.finished.emit()
 
     def setStatusFolder(self, path, status):
         query = QtSql.QSqlQuery(self.con)
@@ -89,33 +138,6 @@ class Indexer(QtCore.QObject):
         query.bindValue(':folder_id', folder_id)
         if not query.exec():
             GDBModule.printQueryErr(query, 'removeFilesBeforeReindex')
-
-    def _index(self, path):
-        """recursive method for indexing files"""
-        self.directory_changed.emit(path)
-        # switch to new directory (root or recursive)
-        directory = QtCore.QDir(path)
-        directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
-        for entry in directory.entryInfoList():
-            if entry.isFile():
-                self.checked_files += 1
-                self.percentage = percentage(self.checked_files, self.total_files)
-
-            # check if we have matched extension (zip / tar.gz) or there is no any extension to match
-            file_ext = entry.suffix() or entry.completeSuffix()
-            if file_ext in self.extensions.values() or self.extensions == {}:
-                # no extensions selected and file hasn't extension
-                extension_id = 0
-                if file_ext:
-                    extension_id = self.extensionId(file_ext)
-                item = {'dir': path, 'filename': entry.fileName(), 'size': entry.size(),
-                        'extension_id': extension_id, 'folder_id': self.folder_id}
-                self.match_found.emit()
-
-                # insert file in database
-                self.addFile(item)
-            if entry.isDir():
-                self._index(entry.filePath())
 
     def extensionId(self, extension):
         for key, value in self.extensions.items():

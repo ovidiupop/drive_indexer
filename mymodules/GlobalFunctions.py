@@ -66,6 +66,7 @@ default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0
 PREFERENCES = [
     ['header_to_csv', 'Add header to exported csv', '0', '0', 'bool', '1'],
     ['file_dialog_modal', 'File Information is modal', '1', '1', 'bool', '1'],
+    ['indexer_autorun', 'Run indexer when new folder is added', '1', '1', 'bool', '1'],
     ['window_size', 'Dimension for window when start (width, height)', '1000, 800', '1000, 800', 'str', '0'],
     ['settings_tabs_order', 'Preferred order for settings tabs', '0, 1, 2, 3, 4', '0, 1, 2, 3, 4', 'str', '0'],
 ]

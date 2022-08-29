@@ -631,7 +631,7 @@ class GDatabase:
             '   id INTEGER PRIMARY KEY, '
             '   path TEXT NOT NULL, '
             '   drive_id TEXT, '
-            '   status INTEGER NOT NULL DEFAULT 1, '
+            '   status INTEGER NOT NULL DEFAULT 0, '
             '   FOREIGN KEY(drive_id) REFERENCES drives(serial))',
 
             'CREATE TABLE extensions('

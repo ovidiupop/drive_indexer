@@ -15,6 +15,7 @@
 		<file alias="selected-results.svg">/images/actions/selected-results.svg</file>
 		<file alias="accordion.png">/images/app/32/accordion.png</file>
 		<file alias="application_osx_terminal.png">/images/app/32/application_osx_terminal.png</file>
+		<file alias="cancel.png">/images/app/32/cancel.png</file>
 		<file alias="category.png">/images/app/32/category.png</file>
 		<file alias="cd.png">/images/app/32/cd.png</file>
 		<file alias="chart_pie.png">/images/app/32/chart_pie.png</file>
@@ -24,6 +25,7 @@
 		<file alias="dice.png">/images/app/32/dice.png</file>
 		<file alias="drive.png">/images/app/32/drive.png</file>
 		<file alias="email.png">/images/app/32/email.png</file>
+		<file alias="exclamation.png">/images/app/32/exclamation.png</file>
 		<file alias="file.png">/images/app/32/file.png</file>
 		<file alias="file_extension_exe.png">/images/app/32/file_extension_exe.png</file>
 		<file alias="folder.png">/images/app/32/folder.png</file>
@@ -40,6 +42,7 @@
 		<file alias="size.png">/images/app/32/size.png</file>
 		<file alias="sound.png">/images/app/32/sound.png</file>
 		<file alias="sound_mute.png">/images/app/32/sound_mute.png</file>
+		<file alias="stop.png">/images/app/32/stop.png</file>
 		<file alias="table_multiple.png">/images/app/32/table_multiple.png</file>
 		<file alias="television.png">/images/app/32/television.png</file>
 		<file alias="tick.png">/images/app/32/tick.png</file>

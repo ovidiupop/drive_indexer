@@ -1,16 +1,16 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QSortFilterProxyModel, Qt, QModelIndex
-from PyQt5.QtWidgets import QFileDialog, QAbstractItemView
+from PyQt5.QtWidgets import QFileDialog
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
-from mymodules.GlobalFunctions import iconForButton, confirmationDialog
+from mymodules.GlobalFunctions import iconForButton, confirmationDialog, getPreference
 from mymodules.ModelsModule import FoldersModel
 from mymodules.SystemModule import folderCanBeIndexed
 
 
 class Folders(QtWidgets.QWidget):
     folder_added = QtCore.pyqtSignal()
+    stop_indexer = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
         super(Folders, self).__init__(parent)
@@ -19,6 +19,8 @@ class Folders(QtWidgets.QWidget):
         self.folder_remove_all_button = PushButton('Remove All')
         self.folder_remove_selected_button = PushButton('Remove')
         self.folder_reindex_button = PushButton('Re/Index')
+        self.folder_stop_index_button = PushButton('Stop Index')
+        self.folder_stop_index_button.hide()
 
         self.close_indexed_results_button = PushButton()
         self.close_indexed_results_button.hide()
@@ -32,7 +34,7 @@ class Folders(QtWidgets.QWidget):
         self.folders_indexed_table.setModel(self.folders_indexed_table_model)
         self.folders_indexed_table.setColumnHidden(self.folders_indexed_table_model.fieldIndex("id"), True)
         self.folders_indexed_table.setColumns([0.1, 0.75, 0.14, 0.10])
-        self.folders_indexed_table.setMaximumHeight(200)
+        # self.folders_indexed_table.setMaximumHeight(200)
 
         self.results_progress_group = QtWidgets.QGroupBox('Results')
         self.results_progress_group.hide()
@@ -41,11 +43,14 @@ class Folders(QtWidgets.QWidget):
         self.folder_remove_all_button.setIcon(iconForButton('SP_DialogDiscardButton'))
         self.folder_add_button.setIcon(iconForButton('SP_DialogOpenButton'))
         self.folder_remove_selected_button.setIcon(iconForButton('SP_DialogResetButton'))
+        self.folder_stop_index_button.setIcon(iconForButton('SP_MediaStop'))
 
         self.close_indexed_results_button.setIcon(iconForButton('SP_DialogCloseButton'))
         self.folder_add_button.clicked.connect(self.selectAndAddNewFolder)
         self.folder_remove_all_button.clicked.connect(self.removeAllFolders)
         self.folder_remove_selected_button.clicked.connect(self.removeFolders)
+        self.folder_stop_index_button.clicked.connect(self.stopIndexer)
+
         self.close_indexed_results_button.clicked.connect(self.hideResults)
 
         buttons_column_layout = QtWidgets.QVBoxLayout()
@@ -54,6 +59,7 @@ class Folders(QtWidgets.QWidget):
         buttons_column_layout.addWidget(self.folder_remove_selected_button)
         buttons_column_layout.addWidget(self.folder_remove_all_button)
         buttons_column_layout.addWidget(self.folder_reindex_button)
+        buttons_column_layout.addWidget(self.folder_stop_index_button)
         buttons_column_layout.addStretch()
         # folders and progress of indexing
         folders_column_layout = QtWidgets.QVBoxLayout()
@@ -89,6 +95,15 @@ class Folders(QtWidgets.QWidget):
     def fillPreferredFolders(self):
         self.folders_indexed_table.clearSelection()
         # self.refreshTable()
+
+    def stopIndexer(self):
+        confirmation_text = f"Do you wish to stop current indexing?" \
+                            f"<br>The current folder will not be completely indexed. " \
+                            f"You have to reindex it later!<br>Do you proceed?"
+        confirm = confirmationDialog("Stop indexing?", confirmation_text)
+        if not confirm:
+            return
+        self.stop_indexer.emit()
 
     # table
     def removeAllFolders(self):
@@ -139,7 +154,8 @@ class Folders(QtWidgets.QWidget):
                         self.refreshTable()
                         self.selectLastItemFolderSources()
                         # start indexing of new folder
-                        self.folder_added.emit()
+                        if int(getPreference('indexer_autorun')):
+                            self.folder_added.emit()
                         self.refreshTable()
                 else:
                     QtWidgets.QMessageBox.critical(self.parent(),

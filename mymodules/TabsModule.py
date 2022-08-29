@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QTabWidget
 
 from mymodules import GDBModule as gdb, IndexerModule as wk, DevicesMonitorModule as dc
@@ -7,6 +8,7 @@ from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
 from mymodules.GlobalFunctions import setStatusBarMW
+from mymodules.IndexerModule import JobRunner
 from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
 
@@ -73,7 +75,10 @@ class TabsWidget(QtWidgets.QWidget):
         """ End of thread """
         # re-enable buttons
         self.setStatusButtons(True)
-        self.setStatusBar(f'Indexed {self.indexer.found_files} files')
+        self.folders.folder_stop_index_button.hide()
+
+        self.setStatusBar(f'Indexed {self.runner.found_files} files')
+        # self.setStatusBar(f'Indexed {self.indexer.found_files} files')
         # sometimes the percent is not 100 at the end
         # set manually to fill the bar
         self.folders.indexing_progress_bar.setValue(100)
@@ -116,40 +121,73 @@ class TabsWidget(QtWidgets.QWidget):
             self.folders.results_progress_group.show()
             self.folders.close_indexed_results_button.hide()
             self.setStatusButtons(False)
-            self.indexer = wk.Indexer()
+            self.folders.folder_stop_index_button.show()
+
+            self.threadpool = QThreadPool()
+            self.runner = JobRunner()
+
             # indexing for new extension
             if self.extensions.last_added_extension:
-                self.indexer.remove_indexed = False
+                self.runner.remove_indexed = False
                 extension = self.extensions.last_added_extension
                 ext_id = gdb.extensionId(extension)
-                self.indexer.setExtensions({ext_id: extension})
+                self.runner.setExtensions({ext_id: extension})
 
             indexes = self.folders.folders_indexed_table.selectedIndexes()
             if indexes:
                 folders = [self.folders.folders_indexed_table.model().data(index) for index in indexes if index.column() == 1]
-                self.indexer.folders_to_index = folders
+                self.runner.folders_to_index = folders
             else:
-                self.indexer.folders_to_index = gdb.allFolders()
+                self.runner.folders_to_index = gdb.allFolders()
 
-            self.indexer.found_files = 0
-            self.indexer_thread = QtCore.QThread()
-            self.indexer.moveToThread(self.indexer_thread)
-            self.indexer.finished.connect(self.onFinished)
-            self.indexer.finished.connect(self.indexer_thread.quit)
-            self.indexer_thread.start()
+            self.runner.found_files = 0
+            self.runner.signals.finished.connect(self.onFinished)
+            self.runner.signals.status_folder_changed.connect(self.folders.refreshTable)
+            self.runner.signals.directory_changed.connect(self.onDirectoryChanged)
+            self.runner.signals.match_found.connect(self.onMatchFound)
+            self.threadpool.start(self.runner)
 
-            self.indexer.status_folder_changed.connect(lambda: self.folders.refreshTable())
-            self.indexer.directory_changed.connect(self.onDirectoryChanged)
-            self.indexer.match_found.connect(self.onMatchFound)
-            self.reindex_folder.connect(self.indexer.doIndex)
-            self.reindex_folder.connect(self.indexer_thread.start)
-            self.reindex_folder.emit(self.indexer)
+            self.folders.stop_indexer.connect(self.runner.kill)
+
+
+
+            # self.indexer = wk.Indexer()
+            # # indexing for new extension
+            # if self.extensions.last_added_extension:
+            #     self.indexer.remove_indexed = False
+            #     extension = self.extensions.last_added_extension
+            #     ext_id = gdb.extensionId(extension)
+            #     self.indexer.setExtensions({ext_id: extension})
+
+            # indexes = self.folders.folders_indexed_table.selectedIndexes()
+            # if indexes:
+            #     folders = [self.folders.folders_indexed_table.model().data(index) for index in indexes if index.column() == 1]
+            #     self.indexer.folders_to_index = folders
+            # else:
+            #     self.indexer.folders_to_index = gdb.allFolders()
+
+            # self.indexer.found_files = 0
+            # self.indexer_thread = QtCore.QThread()
+            # self.indexer.moveToThread(self.indexer_thread)
+            # self.indexer.finished.connect(self.onFinished)
+            # self.indexer.finished.connect(self.indexer_thread.quit)
+            # self.indexer_thread.start()
+
+            # self.indexer.status_folder_changed.connect(lambda: self.folders.refreshTable())
+            # self.indexer.directory_changed.connect(self.onDirectoryChanged)
+            # self.indexer.match_found.connect(self.onMatchFound)
+            # self.reindex_folder.connect(self.indexer.doIndex)
+            # self.reindex_folder.connect(self.indexer_thread.start)
+            # self.reindex_folder.emit(self.indexer)
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):
-        self.indexer.found_files += 1
-        self.folders.total_folders_indexed_label.setText(f'Found: {self.indexer.found_files} files')
-        self.folders.indexing_progress_bar.setValue(self.indexer.percentage)
+        self.runner.found_files += 1
+        self.folders.total_folders_indexed_label.setText(f'Found: {self.runner.found_files} files')
+        self.folders.indexing_progress_bar.setValue(self.runner.percentage)
+        # self.indexer.found_files += 1
+        # self.folders.total_folders_indexed_label.setText(f'Found: {self.indexer.found_files} files')
+        # self.folders.indexing_progress_bar.setValue(self.indexer.percentage)
 
     @QtCore.pyqtSlot(str)
     def onDirectoryChanged(self, path):
