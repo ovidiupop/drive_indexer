@@ -5,7 +5,7 @@ import subprocess
 import sys
 from contextlib import redirect_stdout
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtTest
 from PyQt5.QtCore import QMimeDatabase, QDir, QStandardPaths
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox, QTabWidget, QFileDialog, QApplication, QMainWindow
@@ -18,23 +18,6 @@ DATABASE_DRIVER = 'QSQLITE'
 
 CSV_COLUMN_SEPARATOR = ','
 CSV_LINE_SEPARATOR = '\n'
-
-CODECS = ['ascii', 'big5', 'big5hkscs', 'cp037', 'cp273', 'cp424', 'cp437',
-          'cp500', 'cp720', 'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp856', 'cp857',
-          'cp858', 'cp860', 'cp861', 'cp862', 'cp863', 'cp864', 'cp865', 'cp866', 'cp869',
-          'cp874', 'cp875', 'cp932', 'cp949', 'cp950', 'cp1006', 'cp1026', 'cp1125',
-          'cp1140', 'cp1250', 'cp1251', 'cp1252', 'cp1253', 'cp1254', 'cp1255', 'cp1256',
-          'cp1257', 'cp1258', 'euc_jp', 'euc_jis_2004', 'euc_jisx0213', 'euc_kr',
-          'gb2312', 'gbk', 'gb18030', 'hz', 'iso2022_jp', 'iso2022_jp_1', 'iso2022_jp_2',
-          'iso2022_jp_2004', 'iso2022_jp_3', 'iso2022_jp_ext', 'iso2022_kr', 'latin_1',
-          'iso8859_2', 'iso8859_3', 'iso8859_4', 'iso8859_5', 'iso8859_6', 'iso8859_7',
-          'iso8859_8', 'iso8859_9', 'iso8859_10', 'iso8859_11', 'iso8859_13',
-          'iso8859_14', 'iso8859_15', 'iso8859_16', 'johab', 'koi8_r', 'koi8_t', 'koi8_u',
-          'kz1048', 'mac_cyrillic', 'mac_greek', 'mac_iceland', 'mac_latin2', 'mac_roman',
-          'mac_turkish', 'ptcp154', 'shift_jis', 'shift_jis_2004', 'shift_jisx0213',
-          'utf_32', 'utf_32_be', 'utf_32_le', 'utf_16', 'utf_16_be', 'utf_16_le', 'utf_7',
-          'utf_8', 'utf_8_sig']
-
 REQUIRED_TABLES = {'drives', 'folders', 'extensions', 'files', 'categories', 'preferences'}
 CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
               'Disc and media': ':cd.png', 'Data and database': ':database.png',
@@ -47,7 +30,7 @@ CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)",
-                       "active": "Active"}
+                       "active": "Active", 'path': 'Path'}
 
 default_extensions = [['aif', 1, 0], ['cda', 1, 0], ['mid', 1, 0], ['midi', 1, 0], ['mp3', 1, 1],
                       ['mpa', 1, 0], ['ogg', 1, 1], ['wav', 1, 0], ['wma', 1, 0], ['wpl', 1, 0],
@@ -84,6 +67,13 @@ PREFERENCES = [
     ['window_size', 'Dimension for window when start (width, height)', '1000, 800', '1000, 800', 'str', '0'],
     ['settings_tabs_order', 'Preferred order for settings tabs', '0, 1, 2, 3, 4', '0, 1, 2, 3, 4', 'str', '0'],
 ]
+
+
+def setStatusBarMW(message):
+    mw = findMainWindow()
+    mw.statusbar.showMessage(message)
+    QtTest.QTest.qWait(100)
+    return True
 
 
 def findMainWindow():
@@ -258,8 +248,10 @@ def setPreferenceById(pid, checkbox):
     value = checkbox.isChecked()
     gdb.setPreferenceById(pid, int(value))
 
+
 def setPreferenceByName(name, value):
     gdb.setPreferenceByName(name, value)
+
 
 def getPreference(name):
     return gdb.getPreferenceByName(name)

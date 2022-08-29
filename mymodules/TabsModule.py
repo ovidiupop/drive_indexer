@@ -6,7 +6,7 @@ from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
-from mymodules.GlobalFunctions import tabIndexByName
+from mymodules.GlobalFunctions import setStatusBarMW
 from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
 
@@ -31,8 +31,6 @@ class TabsWidget(QtWidgets.QWidget):
         self.folders = Folders()
         # import Preferences Module
         self.preferences = Preferences()
-
-
         self.setDefaultActions()
 
         self.tab_search_group = QtWidgets.QGroupBox()
@@ -60,17 +58,8 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
         self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
         self.tabs_settings.addTab(self.tab_preferences_group, QtGui.QIcon(':preferences.png'), 'Preferences')
-
-        # self.tabs_settings.currentChanged.connect(self.tabSettingsChanged)
-
         self.setProgressBarToStatusBar()
         self.startThreadDevices()
-
-    # def tabSettingsChanged(self, tab_index):
-    #     if tab_index == 1:
-    #         self.drives.comboActiveDrives()
-    #     if tab_index == 0:
-    #         self.folders.fillPreferredFolders()
 
     def setDefaultActions(self):
         self.folders.folder_reindex_button.clicked.connect(self.startThreadIndexer)
@@ -118,44 +107,42 @@ class TabsWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def reindexForNewExtension(self):
         self.folders.unselectFolderSources()
-        # switch to folders tab
-        # tab_folder_index = tabIndexByName(self.tabs_settings, 'Folders')
-        # self.tabs_settings.setCurrentIndex(tab_folder_index)
         self.extensions.extension_added.emit()
 
     # here we create the thread
     # after create the long time method
     def startThreadIndexer(self):
-        self.folders.results_progress_group.show()
-        self.folders.close_indexed_results_button.hide()
-        self.setStatusButtons(False)
-        self.indexer = wk.Indexer()
-        # indexing for new extension
-        if self.extensions.last_added_extension:
-            self.indexer.remove_indexed = False
-            extension = self.extensions.last_added_extension
-            ext_id = gdb.extensionId(extension)
-            self.indexer.setExtensions({ext_id: extension})
+        if setStatusBarMW('Please wait while drive is initialized...'):
+            self.folders.results_progress_group.show()
+            self.folders.close_indexed_results_button.hide()
+            self.setStatusButtons(False)
+            self.indexer = wk.Indexer()
+            # indexing for new extension
+            if self.extensions.last_added_extension:
+                self.indexer.remove_indexed = False
+                extension = self.extensions.last_added_extension
+                ext_id = gdb.extensionId(extension)
+                self.indexer.setExtensions({ext_id: extension})
 
-        selected = self.folders.folders_indexed.selectedIndexes()
-        if selected:
-            folders = []
-            for folder in selected:
-                folders.append(folder.data())
-            self.indexer.folders_to_index = folders
-        else:
-            self.indexer.folders_to_index = gdb.allFolders()
-        self.indexer.found_files = 0
-        self.indexer_thread = QtCore.QThread()
-        self.indexer.moveToThread(self.indexer_thread)
-        self.indexer.finished.connect(self.onFinished)
-        self.indexer.finished.connect(self.indexer_thread.quit)
-        self.indexer_thread.start()
-        self.indexer.directory_changed.connect(self.onDirectoryChanged)
-        self.indexer.match_found.connect(self.onMatchFound)
-        self.reindex_folder.connect(self.indexer.doIndex)
-        self.reindex_folder.connect(self.indexer_thread.start)
-        self.reindex_folder.emit(self.indexer)
+            selected = self.folders.folders_indexed.selectedIndexes()
+            if selected:
+                folders = []
+                for folder in selected:
+                    folders.append(folder.data())
+                self.indexer.folders_to_index = folders
+            else:
+                self.indexer.folders_to_index = gdb.allFolders()
+            self.indexer.found_files = 0
+            self.indexer_thread = QtCore.QThread()
+            self.indexer.moveToThread(self.indexer_thread)
+            self.indexer.finished.connect(self.onFinished)
+            self.indexer.finished.connect(self.indexer_thread.quit)
+            self.indexer_thread.start()
+            self.indexer.directory_changed.connect(self.onDirectoryChanged)
+            self.indexer.match_found.connect(self.onMatchFound)
+            self.reindex_folder.connect(self.indexer.doIndex)
+            self.reindex_folder.connect(self.indexer_thread.start)
+            self.reindex_folder.emit(self.indexer)
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):

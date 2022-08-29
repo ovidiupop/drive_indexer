@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtSql, QtGui
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
+from PyQt5.QtGui import QIcon
+from PyQt5.QtSql import QSqlTableModel
 from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, \
     QDataWidgetMapper
 
@@ -23,31 +25,6 @@ class ExtensionsModel(QtCore.QAbstractListModel):
     # override method of abstract class
     def rowCount(self, index):
         return len(self.extensions)
-
-
-class DrivesTableModel(QtSql.QSqlTableModel):
-    def __init__(self):
-        super(DrivesTableModel, self).__init__()
-        self._data = []
-        self.table = 'drives'
-        self.setTable(self.table)
-        self.setEditStrategy(self.OnRowChange)
-        self.setColumnsName()
-        self.setSort(self.fieldIndex("size"), Qt.DescendingOrder)
-
-    def setColumnsName(self):
-        for k, v in HEADER_DRIVES_TABLE.items():
-            idx = self.fieldIndex(k)
-            self.setHeaderData(idx, Qt.Horizontal, v)
-
-    def setTableSorter(self, column_index, table):
-        sort_filter = QSortFilterProxyModel()
-        sort_filter.setSourceModel(self)
-        sort_filter.setFilterKeyColumn(column_index)
-        table.setModel(sort_filter)
-        table.setSortingEnabled(True)
-        table.sortByColumn(column_index, Qt.DescendingOrder)
-
 
 class SearchResultsTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data):
@@ -148,6 +125,55 @@ class SearchResultsTableItemsDelegate(QStyledItemDelegate):
         return None
 
 
+class DrivesTableModel(QtSql.QSqlTableModel):
+    def __init__(self):
+        super(DrivesTableModel, self).__init__()
+        self._data = []
+        self.table = 'drives'
+        self.setTable(self.table)
+        self.setEditStrategy(self.OnRowChange)
+        self.setColumnsName()
+        self.setSort(self.fieldIndex("size"), Qt.DescendingOrder)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+
+        column = index.column()
+        column_name = nameOfColumn(index.column())
+        if role == Qt.DisplayRole:
+
+            if column_name == 'active':
+                return None
+
+        if role == Qt.DecorationRole:
+            if column_name == 'active':
+                if QSqlTableModel.data(self, index) == 1:
+                    return QIcon(':tick.png')
+                else:
+                    return QIcon(':cross.png')
+
+        if role == Qt.TextAlignmentRole:
+            if column_name == 'size':
+                return Qt.AlignVCenter + Qt.AlignRight
+
+        # default, no specific condition found
+        return QSqlTableModel.data(self, index, role)
+
+    def setColumnsName(self):
+        for k, v in HEADER_DRIVES_TABLE.items():
+            idx = self.fieldIndex(k)
+            self.setHeaderData(idx, Qt.Horizontal, v)
+
+    def setTableSorter(self, column_index, table):
+        sort_filter = QSortFilterProxyModel()
+        sort_filter.setSourceModel(self)
+        sort_filter.setFilterKeyColumn(column_index)
+        table.setModel(sort_filter)
+        table.setSortingEnabled(True)
+        table.sortByColumn(column_index, Qt.DescendingOrder)
+
+
 class DrivesMapper(QDataWidgetMapper):
     def __init__(self, parent):
         super().__init__(parent)
@@ -160,27 +186,28 @@ class DrivesMapper(QDataWidgetMapper):
         self.addMapping(parent.drive_active_input, model.fieldIndex('active'))
 
 
+def nameOfColumn(idx):
+    names = HEADER_DRIVES_TABLE.keys()
+    for index, name in enumerate(names):
+        if index == idx:
+            return name
+
+
 class DrivesItemsDelegate(QStyledItemDelegate):
     def __init__(self, parent):
         QStyledItemDelegate.__init__(self, parent)
 
-    def nameOfColumn(self, idx):
-        names = HEADER_DRIVES_TABLE.keys()
-        for index, name in enumerate(names):
-            if index == idx:
-                return name
-
     def createEditor(self, parent, option, index):
         disabled = ['serial', 'name', 'active', 'path']
-        if self.nameOfColumn(index.column()) in disabled:
+        if nameOfColumn(index.column()) in disabled:
             editor = QLineEdit(parent)
             editor.setDisabled(True)
             return editor
-        elif 'label' == self.nameOfColumn(index.column()):
+        elif 'label' == nameOfColumn(index.column()):
             editor = QLineEdit(parent)
             editor.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             return editor
-        elif 'size' == self.nameOfColumn(index.column()):
+        elif 'size' == nameOfColumn(index.column()):
             spinbox = QSpinBox(parent)
             spinbox.setRange(0, 2000000)
             spinbox.setSingleStep(100)

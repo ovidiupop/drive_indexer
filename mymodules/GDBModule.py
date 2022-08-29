@@ -62,6 +62,19 @@ def getAll(table: str, only_field: list = None) -> list:
     return return_array
 
 
+def foldersOfDrive(serial):
+    query = QtSql.QSqlQuery()
+    query.prepare('SELECT path FROM folders WHERE drive_id=:drive_id')
+    query.bindValue(':drive_id', serial)
+    if query.exec():
+        folders = []
+        while query.next():
+            folders.append(query.value(0))
+        query.clear()
+        return folders
+
+
+
 def getExtensionsCategories():
     """
     :param extension:
@@ -486,6 +499,7 @@ def driveSerialIsMounted(serial: str) -> bool:
         return ret
     return False
 
+
 def isDriveActiveByLabel(label: str) -> bool:
     """
     :param serial:
@@ -499,6 +513,7 @@ def isDriveActiveByLabel(label: str) -> bool:
         query.clear()
         return ret
     return False
+
 
 def dummyDataResult():
     results = []
@@ -526,6 +541,7 @@ def setPreferenceById(id, value):
         query.clear()
     return True
 
+
 def setPreferenceByName(name, value):
     query = QtSql.QSqlQuery()
     query.prepare("UPDATE preferences SET value=:value WHERE name=:name")
@@ -534,6 +550,7 @@ def setPreferenceByName(name, value):
     if query.exec():
         query.clear()
     return True
+
 
 def getPreferenceByName(name):
     query = QtSql.QSqlQuery()

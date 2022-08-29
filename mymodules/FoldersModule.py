@@ -99,10 +99,9 @@ class Folders(QtWidgets.QWidget):
                     self.folders_indexed.takeItem(self.folders_indexed.currentRow())
                 message = f'Removed folder <br><br> {names[0]}' if count == 1 \
                     else f"Removed folders <br><br>{'<br>'.join(names)}"
-
-                QtWidgets.QMessageBox.information(self, 'Folder removes', message)
+                QtWidgets.QMessageBox.information(self.parent(), 'Folder removes', message)
             else:
-                QtWidgets.QMessageBox.critical(self, 'Error', "Database wasn't cleaned!")
+                QtWidgets.QMessageBox.critical(self.parent(), 'Error', "Database wasn't cleaned!")
 
     def unselectFolderSources(self):
         self.folders_indexed.clearSelection()
@@ -118,11 +117,13 @@ class Folders(QtWidgets.QWidget):
             self, directory=home_path, caption="Select a folder")
         if folder_name:
             if gdb.folderExists(folder_name):
-                QtWidgets.QMessageBox.critical(self, 'Folder indexed', 'Folder is already indexed')
+                QtWidgets.QMessageBox.warning(self.parent(), 'Folder indexed', 'Folder is already indexed')
             else:
                 response = folderCanBeIndexed(folder_name)
                 if response[0]:
                     serial = response[1]
+                    if self.alreadyIndexed(folder_name, serial):
+                        return None
                     if gdb.addFolder(folder_name, serial):
                         self.folders_indexed.addItem(folder_name)
                         # select last inserted row
@@ -130,5 +131,19 @@ class Folders(QtWidgets.QWidget):
                         # start indexing of new folder
                         self.folder_added.emit()
                 else:
-                    QtWidgets.QMessageBox.critical(self, 'Error!', f"Drive for this folder isn't available for index!"
+                    QtWidgets.QMessageBox.critical(self.parent(),
+                                                   'Error!',
+                                                   f"Drive for this folder isn't available for index!"
                                                                    f"\nPlease add {response[1]} in Drives section!")
+
+    def alreadyIndexed(self, folder, serial):
+        parents_of_drive = gdb.foldersOfDrive(serial)
+        if parents_of_drive:
+            for parent_folder in parents_of_drive:
+                if folder.startswith(parent_folder):
+                    QtWidgets.QMessageBox.warning(self.parent(),
+                                                  'Exists!',
+                                                  f"You already have indexed this folder within "
+                                                  f"<b>{parent_folder}</b> folder!<br>Will not be added again!")
+                    return True
+        return False

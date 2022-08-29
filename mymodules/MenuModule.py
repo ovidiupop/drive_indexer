@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import QAction, QShortcut
 
 from mymodules.GlobalFunctions import exportDataBase, importDataBase, tabIndexByName
+from mymodules.HelpContent import HelpContent
 
 
 class IMenu(QtWidgets.QWidget):
@@ -128,7 +129,7 @@ class IMenu(QtWidgets.QWidget):
         self.tabs_view.tabs_settings.setCurrentIndex(tab_settings_index)
 
     def helpContent(self):
-        pass
+        HelpContent(self)
 
     def about(self):
         QtWidgets.QMessageBox.about(self, 'About Indexer',

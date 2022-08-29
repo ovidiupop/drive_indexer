@@ -1,5 +1,5 @@
 import pandas as pd
-from PyQt5 import QtCore, QtTest
+from PyQt5 import QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt, QFileInfo
 from PyQt5.QtWidgets import QAbstractItemView
 
@@ -18,7 +18,6 @@ class Search(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
-        self.mw = findMainWindow()
 
         self.export_all_results_signal.connect(self.exportAllResultsToCSV)
         self.export_selected_results_signal.connect(self.exportSelectedResultsToCSV)
@@ -103,21 +102,15 @@ class Search(QtWidgets.QWidget):
         self.getExtensionsForSearch()
         self.double_clicked_result_row.connect(self.doubleClickedResultRow)
 
-
     @QtCore.pyqtSlot()
     def doubleClickedResultRow(self):
         # check if row belongs to a mounted drive
         selected = self.found_results_table.currentIndex()
         if self.found_results_table.model().hasMountedDrive(selected):
-            if self.setStatusBar():
+            if setStatusBarMW('Please wait while drive is initialized...'):
                 self.prepareFileDetailDialog(self.found_results_table)
         else:
             QtWidgets.QMessageBox.information(None, 'No file preview', 'The drive is not mounted in system!')
-
-    def setStatusBar(self):
-        self.mw.statusbar.showMessage('Please wait while drive is initialized...')
-        QtTest.QTest.qWait(100)
-        return True
 
     @QtCore.pyqtSlot()
     def onSubmitted(self):
@@ -211,7 +204,7 @@ class Search(QtWidgets.QWidget):
     def putInFile(self, data):
         if not data:
             QtWidgets.QMessageBox.information(self, 'Nothing to export', "There is nothing to export<br><br>Search for "
-                                                                     "something!")
+                                                                         "something!")
             return False
 
         if int(getPreference('header_to_csv')):
@@ -239,4 +232,3 @@ class Search(QtWidgets.QWidget):
         extension = info.suffix()
         category = ext_cat[extension]
         FileDetailDialog(category, data, self)
-
