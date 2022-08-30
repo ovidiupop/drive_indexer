@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton

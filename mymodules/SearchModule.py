@@ -1,7 +1,6 @@
 import pandas as pd
 from PyQt5 import QtCore
-from PyQt5.QtCore import QSortFilterProxyModel, Qt, QFileInfo
-from PyQt5.QtWidgets import QAbstractItemView
+from PyQt5.QtCore import Qt, QFileInfo
 
 from mymodules import ComponentsModule, ModelsModule
 from mymodules.CategoriesModule import CategoriesSelector
