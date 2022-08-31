@@ -11,6 +11,7 @@ from mymodules.GlobalFunctions import setStatusBarMW
 from mymodules.IndexerModule import JobRunner
 from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
+from mymodules.SystemModule import folderCanBeIndexed
 
 
 class TabsWidget(QtWidgets.QWidget):
@@ -132,14 +133,7 @@ class TabsWidget(QtWidgets.QWidget):
                 extension = self.extensions.last_added_extension
                 ext_id = gdb.extensionId(extension)
                 self.runner.setExtensions({ext_id: extension})
-
-            indexes = self.folders.folders_indexed_table.selectedIndexes()
-            if indexes:
-                folders = [self.folders.folders_indexed_table.model().data(index) for index in indexes if index.column() == 1]
-                self.runner.folders_to_index = folders
-            else:
-                self.runner.folders_to_index = gdb.allFolders()
-
+            self.setIndexableFolders()
             self.runner.found_files = 0
             self.runner.signals.finished.connect(self.onFinished)
             self.runner.signals.status_folder_changed.connect(self.folders.refreshTable)
@@ -147,6 +141,29 @@ class TabsWidget(QtWidgets.QWidget):
             self.runner.signals.match_found.connect(self.onMatchFound)
             self.threadpool.start(self.runner)
             self.folders.stop_indexer.connect(self.runner.kill)
+
+    def setIndexableFolders(self):
+        indexes = self.folders.folders_indexed_table.selectedIndexes()
+        if indexes:
+            folders = [self.folders.folders_indexed_table.model().data(index) for index in indexes if
+                       index.column() == 1]
+        else:
+            folders = gdb.allFolders()
+        non_indexable = []
+        indexable_folders = []
+        for folder in folders:
+            can = folderCanBeIndexed(folder)
+            if can[0]:
+                indexable_folders.append(folder)
+            else:
+                non_indexable.append(folder)
+        self.runner.folders_to_index = indexable_folders
+        if len(non_indexable):
+            non = "<br>".join(non_indexable)
+            QtWidgets.QMessageBox.critical(self,
+                                           'Error!',
+                                           f"Next folders can't be indexed right now, because the parent drive is not active!"
+                                           f"<br>{non}")
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):
