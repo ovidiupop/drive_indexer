@@ -79,11 +79,16 @@ class JobRunner(QRunnable):
             raise WorkerKilledException
 
         """recursive method for indexing files"""
-        self.signals.directory_changed.emit(path)
         # switch to new directory (root or recursive)
         directory = QtCore.QDir(path)
         directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
+        self.signals.directory_changed.emit(path)
         for entry in directory.entryInfoList():
+            if entry.isDir():
+                if self.folderExists(entry.filePath()):
+                    continue
+                self._index(entry.filePath())
+
             if entry.isFile():
                 self.checked_files += 1
                 self.percentage = percentage(self.checked_files, self.total_files)
@@ -101,8 +106,6 @@ class JobRunner(QRunnable):
 
                 # insert file in database
                 self.addFile(item)
-            if entry.isDir():
-                self._index(entry.filePath())
 
     def finishThread(self):
         self.con.close()
@@ -166,3 +169,16 @@ class JobRunner(QRunnable):
         if query.exec():
             while query.first():
                 return query.value(0)
+
+    def folderExists(self, folder: str) -> bool:
+        """
+        :param folder:
+        :return:
+        check if a folder exists
+        """
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare("SELECT path FROM folders where path=:path limit 1")
+        query.bindValue(':path', folder)
+        ret = query.exec() and query.first()
+        query.clear()
+        return ret

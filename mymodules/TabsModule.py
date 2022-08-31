@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QTabWidget
 
-from mymodules import GDBModule as gdb, IndexerModule as wk
+from mymodules import GDBModule as gdb, DevicesMonitorModule as dc
 from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
@@ -11,6 +11,7 @@ from mymodules.GlobalFunctions import setStatusBarMW
 from mymodules.IndexerModule import JobRunner
 from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
+from mymodules.SystemModule import folderCanBeIndexed
 
 import sys
 
@@ -197,7 +198,7 @@ class TabsWidget(QtWidgets.QWidget):
             self.folders.indexing_progress_bar.hide()
 
     def startThreadDevices(self):
-        self.devices_changes = dM.Devices()
+        self.devices_changes = dc.Devices()
         self.devices_changes_thread = QtCore.QThread()
         self.devices_changes.moveToThread(self.devices_changes_thread)
         self.devices_changes_thread.start()
