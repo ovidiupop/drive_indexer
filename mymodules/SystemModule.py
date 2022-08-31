@@ -124,7 +124,9 @@ def mountedDrivesWindows():
             disk = {'serial': serial, 'path': path, 'size': sizeToGb(size), 'name': name}
             disks.append(disk)
 
-    return disks
+        if disks:
+            setActiveDriveDB(disks)
+        return disks
 
 
 def get_serial_number_of_physical_disk(drive_letter='C:'):

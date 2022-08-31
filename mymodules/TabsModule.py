@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QTabWidget
 
 from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import Categories
+from mymodules.DevicesMonitorModule import Monitoring, DeviceJobRunner, Devices
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
@@ -15,19 +16,16 @@ from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
 from mymodules.SystemModule import folderCanBeIndexed, isEmptyFolder
 
-if sys.platform == 'win32':
-    from mymodules import DeviceMonitorWindowsModule as dc
-else:
-    from mymodules import DevicesMonitorModule as dc
-
 
 class TabsWidget(QtWidgets.QWidget):
     reindex_folder = QtCore.pyqtSignal(object)
+    kill_device_monitor_runner = QtCore.pyqtSignal()
 
     def __init__(self, parent):
         super(TabsWidget, self).__init__(parent)
         self.indexer_thread = None
         self.indexer = None
+        self.monitoring = None
 
         # importing Categories Module
         self.categories = Categories()
@@ -68,8 +66,37 @@ class TabsWidget(QtWidgets.QWidget):
         self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
         self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
         self.tabs_settings.addTab(self.tab_preferences_group, QtGui.QIcon(':preferences.png'), 'Preferences')
+
+        layout_tab_categories = self.categories.layout_tab_categories
+        self.tab_categories_group.setLayout(layout_tab_categories)
+        self.tab_categories_group.setMaximumHeight(200)
+
+        layout_tab_drives = self.drives.layout_tab_drives
+        self.tab_drives_group.setLayout(layout_tab_drives)
+
+        # final layout for search tab
+        layout_tab_search = self.search.search_tab_layout
+        self.tab_search_group.setLayout(layout_tab_search)
+
+        layout_tab_extensions = self.extensions.layout_tab_extensions
+        self.tab_extensions_group.setLayout(layout_tab_extensions)
+
+        preferences_section_layout = self.preferences.layout_tab_preferences
+        self.tab_preferences_group.setLayout(preferences_section_layout)
+
+        folders_section_layout = self.folders.folders_section_layout
+        self.tab_folders_group.setLayout(folders_section_layout)
+
+        settings_tab_layout = QtWidgets.QVBoxLayout()
+        settings_tab_layout.addWidget(self.tabs_settings)
+        self.tab_settings_group.setLayout(settings_tab_layout)
+
         self.setProgressBarToStatusBar()
-        self.startThreadDevices()
+        self.startThreadMonitoringDevices()
+        self.parent().kill_device_monitor_runner.connect(lambda: self.killDeviceMonitorRunner())
+
+    def killDeviceMonitorRunner(self):
+        self.kill_device_monitor_runner.emit()
 
     def setDefaultActions(self):
         self.folders.folder_reindex_button.clicked.connect(self.startThreadIndexer)
@@ -176,7 +203,6 @@ class TabsWidget(QtWidgets.QWidget):
         self.folders.total_folders_indexed_label.setText(f'Found: {self.runner.found_files} files')
         self.folders.indexing_progress_bar.setValue(self.runner.percentage)
 
-
     @QtCore.pyqtSlot(str)
     def onDirectoryChanged(self, path):
         """ New folder is indexing and its path is displayed"""
@@ -191,47 +217,16 @@ class TabsWidget(QtWidgets.QWidget):
         else:
             self.folders.indexing_progress_bar.hide()
 
-    def startThreadDevices(self):
-        self.devices_changes = dc.Devices()
-        self.devices_changes_thread = QtCore.QThread()
-        self.devices_changes.moveToThread(self.devices_changes_thread)
-        self.devices_changes_thread.start()
-        self.devices_changes.configuration_changed.connect(lambda: self.deviceListChanged())
+    def startThreadMonitoringDevices(self):
+        self.monitoring = Monitoring(self)
+        self.monitoring.configuration_changed.connect(lambda: self.deviceListChanged())
 
     @QtCore.pyqtSlot()
     def deviceListChanged(self):
-        # print('refill')
         self.drives.comboActiveDrives()
+        self.drives.drives_table.setModel(self.drives.drives_table_model)
         self.drives.drives_table_model.select()
         self.folders.fillPreferredFolders()
 
 
-class TabsView(TabsWidget):
-    def __init__(self, parent=None):
-        super(TabsView, self).__init__(parent)
-
-        layout_tab_categories = self.categories.layout_tab_categories
-        self.tab_categories_group.setLayout(layout_tab_categories)
-        self.tab_categories_group.setMaximumHeight(200)
-
-        layout_tab_drives = self.drives.layout_tab_drives
-        self.tab_drives_group.setLayout(layout_tab_drives)
-
-        # final layout for search tab
-        layout_tab_search = self.search.search_tab_layout
-        self.tab_search_group.setLayout(layout_tab_search)
-
-        layout_tab_extensions = self.extensions.layout_tab_extensions
-        self.tab_extensions_group.setLayout(layout_tab_extensions)
-
-        preferences_section_layout = self.preferences.layout_tab_preferences
-        self.tab_preferences_group.setLayout(preferences_section_layout)
-
-        folders_section_layout = self.folders.folders_section_layout
-        self.tab_folders_group.setLayout(folders_section_layout)
-
-        settings_tab_layout = QtWidgets.QVBoxLayout()
-        settings_tab_layout.addWidget(self.tabs_settings)
-        # settings_tab_layout.addStretch()
-        self.tab_settings_group.setLayout(settings_tab_layout)
 

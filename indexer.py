@@ -1,3 +1,5 @@
+from PyQt5 import QtCore
+
 import resources
 from mymodules import TabsModule
 from mymodules.GlobalFunctions import *
@@ -5,6 +7,8 @@ from mymodules.MenuModule import IMenu
 
 
 class IndexerWindow(QMainWindow):
+    kill_device_monitor_runner = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super(IndexerWindow, self).__init__(parent)
         # instantiate database
@@ -23,11 +27,13 @@ class IndexerWindow(QMainWindow):
         # save last window size as preferred
         setPreferenceByName('window_size', preference)
 
+        self.kill_device_monitor_runner.emit()
+
     def setStatusBar(self, text):
         self.statusbar.showMessage(text)
 
     def _createTabs(self):
-        self.tabs_view = TabsModule.TabsView(self)
+        self.tabs_view = TabsModule.TabsWidget(self)
         self.tabs = self.tabs_view.tabs_main
 
     def _createStatusBar(self):
