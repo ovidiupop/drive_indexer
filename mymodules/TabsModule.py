@@ -1,8 +1,10 @@
+import sys
+
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QTabWidget
 
-from mymodules import GDBModule as gdb, DevicesMonitorModule as dc
+from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import Categories
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
@@ -13,14 +15,10 @@ from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
 from mymodules.SystemModule import folderCanBeIndexed
 
-import sys
-
-from mymodules.SystemModule import folderCanBeIndexed
-
 if sys.platform == 'win32':
-    from mymodules import DeviceMonitorWindowsModule as dM
+    from mymodules import DeviceMonitorWindowsModule as dc
 else:
-    from mymodules import DevicesMonitorModule as dM
+    from mymodules import DevicesMonitorModule as dc
 
 
 class TabsWidget(QtWidgets.QWidget):
@@ -113,7 +111,6 @@ class TabsWidget(QtWidgets.QWidget):
                   self.folders.folder_reindex_button,
                   self.extensions.add_extension_button,
                   self.extensions.remove_extension_button,
-                  # self.extensions.set_preferred_extension_button,
                   self.extensions.add_extension_input
                   ]
         for my_input in inputs:
@@ -179,9 +176,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.runner.found_files += 1
         self.folders.total_folders_indexed_label.setText(f'Found: {self.runner.found_files} files')
         self.folders.indexing_progress_bar.setValue(self.runner.percentage)
-        # self.indexer.found_files += 1
-        # self.folders.total_folders_indexed_label.setText(f'Found: {self.indexer.found_files} files')
-        # self.folders.indexing_progress_bar.setValue(self.indexer.percentage)
+
 
     @QtCore.pyqtSlot(str)
     def onDirectoryChanged(self, path):

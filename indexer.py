@@ -10,7 +10,7 @@ class IndexerWindow(QMainWindow):
         # instantiate database
         gdb.GDatabase()
         # load resources
-        resources
+        # resources
         # create gui
         self.init_UI()
         # instantiate menu
@@ -45,6 +45,7 @@ class IndexerWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle('Fusion')
     app.setApplicationName(APP_NAME)
     mw = IndexerWindow()
     sys.exit(app.exec())
