@@ -41,6 +41,11 @@ def setActiveDriveDB(mounted_drives):
         gdb.setDrivesActive(mounted_drives)
 
 
+def isEmptyFolder(folder):
+    dir = os.listdir(folder)
+    return len(dir) == 0
+
+
 def folderCanBeIndexed(folder):
     if 'linux' in sys.platform:
         path = getDevicePathForFolder(folder)
@@ -54,10 +59,10 @@ def folderCanBeIndexed(folder):
         root = Path(folder).anchor
 
         parts = folder.split(':')
-        letter =root.strip('\\')
+        letter = root.strip('\\')
 
         serial = get_serial_number_of_physical_disk(drive_letter=letter)
-        serial_is_mounted =gdb.driveSerialIsMounted(serial)
+        serial_is_mounted = gdb.driveSerialIsMounted(serial)
         if serial:
             if serial_is_mounted:
                 return [True, serial]
@@ -93,7 +98,7 @@ def mountedDrivesWindows():
 
     disks = []
     drives = subprocess.Popen(f'wmic diskdrive get model,interfaceType,serialNumber,size,name', shell=True, stdin=None,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     lines_drives = drives.stdout.readlines()
     lines_drives.pop(0)
     count = len(lines_drives)
@@ -108,9 +113,9 @@ def mountedDrivesWindows():
             length = len(data)
 
             # this order is mandatory
-            size = data.pop(len(data)-1)
-            serial = data.pop(len(data)-1)
-            path = data.pop(len(data)-1)
+            size = data.pop(len(data) - 1)
+            serial = data.pop(len(data) - 1)
+            path = data.pop(len(data) - 1)
             name = '_'.join(data)
 
             # if serial in serials:
@@ -159,6 +164,7 @@ def mountedDrivesLinux():
         setActiveDriveDB(disks)
     return disks
 
+
 def mountedDrives():
     if 'linux' in sys.platform:
         disks = []
@@ -185,7 +191,8 @@ def mountedDrives():
         # {'serial': 'WD-WMC4N0404141', 'path': '/dev/sdd', 'size': 2700.0, 'hotplug': '1', 'name': 'WDC_WD30EZRX-00D8PB0'},
         # {'serial': '4990779F50C0', 'path': '/dev/sde', 'size': 931.5, 'hotplug': '1', 'name': 'XPG_EX500'}]
     if 'win' in sys.platform:
-        return self.mo
+        pass
+
 
 def sizeToGb(size):
     measures = ['M', 'G', 'T']
@@ -195,7 +202,7 @@ def sizeToGb(size):
             if size.endswith(measure):
                 s = size.replace(measure, '')
                 if measure == 'M':
-                    new_size = float(s.replace(',', '.'))/1000
+                    new_size = float(s.replace(',', '.')) / 1000
                 elif measure == 'G':
                     new_size = float(s.replace(',', '.'))
                 elif measure == 'T':
