@@ -15,10 +15,10 @@ class TableViewAutoCols(QtWidgets.QTableView):
     def setColumns(self, columns):
         self.columns = columns
 
-    # def resizeEvent(self, event):
-    #     width = event.size().width()
-    #     for index, size in enumerate(self.columns):
-    #         self.setColumnWidth(index, width * size)
+    def resizeEvent(self, event):
+        width = event.size().width()
+        for index, size in enumerate(self.columns):
+            self.setColumnWidth(index, width * size)
 
 
 class PushButton(QtWidgets.QPushButton):
