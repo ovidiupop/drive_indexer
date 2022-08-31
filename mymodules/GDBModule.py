@@ -1,23 +1,8 @@
-import sys
-from PyQt5 import QtWidgets, QtSql
+from PyQt5 import QtSql
 from PyQt5.QtCore import qDebug
 
-from mymodules.GlobalFunctions import default_extensions, REQUIRED_TABLES, CATEGORIES
+from mymodules.GlobalFunctions import *
 from mymodules.HumanReadableSize import HumanBytes
-
-DATABASE_NAME = 'indexer.db'
-
-
-def connection(name: str):
-    """
-    :param name:
-    :return:
-    """
-    driver = 'QSQLITE'
-    database = DATABASE_NAME
-    db = QtSql.QSqlDatabase.addDatabase(driver, name)
-    db.setDatabaseName(database)
-    return db
 
 
 def printQueryErr(query, method_name=''):
@@ -54,7 +39,7 @@ def getAll(table: str, only_field: list = None) -> list:
     :param only_field:
     :return:
     get all records from table
-    if only_fields is set, return a list of choosen fields
+    if only_fields is set, return a list of chosen fields
     ex: ['aif', 'doc', 'docx', 'odt', 'pdf', 'rtf', 'tex', 'txt', 'wpd']
     else return a list of dict with all fields of table
     ex:[{'serial': 'S2R6NX0H703355N', 'name': 'Samsung_SSD_850_EVO_250GB', 'label': 'Samsung_SSD_850_EVO_250GB'},
@@ -75,6 +60,33 @@ def getAll(table: str, only_field: list = None) -> list:
             return_array.append(row)
     query.clear()
     return return_array
+
+
+def foldersOfDrive(serial):
+    query = QtSql.QSqlQuery()
+    query.prepare('SELECT path FROM folders WHERE drive_id=:drive_id')
+    query.bindValue(':drive_id', serial)
+    if query.exec():
+        folders = []
+        while query.next():
+            folders.append(query.value(0))
+        query.clear()
+        return folders
+
+def getExtensionsCategories():
+    """
+    :param extension:
+    :return:
+    """
+    ext_cat = {}
+    query = QtSql.QSqlQuery()
+    query.prepare('SELECT extension, category from extensions e'
+                  ' left join categories c on c.id=e.category_id')
+    if query.exec():
+        while query.next():
+            ext_cat[query.value(0)] = query.value(1)
+    query.clear()
+    return ext_cat
 
 
 def allFolders(hide_inactive=True) -> list:
@@ -447,7 +459,7 @@ def getDriveByPath(path: str) -> str:
     :return:
     """
     query = QtSql.QSqlQuery()
-    query.prepare("SELECT serial FROM drives WHERE path=:path and active=1")
+    query.prepare("SELECT serial FROM drives WHERE path=:path")
     query.bindValue(":path", str(path))
     if query.exec():
         query.first()
@@ -464,6 +476,36 @@ def driveSerialExists(serial: str) -> bool:
     query = QtSql.QSqlQuery()
     query.prepare("SELECT * FROM drives WHERE serial=:serial")
     query.bindValue(":serial", str(serial))
+    if query.exec():
+        ret = query.first()
+        query.clear()
+        return ret
+    return False
+
+
+def driveSerialIsMounted(serial: str) -> bool:
+    """
+    :param serial:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT * FROM drives WHERE serial=:serial and active=1")
+    query.bindValue(":serial", str(serial))
+    if query.exec():
+        ret = query.first()
+        query.clear()
+        return ret
+    return False
+
+
+def isDriveActiveByLabel(label: str) -> bool:
+    """
+    :param serial:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT * FROM drives WHERE label=:label and active=1")
+    query.bindValue(":label", str(label))
     if query.exec():
         ret = query.first()
         query.clear()
@@ -488,15 +530,59 @@ def dummyDataResult():
     return results
 
 
+def setPreferenceById(id, value):
+    query = QtSql.QSqlQuery()
+    query.prepare("UPDATE preferences SET value=:value WHERE id=:id")
+    query.bindValue(':value', value)
+    query.bindValue(':id', id)
+    if query.exec():
+        query.clear()
+    return True
+
+
+def setPreferenceByName(name, value):
+    query = QtSql.QSqlQuery()
+    query.prepare("UPDATE preferences SET value=:value WHERE name=:name")
+    query.bindValue(':value', value)
+    query.bindValue(':name', name)
+    if query.exec():
+        query.clear()
+    return True
+
+
+def getPreferenceByName(name):
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT value FROM preferences WHERE name=:name")
+    query.bindValue(":name", str(name))
+    if query.exec():
+        query.first()
+        ret = query.value('value')
+        query.clear()
+        return ret
+
+
+def connection(name: str):
+    """
+    :param name:
+    :return:
+    """
+    db = QtSql.QSqlDatabase.addDatabase(DATABASE_DRIVER, name)
+    db.setDatabaseName(getDatabaseLocation())
+    return db
+
+
 class GDatabase:
     def __init__(self):
         super().__init__()
-        driver = 'QSQLITE'
-        database = DATABASE_NAME
-        self.con = QtSql.QSqlDatabase.addDatabase(driver)
-        self.con.setDatabaseName(database)
+        local_path = getAppLocation()
+        if not QDir(local_path).exists():
+            QDir().mkdir(local_path)
+        database_path = getDatabaseLocation()
+        self.con = QtSql.QSqlDatabase.addDatabase(DATABASE_DRIVER)
+        self.con.setDatabaseName(database_path)
         self.required_tables = REQUIRED_TABLES
         self.categories = CATEGORIES
+        self.preferences = PREFERENCES
         self.default_extensions = default_extensions
         self.checkDatabaseConnection()
         self.tablesExists()
@@ -518,17 +604,61 @@ class GDatabase:
     def addTablesDatabase(self):
         query = QtSql.QSqlQuery()
         commands = [
+            'DROP TABLE IF EXISTS drivers_db',
+            'DROP TABLE IF EXISTS databases',
             'DROP TABLE IF EXISTS categories',
             'DROP TABLE IF EXISTS drives',
             'DROP TABLE IF EXISTS folders',
             'DROP TABLE IF EXISTS extensions',
             'DROP TABLE IF EXISTS files',
-            'CREATE TABLE categories (id INTEGER PRIMARY KEY, category TEXT NOT NULL, icon TEXT NOT NULL, selected INT NOT NULL DEFAULT 0)',
-            'CREATE TABLE drives ( serial TEXT PRIMARY KEY, name TEXT NOT NULL, label TEXT NOT NULL, size FLOAT NOT NULL, active INTEGER DEFAULT 0, path TEXT NOT NULL)',
-            'CREATE TABLE folders ( id INTEGER PRIMARY KEY, path TEXT NOT NULL, drive_id TEXT, FOREIGN KEY(drive_id) REFERENCES drives(serial))',
-            'CREATE TABLE extensions ( id INTEGER PRIMARY KEY, extension TEXT NOT NULL, category_id INTEGER NOT NULL, selected INTEGER DEFAULT 0, FOREIGN KEY(category_id) REFERENCES categories(id))',
-            'CREATE TABLE files ( id INTEGER PRIMARY KEY, dir TEXT NOT NULL, filename TEXT NOT NULL, size INTEGER, '
-            'extension_id INTEGER NOT NULL, folder_id INTEGER NOT NULL, FOREIGN KEY(extension_id) REFERENCES extensions(id), FOREIGN KEY(folder_id) REFERENCES folders(id))',
+            'DROP TABLE IF EXISTS preferences',
+
+            'CREATE TABLE categories('
+            '   id INTEGER PRIMARY KEY, '
+            '   category VARCHAR(30) NOT NULL, '
+            '   icon VARCHAR(30) NOT NULL, '
+            '   selected INT NOT NULL DEFAULT 1)',
+
+            'CREATE TABLE drives('
+            '   serial TEXT PRIMARY KEY, '
+            '   name VARCHAR(50) NOT NULL, '
+            '   label VARCHAR(50) NOT NULL, '
+            '   size FLOAT NOT NULL, '
+            '   active INTEGER DEFAULT 0, '
+            '   path VARCHAR(20) NOT NULL)',
+
+            'CREATE TABLE folders('
+            '   id INTEGER PRIMARY KEY, '
+            '   path TEXT NOT NULL, '
+            '   drive_id TEXT, '
+            '   status INTEGER NOT NULL DEFAULT 0, '
+            '   FOREIGN KEY(drive_id) REFERENCES drives(serial))',
+
+            'CREATE TABLE extensions('
+            '   id INTEGER PRIMARY KEY, '
+            '   extension VARCHAR(20) NOT NULL, '
+            '   category_id INTEGER NOT NULL, '
+            '   selected INTEGER DEFAULT 0, '
+            '   FOREIGN KEY(category_id) REFERENCES categories(id))',
+
+            'CREATE TABLE files('
+            '   id INTEGER PRIMARY KEY, '
+            '   dir TEXT NOT NULL, '
+            '   filename TEXT NOT NULL, '
+            '   size INTEGER, '
+            '   extension_id INTEGER NOT NULL, '
+            '   folder_id INTEGER NOT NULL, '
+            '   FOREIGN KEY(extension_id) REFERENCES extensions(id), '
+            '   FOREIGN KEY(folder_id) REFERENCES folders(id))',
+
+            'CREATE TABLE preferences('
+            '   id INTEGER PRIMARY KEY, '
+            '   name VARCHAR(50) NOT NULL, '
+            '   description TEXT, '
+            '   value TEXT NOT NULL, '
+            '   original VARCHAR(50) NOT NULL, '
+            '   type VARCHAR(10) NOT NULL, '
+            '   editable INT NOT NULL)',
         ]
 
         # each query must be prepared before execution
@@ -548,8 +678,20 @@ class GDatabase:
                 f'{missing_tables}')
             sys.exit(1)
 
+        # populate preferences
+        for preference in self.preferences:
+            query.prepare("""INSERT INTO preferences (name, description, value, 
+            original, type, editable) VALUES (?, ?, ?, ?, ?, ?)""")
+            query.addBindValue(preference[0])
+            query.addBindValue(preference[1])
+            query.addBindValue(preference[2])
+            query.addBindValue(preference[3])
+            query.addBindValue(preference[4])
+            query.addBindValue(preference[5])
+            query.exec()
+
         # populate categories
-        for category, icon  in self.categories.items():
+        for category, icon in self.categories.items():
             query.prepare("""INSERT INTO categories (category, icon) VALUES (?, ?)""")
             query.addBindValue(category)
             query.addBindValue(icon)

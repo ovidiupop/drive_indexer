@@ -40,3 +40,44 @@ TO CREATE INDEX FOR ITERATING IN MODEL
         QModelIndex * index = model.index(row, column)
 The simplest way to get value of a cell from table is: here row and col need to be integer!!!
         val = model.data(model.index(row, col), Qt.DisplayRole)
+
+
+REMOVE ALL DIGITS to RIGHT
+path = parts[0].rstrip('0123456789').strip()
+
+
+# QDIALOG
+# add minimize, maximize and the other flags for manipulating window
+self.setWindowFlags(Qt.Window)
+
+ADD ICON
+    label = QLabel(self)
+    pixmap = QPixmap(':sound.png')
+    label.setPixmap(pixmap)
+    self.resize(16, 16)
+
+When generate same type of object in loop, to assign individual values, we have to instantiate a new pointer
+for that value, else all the objects will get the last used value
+SEE val=x
+        for idx, cat in enumerate(self.categories):
+            ..............
+            x = cat_name
+            cat_name.stateChanged.connect(lambda checked, val=x: self.setPreferredCategory(val))
+
+
+Set attribute to class using a string
+    setattr
+    setattr(self, string, value)
+    ex.
+    [setattr(self, column.lower(), data[index]) for index, column in enumerate(HEADER_SEARCH_RESULTS_TABLE)]
+To get attribute by string
+    getattr(self, attribute)
+
+Call the instance of a class by its name
+    import Module where the class is if not in the same module
+    class_name = 'ClassName'
+variant 1
+    obj = globals()[class_name]
+    instance = obj()
+variant 2
+    instance = globals()[class_name]()

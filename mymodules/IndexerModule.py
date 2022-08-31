@@ -1,6 +1,11 @@
 import os
-from PyQt5 import QtCore, QtSql
+
+import pythoncom
+from PyQt5 import QtCore, QtSql, QtWidgets
+from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
+
 from mymodules import GDBModule
+from mymodules.SystemModule import folderCanBeIndexed
 
 
 def percentage(part, whole):
@@ -19,16 +24,27 @@ def countTotalFiles(roots):
     return count
 
 
-class Indexer(QtCore.QObject):
-    """ Indexer class
-    The worker responsible with indexing of files to database
-    """
+class WorkerKilledException(Exception):
+    pass
+
+
+# we need this WorkerSignals, because QRunnable hasn't signals
+# WorkerSignals is derived from Object and have signals
+class WorkerSignals(QObject):
+    progress = pyqtSignal(int)
     match_found = QtCore.pyqtSignal()
     directory_changed = QtCore.pyqtSignal(str)
     finished = QtCore.pyqtSignal()
+    status_folder_changed = QtCore.pyqtSignal()
+
+
+class JobRunner(QRunnable):
+    signals = WorkerSignals()
 
     def __init__(self):
         super().__init__()
+        self.is_killed = False
+
         self.con = GDBModule.connection('indexer_connection')
         self.con.open()
         self.extensions = self.getExtensionsList()
@@ -40,43 +56,30 @@ class Indexer(QtCore.QObject):
         self.folder_id = 0
         self.remove_indexed = True
 
-    def getExtensionsList(self):
-        extensions = {}
-        all_extensions = GDBModule.getAll('extensions')
-        for ext in all_extensions:
-            extensions[ext['id']] = ext['extension']
-        return extensions
-
-    def setExtensions(self, extensions):
-        self.extensions = extensions
-
-    # use the @QtCore.pyqtSlot() decorator to
-    # make the worker's methods into true Qt slots
-    @QtCore.pyqtSlot()
-    def doIndex(self):
-        self.total_files = countTotalFiles(self.folders_to_index)
-        for folder in self.folders_to_index:
-            self.folder_id = self.folderId(folder)
-            if self.remove_indexed:
-                self.removeFilesBeforeReindex(self.folder_id)
-            self._index(folder)
-        # finish the thread
-        self.con.close()
-        self.finished.emit()
-
-    def removeFilesBeforeReindex(self, folder_id):
-        """ before reindex a folder, remove old indexed files from that folder
-        to prevent duplication
-        """
-        query = QtSql.QSqlQuery(self.con)
-        query.prepare("""Delete from files where folder_id=:folder_id""")
-        query.bindValue(':folder_id', folder_id)
-        if not query.exec():
-            GDBModule.printQueryErr(query, 'removeFilesBeforeReindex')
+    @pyqtSlot()
+    def run(self):
+        try:
+            self.total_files = countTotalFiles(self.folders_to_index)
+            for folder in self.folders_to_index:
+                self.folder_id = self.folderId(folder)
+                if self.remove_indexed:
+                    self.removeFilesBeforeReindex(self.folder_id)
+                self.setStatusFolder(folder, 0)
+                self.signals.status_folder_changed.emit()
+                self._index(folder)
+                self.setStatusFolder(folder, 1)
+                self.signals.status_folder_changed.emit()
+            self.finishThread()
+        except WorkerKilledException:
+            pass
 
     def _index(self, path):
+        if self.is_killed:
+            self.finishThread()
+            raise WorkerKilledException
+
         """recursive method for indexing files"""
-        self.directory_changed.emit(path)
+        self.signals.directory_changed.emit(path)
         # switch to new directory (root or recursive)
         directory = QtCore.QDir(path)
         directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
@@ -94,12 +97,48 @@ class Indexer(QtCore.QObject):
                     extension_id = self.extensionId(file_ext)
                 item = {'dir': path, 'filename': entry.fileName(), 'size': entry.size(),
                         'extension_id': extension_id, 'folder_id': self.folder_id}
-                self.match_found.emit()
+                self.signals.match_found.emit()
 
                 # insert file in database
                 self.addFile(item)
             if entry.isDir():
                 self._index(entry.filePath())
+
+    def finishThread(self):
+        self.con.close()
+        self.signals.finished.emit()
+
+    def kill(self):
+        self.is_killed = True
+
+    def getExtensionsList(self):
+        extensions = {}
+        all_extensions = GDBModule.getAll('extensions')
+        for ext in all_extensions:
+            extensions[ext['id']] = ext['extension']
+        return extensions
+
+    def setExtensions(self, extensions):
+        self.extensions = extensions
+
+    def setStatusFolder(self, path, status):
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare("UPDATE folders SET status=:status WHERE path=:path")
+        query.bindValue(':path', path)
+        query.bindValue(':status', int(status))
+        if query.exec():
+            query.clear()
+        return True
+
+    def removeFilesBeforeReindex(self, folder_id):
+        """ before reindex a folder, remove old indexed files from that folder
+        to prevent duplication
+        """
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare("""Delete from files where folder_id=:folder_id""")
+        query.bindValue(':folder_id', folder_id)
+        if not query.exec():
+            GDBModule.printQueryErr(query, 'removeFilesBeforeReindex')
 
     def extensionId(self, extension):
         for key, value in self.extensions.items():

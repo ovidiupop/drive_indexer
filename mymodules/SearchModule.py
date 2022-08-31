@@ -1,22 +1,20 @@
-import os
-
 import pandas as pd
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QSortFilterProxyModel, Qt
-from PyQt5.QtWidgets import QTableView, QAbstractItemView, QFileDialog
+from PyQt5 import QtCore
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, QFileInfo
+from PyQt5.QtWidgets import QAbstractItemView
 
 from mymodules import ComponentsModule, ModelsModule
-from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import CategoriesSelector
 from mymodules.ComponentsModule import PushButton
 from mymodules.GlobalFunctions import *
-from mymodules.ModelsModule import SearchResultsTableModel
+from mymodules.ModelsModule import SearchResultsTableModel, SearchResultsTableItemsDelegate
+from mymodules.PreviewFileModule import FileDetailDialog
 
 
 class Search(QtWidgets.QWidget):
-
     export_all_results_signal = QtCore.pyqtSignal()
     export_selected_results_signal = QtCore.pyqtSignal()
+    double_clicked_result_row = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
         super(Search, self).__init__(parent)
@@ -29,6 +27,8 @@ class Search(QtWidgets.QWidget):
         self.search_input_label = QtWidgets.QLabel('Search for:')
         self.search_term_input = QtWidgets.QLineEdit()
         self.search_term_input.setPlaceholderText('Insert term to search')
+        self.search_term_input.setFocus(Qt.OtherFocusReason)
+
         self.search_button = PushButton('Search')
         self.search_button.setMinimumWidth(200)
         self.search_button.setIcon(iconForButton('SP_FileDialogContentsView'))
@@ -39,20 +39,14 @@ class Search(QtWidgets.QWidget):
         self.found_search_label = QtWidgets.QLabel('Found')
         self.found_search_label.hide()
 
+        # set table for results
         self.found_results_table = ComponentsModule.TableViewAutoCols(None)
         self.found_results_table.setColumns([0.40, 0.25, 0.10, 0.10, 0.15])
-        self.found_results_table_model = ModelsModule.SearchResultsTableModel(
-            pd.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE))
+        self.found_results_table.doubleClicked.connect(self.double_clicked_result_row)
+        self.found_results_table.setItemDelegate(SearchResultsTableItemsDelegate(self))
 
-        # add sorting to table
-        sortermodel_results = QSortFilterProxyModel()
-        sortermodel_results.setSourceModel(self.found_results_table_model)
-        sortermodel_results.setFilterKeyColumn(2)
-        # use sorter as model for table
-        self.found_results_table.setModel(sortermodel_results)
-        self.found_results_table.setSortingEnabled(True)
-        self.found_results_table.sortByColumn(2, Qt.AscendingOrder)
-        self.found_results_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.found_results_table_model = ModelsModule.SearchResultsTableModel(
+            pd.DataFrame([], columns=HEADER_SEARCH_RESULTS_TABLE), self.found_results_table)
 
         # categories box
         self.categories_selector_search = CategoriesSelector(parent=self)
@@ -67,7 +61,7 @@ class Search(QtWidgets.QWidget):
 
         h_categories_row = QtWidgets.QHBoxLayout()
         self.checkboxes_group = QtWidgets.QGroupBox()
-        self.checkboxes_group.setMaximumHeight(140)
+        self.checkboxes_group.setMaximumHeight(100)
         self.checkboxes_group.setLayout(self.categories_layout)
         h_categories_row.addWidget(self.checkboxes_group)
 
@@ -96,6 +90,17 @@ class Search(QtWidgets.QWidget):
         # prepare extensions for search
         self.extensions_for_search = []
         self.getExtensionsForSearch()
+        self.double_clicked_result_row.connect(self.doubleClickedResultRow)
+
+    @QtCore.pyqtSlot()
+    def doubleClickedResultRow(self):
+        # check if row belongs to a mounted drive
+        selected = self.found_results_table.currentIndex()
+        if self.found_results_table.model().hasMountedDrive(selected):
+            if setStatusBarMW('Please wait while drive is initialized...'):
+                self.prepareFileDetailDialog(self.found_results_table)
+        else:
+            QtWidgets.QMessageBox.information(None, 'No file preview', 'The drive is not mounted in system!')
 
     @QtCore.pyqtSlot()
     def onSubmitted(self):
@@ -119,7 +124,7 @@ class Search(QtWidgets.QWidget):
 
     def updateResults(self, results):
         data = pd.DataFrame(results, columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE)
-        self.found_results_table.setModel(SearchResultsTableModel(data))
+        self.found_results_table.setModel(SearchResultsTableModel(data, self.found_results_table))
         self.update()
 
     # load extensions when the search is started
@@ -187,7 +192,16 @@ class Search(QtWidgets.QWidget):
 
     # we have to pass data as list
     def putInFile(self, data):
-        default_dir = DEFAULT_DIR
+        if not data:
+            QtWidgets.QMessageBox.information(self, 'Nothing to export', "There is nothing to export<br><br>Search for "
+                                                                         "something!")
+            return False
+
+        if int(getPreference('header_to_csv')):
+            header = CSV_COLUMN_SEPARATOR.join(HEADER_SEARCH_RESULTS_TABLE)
+            data.insert(0, header)
+
+        default_dir = getDefaultDir()
         default_filename = os.path.join(default_dir, "")
         filename, _ = QFileDialog.getSaveFileName(
             self, "Save CSV", default_filename, "CSV Files (*.csv)"
@@ -199,3 +213,12 @@ class Search(QtWidgets.QWidget):
             file.close()
             QtWidgets.QMessageBox.information(None, 'Export CSV', 'Exported successfully!')
             return
+
+    def prepareFileDetailDialog(self, table):
+        ext_cat = gdb.getExtensionsCategories()
+        data = table.model().rowData(table.currentIndex())
+        file_path = data[0] + '/' + data[1]
+        info = QFileInfo(file_path)
+        extension = info.suffix()
+        category = ext_cat[extension]
+        FileDetailDialog(category, data, self)

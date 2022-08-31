@@ -1,9 +1,44 @@
-from PyQt5 import QtCore, QtSql
+from PyQt5 import QtCore, QtSql, QtGui
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
-from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QItemDelegate, QLineEdit, \
-    QDataWidgetMapper
+from PyQt5.QtGui import QIcon
+from PyQt5.QtSql import QSqlTableModel, QSqlRelation
+from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, \
+    QDataWidgetMapper, QAbstractItemView
 
-from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE
+from mymodules import GDBModule as gdb
+from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
+
+
+def sorter(model_obj, table_obj, filter_key):
+    # add sorting to table
+    sortermodel = QSortFilterProxyModel()
+    sortermodel.setSourceModel(model_obj)
+    sortermodel.setFilterKeyColumn(filter_key)
+
+    # use sorter as model for table
+    table_obj.setModel(sortermodel)
+    table_obj.setSortingEnabled(True)
+    table_obj.sortByColumn(filter_key, Qt.DescendingOrder)
+    table_obj.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+
+class SortFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        QSortFilterProxyModel.__init__(self, *args, **kwargs)
+        self.filters = {}
+
+    def setFilterByColumn(self, regex, column):
+        self.filters[column] = regex
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        for key, regex in self.filters.items():
+            ix = self.sourceModel().index(source_row, key, source_parent)
+            if ix.isValid():
+                text = self.sourceModel().data(ix).toString()
+                if not text.contains(regex):
+                    return False
+        return True
 
 
 class ExtensionsModel(QtCore.QAbstractListModel):
@@ -24,34 +59,71 @@ class ExtensionsModel(QtCore.QAbstractListModel):
         return len(self.extensions)
 
 
-class DrivesTableModel(QtSql.QSqlTableModel):
-    def __init__(self):
-        super(DrivesTableModel, self).__init__()
-        self._data = []
-        self.table = 'drives'
-        self.setTable(self.table)
+class FoldersModel(QtSql.QSqlRelationalTableModel):
+    def __init__(self, parent=None):
+        super(FoldersModel, self).__init__(parent)
+        self.setTable('folders')
+        self.setRelation(2, QSqlRelation("drives", "serial", "label"))
         self.setEditStrategy(self.OnRowChange)
         self.setColumnsName()
-        self.setSort(self.fieldIndex("size"), Qt.DescendingOrder)
+        self.setSort(self.fieldIndex("drive_id"), Qt.DescendingOrder)
+        sorter(self, self.parent(), 2)
+        self.parent().setItemDelegate(FoldersItemsDelegate(self))
+        self.select()
 
     def setColumnsName(self):
-        for k, v in HEADER_DRIVES_TABLE.items():
+        for k, v in HEADER_FOLDERS_TABLE.items():
             idx = self.fieldIndex(k)
             self.setHeaderData(idx, Qt.Horizontal, v)
 
-    def setTableSorter(self, column_index, table):
-        sort_filter = QSortFilterProxyModel()
-        sort_filter.setSourceModel(self)
-        sort_filter.setFilterKeyColumn(column_index)
-        table.setModel(sort_filter)
-        table.setSortingEnabled(True)
-        table.sortByColumn(column_index, Qt.DescendingOrder)
+    def nameOfColumn(self, index):
+        return [col for idx, col in enumerate(HEADER_FOLDERS_TABLE) if idx == index][0]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+
+        column_name = self.nameOfColumn(index.column())
+        if role == Qt.DisplayRole:
+            if column_name == 'status':
+                return None
+
+        if role == Qt.DecorationRole:
+            if column_name == 'status':
+                if QSqlTableModel.data(self, index) == 1:
+                    return QIcon(':tick.png')
+                else:
+                    return QIcon(':exclamation.png')
+        return QSqlTableModel.data(self, index, role)
+
+
+class FoldersItemsDelegate(QStyledItemDelegate):
+    def __init__(self, parent):
+        QStyledItemDelegate.__init__(self, parent)
+
+    def createEditor(self, parent, option, index):
+        return None
 
 
 class SearchResultsTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, data):
-        super(SearchResultsTableModel, self).__init__()
+    def __init__(self, data, parent):
+        super(SearchResultsTableModel, self).__init__(parent)
         self._data = data
+        sorter(self, self.parent(), 2)
+
+    def hasMountedDrive(self, index):
+        index_column = self.colIndexByName('Drive')
+        value = str(self._data.iloc[index.row()][index_column])
+        return gdb.isDriveActiveByLabel(value)
+
+    def rowData(self, index):
+        row_data = []
+        for idx in enumerate(HEADER_SEARCH_RESULTS_TABLE):
+            row_data.append(str(self._data.iloc[index.row()][idx[0]]))
+        return row_data
+
+    def colIndexByName(self, name):
+        return [ix for ix, col in enumerate(HEADER_SEARCH_RESULTS_TABLE) if col == name][0]
 
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
@@ -60,6 +132,13 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
             if role == Qt.TextAlignmentRole:
                 if index.column() == 2 or index.column() == 3:
                     return Qt.AlignRight
+
+            if role == Qt.ForegroundRole:
+                if index.column() == self.colIndexByName('Drive'):
+                    value = str(self._data.iloc[index.row()][index.column()])
+                    is_active = gdb.isDriveActiveByLabel(value)
+                    if not is_active:
+                        return QtGui.QColor('red')
         return None
 
     def rowCount(self, parent=None):
@@ -96,23 +175,61 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
             print(e)
 
 
-class SortFilterProxyModel(QSortFilterProxyModel):
-    def __init__(self, *args, **kwargs):
-        QSortFilterProxyModel.__init__(self, *args, **kwargs)
-        self.filters = {}
+class SearchResultsTableItemsDelegate(QStyledItemDelegate):
+    def __init__(self, parent):
+        QStyledItemDelegate.__init__(self, parent)
 
-    def setFilterByColumn(self, regex, column):
-        self.filters[column] = regex
-        self.invalidateFilter()
+    def nameOfColumn(self, index):
+        return [col for idx, col in enumerate(HEADER_SEARCH_RESULTS_TABLE) if idx == index][0]
 
-    def filterAcceptsRow(self, source_row, source_parent):
-        for key, regex in self.filters.items():
-            ix = self.sourceModel().index(source_row, key, source_parent)
-            if ix.isValid():
-                text = self.sourceModel().data(ix).toString()
-                if not text.contains(regex):
-                    return False
-        return True
+    def createEditor(self, parent, option, index):
+        return None
+
+
+class DrivesTableModel(QtSql.QSqlTableModel):
+    def __init__(self):
+        super(DrivesTableModel, self).__init__()
+        self._data = []
+        self.table = 'drives'
+        self.setTable(self.table)
+        self.setEditStrategy(self.OnRowChange)
+        self.setColumnsName()
+        self.setSort(self.fieldIndex("size"), Qt.DescendingOrder)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+
+        column_name = nameOfColumn(index.column())
+        if role == Qt.DisplayRole:
+            if column_name == 'active':
+                return None
+
+        if role == Qt.DecorationRole:
+            if column_name == 'active':
+                if QSqlTableModel.data(self, index) == 1:
+                    return QIcon(':tick.png')
+                else:
+                    return QIcon(':cross.png')
+
+        if role == Qt.TextAlignmentRole:
+            if column_name == 'size':
+                return Qt.AlignVCenter + Qt.AlignRight
+        # default, no specific condition found
+        return QSqlTableModel.data(self, index, role)
+
+    def setColumnsName(self):
+        for k, v in HEADER_DRIVES_TABLE.items():
+            idx = self.fieldIndex(k)
+            self.setHeaderData(idx, Qt.Horizontal, v)
+
+    def setTableSorter(self, column_index, table):
+        sort_filter = QSortFilterProxyModel()
+        sort_filter.setSourceModel(self)
+        sort_filter.setFilterKeyColumn(column_index)
+        table.setModel(sort_filter)
+        table.setSortingEnabled(True)
+        table.sortByColumn(column_index, Qt.DescendingOrder)
 
 
 class DrivesMapper(QDataWidgetMapper):
@@ -127,55 +244,56 @@ class DrivesMapper(QDataWidgetMapper):
         self.addMapping(parent.drive_active_input, model.fieldIndex('active'))
 
 
+def nameOfColumn(idx):
+    names = HEADER_DRIVES_TABLE.keys()
+    for index, name in enumerate(names):
+        if index == idx:
+            return name
+
+
 class DrivesItemsDelegate(QStyledItemDelegate):
     def __init__(self, parent):
         QStyledItemDelegate.__init__(self, parent)
 
-    def nameOfColumn(self, idx):
-        names = HEADER_DRIVES_TABLE.keys()
-        for index, name in enumerate(names):
-            if index == idx:
-                return name
-
     def createEditor(self, parent, option, index):
-        disabled = ['serial', 'name', 'active']
-        if self.nameOfColumn(index.column()) in disabled:
+        disabled = ['serial', 'name', 'active', 'path']
+        if nameOfColumn(index.column()) in disabled:
             editor = QLineEdit(parent)
             editor.setDisabled(True)
             return editor
-        elif 'label' == self.nameOfColumn(index.column()):
+        elif 'label' == nameOfColumn(index.column()):
             editor = QLineEdit(parent)
             editor.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             return editor
-        elif 'size' == self.nameOfColumn(index.column()):
+        elif 'size' == nameOfColumn(index.column()):
             spinbox = QSpinBox(parent)
             spinbox.setRange(0, 2000000)
             spinbox.setSingleStep(100)
             spinbox.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             return spinbox
         else:
-            return QItemDelegate.createEditor(self, parent, option, index)
+            return None
 
 # KEEP THIS FOR EXAMPLE
-        # elif index.column() == OWNER:
-        #     combobox = QComboBox(parent)
-        #     combobox.addItems(sorted(index.model().owners))
-        #     combobox.setEditable(True)
-        #     return combobox
-        #     elif index.column() == COUNTRY:
-        #     combobox = QComboBox(parent)
-        #     combobox.addItems(sorted(index.model().countries))
-        #     combobox.setEditable(True)
-        #     return combobox
-        # elif index.column() == NAME:
-        #     editor = QLineEdit(parent)
-        #     self.connect(editor, SIGNAL("returnPressed()"),
-        #                  self.commitAndCloseEditor)
-        #     return editor
-        #     elif index.column() == DESCRIPTION:
-        #     editor = richtextlineedit.RichTextLineEdit(parent)
-        #     self.connect(editor, SIGNAL("returnPressed()"),
-        #                  self.commitAndCloseEditor)
-        #     return editor
-        # else:
-        #     return QItemDelegate.createEditor(self, parent, option, index)
+# elif index.column() == OWNER:
+#     combobox = QComboBox(table_obj)
+#     combobox.addItems(sorted(index.model().owners))
+#     combobox.setEditable(True)
+#     return combobox
+#     elif index.column() == COUNTRY:
+#     combobox = QComboBox(table_obj)
+#     combobox.addItems(sorted(index.model().countries))
+#     combobox.setEditable(True)
+#     return combobox
+# elif index.column() == NAME:
+#     editor = QLineEdit(table_obj)
+#     self.connect(editor, SIGNAL("returnPressed()"),
+#                  self.commitAndCloseEditor)
+#     return editor
+#     elif index.column() == DESCRIPTION:
+#     editor = richtextlineedit.RichTextLineEdit(table_obj)
+#     self.connect(editor, SIGNAL("returnPressed()"),
+#                  self.commitAndCloseEditor)
+#     return editor
+# else:
+#     return QItemDelegate.createEditor(self, table_obj, option, index)
