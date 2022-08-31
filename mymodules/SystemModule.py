@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from PyQt5.QtCore import QObject
@@ -33,6 +34,11 @@ def getFileData(file):
 def setActiveDriveDB(mounted_drives):
     if mounted_drives:
         gdb.setDrivesActive(mounted_drives)
+
+
+def isEmptyFolder(folder):
+    dir = os.listdir(folder)
+    return len(dir) == 0
 
 
 def folderCanBeIndexed(folder):
@@ -99,7 +105,7 @@ def sizeToGb(size):
             if size.endswith(measure):
                 s = size.replace(measure, '')
                 if measure == 'M':
-                    new_size = float(s.replace(',', '.'))/1000
+                    new_size = float(s.replace(',', '.')) / 1000
                 elif measure == 'G':
                     new_size = float(s.replace(',', '.'))
                 elif measure == 'T':

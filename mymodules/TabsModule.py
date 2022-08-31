@@ -11,7 +11,7 @@ from mymodules.GlobalFunctions import setStatusBarMW
 from mymodules.IndexerModule import JobRunner
 from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
-from mymodules.SystemModule import folderCanBeIndexed
+from mymodules.SystemModule import folderCanBeIndexed, isEmptyFolder
 
 
 class TabsWidget(QtWidgets.QWidget):
@@ -77,11 +77,7 @@ class TabsWidget(QtWidgets.QWidget):
         # re-enable buttons
         self.setStatusButtons(True)
         self.folders.folder_stop_index_button.hide()
-
         self.setStatusBar(f'Indexed {self.runner.found_files} files')
-        # self.setStatusBar(f'Indexed {self.indexer.found_files} files')
-        # sometimes the percent is not 100 at the end
-        # set manually to fill the bar
         self.folders.indexing_progress_bar.setValue(100)
         self.toggleProgressVisibility(False)
         # show close button
@@ -123,11 +119,10 @@ class TabsWidget(QtWidgets.QWidget):
             self.folders.close_indexed_results_button.hide()
             self.setStatusButtons(False)
             self.folders.folder_stop_index_button.show()
-
             self.threadpool = QThreadPool()
             self.runner = JobRunner()
-
-            # indexing for new extension
+            # if indexing for new extension
+            # preserve already indexed files
             if self.extensions.last_added_extension:
                 self.runner.remove_indexed = False
                 extension = self.extensions.last_added_extension
@@ -153,8 +148,11 @@ class TabsWidget(QtWidgets.QWidget):
         indexable_folders = []
         for folder in folders:
             can = folderCanBeIndexed(folder)
-            if can[0]:
-                indexable_folders.append(folder)
+            is_indexable = can[0]
+            is_not_empty = not isEmptyFolder(folder)
+            if is_indexable and is_not_empty:
+                if not isEmptyFolder(folder):
+                    indexable_folders.append(folder)
             else:
                 non_indexable.append(folder)
         self.runner.folders_to_index = indexable_folders
@@ -162,17 +160,15 @@ class TabsWidget(QtWidgets.QWidget):
             non = "<br>".join(non_indexable)
             QtWidgets.QMessageBox.critical(self,
                                            'Error!',
-                                           f"Next folders can't be indexed right now, because the parent drive is not active!"
-                                           f"<br>{non}")
+                                           f"Next folders are empty! Probably the source drive is not active!<br>"
+                                           f"<br>{non}"
+                                           f"<br><br>Please check!")
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):
         self.runner.found_files += 1
         self.folders.total_folders_indexed_label.setText(f'Found: {self.runner.found_files} files')
         self.folders.indexing_progress_bar.setValue(self.runner.percentage)
-        # self.indexer.found_files += 1
-        # self.folders.total_folders_indexed_label.setText(f'Found: {self.indexer.found_files} files')
-        # self.folders.indexing_progress_bar.setValue(self.indexer.percentage)
 
     @QtCore.pyqtSlot(str)
     def onDirectoryChanged(self, path):
@@ -199,7 +195,6 @@ class TabsWidget(QtWidgets.QWidget):
     def deviceListChanged(self):
         # print('refill')
         self.drives.comboActiveDrives()
-        # self.drives.drives_table_model.dataChanged.connect(self.validateData)
         self.drives.drives_table_model.select()
         self.folders.fillPreferredFolders()
 
@@ -232,6 +227,4 @@ class TabsView(TabsWidget):
         settings_tab_layout.addWidget(self.tabs_settings)
         # settings_tab_layout.addStretch()
         self.tab_settings_group.setLayout(settings_tab_layout)
-
-
 

@@ -1,6 +1,12 @@
 To deploy
+do not use this because did not select only used modules
     pip3.8 install cx_freeze
     cxfreeze indexer.py
     or cxfreeze indexer.py --icon=indexer.ico
 
-pyinstaller --name="Indexer" --windowed --onefile indexer.py
+but this
+    pyinstaller --name="Indexer" --windowed --onefile indexer.py
+
+# generate resources
+python3 prepare_resources.py
+pyrcc5 -o resources.py resources.qtc
