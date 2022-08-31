@@ -60,6 +60,7 @@ class DrivesView(Drives):
 
         self.drives_table_model.select()
         self.drives_table = TableViewAutoCols(None)
+        self.drives_table.horizontalHeader().setMinimumSectionSize(0.1)
         self.drives_table.setColumns(COLUMN_SIZE)
         self.drives_table_model = DrivesTableModel()
 

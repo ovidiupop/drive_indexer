@@ -1,11 +1,9 @@
 import os
 
-import pythoncom
-from PyQt5 import QtCore, QtSql, QtWidgets
+from PyQt5 import QtCore, QtSql
 from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
 
 from mymodules import GDBModule
-from mymodules.SystemModule import folderCanBeIndexed
 
 
 def percentage(part, whole):

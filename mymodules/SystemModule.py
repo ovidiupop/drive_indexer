@@ -1,11 +1,12 @@
+import sys
 import os
 import platform
 import subprocess
 
-import win32api
-import wmi
+if sys.platform == 'win32':
+    import win32api
+    import wmi
 
-import sys
 from PyQt5.QtCore import QObject
 from mymodules import GDBModule as gdb
 
