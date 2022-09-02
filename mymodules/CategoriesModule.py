@@ -63,8 +63,10 @@ class CategoriesSelector(QtWidgets.QWidget):
         h_cats.addLayout(h_buttons)
         v_main = QtWidgets.QVBoxLayout()
         v_main.addLayout(h_cats)
-
         v_main.addStretch()
+
+        self.statusButtonCheckAll(self)
+
         return v_main
 
     def checkAllCategories(self, is_checked):
@@ -73,6 +75,13 @@ class CategoriesSelector(QtWidgets.QWidget):
             # this will trigger change for each button
             checkbox.setChecked(True) if is_checked else checkbox.setChecked(False)
         self.statusButtonCheckAll(sender_parent)
+
+    def setPreferredCategory(self, checkbox):
+        text = checkbox.text()
+        if not self.parent_name:
+            # come from settings tab
+            gdb.setCategorySelected(text, checkbox.isChecked())
+        self.statusButtonCheckAll(checkbox.parent())
 
     def statusButtonCheckAll(self, sender_parent):
         all_are_checked = True
@@ -83,13 +92,4 @@ class CategoriesSelector(QtWidgets.QWidget):
         text = 'Uncheck All' if all_are_checked else 'Check All'
         self.check_all_categories.setText(text)
         self.check_all_categories.setChecked(all_are_checked)
-
-    def setPreferredCategory(self, checkbox):
-        text = checkbox.text()
-        if not self.parent_name:
-            # come from settings tab
-            gdb.setCategorySelected(text, checkbox.isChecked())
-        self.statusButtonCheckAll(checkbox.parent())
-
-
 

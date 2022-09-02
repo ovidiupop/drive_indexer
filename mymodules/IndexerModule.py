@@ -53,11 +53,21 @@ class JobRunner(QRunnable):
         self.percentage = 0
         self.folder_id = 0
         self.remove_indexed = True
+        self.index_all_types_of_files = False
+        self.index_files_without_extension = True
+
+    def reInitializeToZero(self):
+        self.found_files = 0
+        self.checked_files = 0
+        self.percentage = 0
+        self.folder_id = 0
 
     @pyqtSlot()
     def run(self):
         try:
+            self.reInitializeToZero()
             self.total_files = countTotalFiles(self.folders_to_index)
+
             for folder in self.folders_to_index:
                 self.folder_id = self.folderId(folder)
                 if self.remove_indexed:
@@ -71,16 +81,23 @@ class JobRunner(QRunnable):
         except WorkerKilledException:
             pass
 
-    def _index(self, path):
+    # check if the thread is killed
+    def amIKilled(self):
         if self.is_killed:
             self.finishThread()
             raise WorkerKilledException
 
-        """recursive method for indexing files"""
+    def _index(self, path):
+        """
+        recursive method for indexing files
+        """
+        self.amIKilled()
+
         # switch to new directory (root or recursive)
         directory = QtCore.QDir(path)
         directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
         self.signals.directory_changed.emit(path)
+
         for entry in directory.entryInfoList():
             if entry.isDir():
                 if self.folderExists(entry.filePath()):
@@ -88,22 +105,78 @@ class JobRunner(QRunnable):
                 self._index(entry.filePath())
 
             if entry.isFile():
-                self.checked_files += 1
-                self.percentage = percentage(self.checked_files, self.total_files)
+                self.addFileByExtension(entry, path)
 
-            # check if we have matched extension (zip / tar.gz) or there is no any extension to match
-            file_ext = entry.suffix() or entry.completeSuffix()
-            if file_ext in self.extensions.values() or self.extensions == {}:
-                # no extensions selected and file hasn't extension
-                extension_id = 0
-                if file_ext:
-                    extension_id = self.extensionId(file_ext)
+    def extensionIdForFile(self, entry):
+        # suppose the file has no extension
+        extension_id = 'no_extension'
+
+        # check if file has any extension
+        ext = entry.suffix() or entry.completeSuffix()
+        file_ext = ext.lower()
+        # extension of file is in usual list's of extensions
+        if file_ext in self.extensions.values():
+            # is a listed extension; assign it id as extension_id to file
+            extension_id = self.extensionId(file_ext)
+
+        # file hasn't extension in usual list (previously checked), but must index all types of files
+        elif file_ext and self.index_all_types_of_files and extension_id == 'no_extension':
+            # save new extension and get its id and assign to file
+            extension_id = self.addNewExtension(file_ext)
+            # re-assign usual extensions to indexed to include the newly added extension
+            self.reAssignExtensions()
+        # file has extension but is not an allowed extension type
+        elif file_ext and not self.index_all_types_of_files:
+            extension_id = 'not_allowed_extension'
+
+        return extension_id
+
+    def addFileByExtension(self, entry, path):
+        self.checked_files += 1
+        self.percentage = percentage(self.checked_files, self.total_files)
+
+        # here we get extension_id as number or 'no_extension' or 'not_allowed_extension'
+        extension_id = self.extensionIdForFile(entry)
+
+        if extension_id != 'not_allowed_extension':
+            if extension_id == 'no_extension':
+                if self.index_files_without_extension or self.index_all_types_of_files:
+                    extension_id = None  # NULL for database
+                else:
+                    extension_id = 'no_save'
+
+            # here we have numeral, None or no_save
+            # we save numeral or None
+            if extension_id != 'no_save':
                 item = {'dir': path, 'filename': entry.fileName(), 'size': entry.size(),
                         'extension_id': extension_id, 'folder_id': self.folder_id}
+                self.found_files += 1
                 self.signals.match_found.emit()
-
                 # insert file in database
                 self.addFile(item)
+
+    def getUncategorizedCategoryId(self):
+        """Get folder id inside of worker"""
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare("SELECT id FROM categories WHERE category=:category")
+        query.bindValue(':category', 'Uncategorized')
+        if query.exec():
+            while query.first():
+                return query.value(0)
+
+    def addNewExtension(self, ext):
+        category_uncategorized = self.getUncategorizedCategoryId()
+
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare(
+            "INSERT INTO extensions ('extension', 'category_id', 'selected') VALUES (?, ?, ?)")
+        query.addBindValue(ext)
+        query.addBindValue(category_uncategorized)
+        query.addBindValue(1)
+        if query.exec():
+            return query.lastInsertId()
+        else:
+            GDBModule.printQueryErr(query, 'addFile')
 
     def finishThread(self):
         self.con.close()
@@ -112,15 +185,21 @@ class JobRunner(QRunnable):
     def kill(self):
         self.is_killed = True
 
-    def getExtensionsList(self):
-        extensions = {}
-        all_extensions = GDBModule.getAll('extensions')
-        for ext in all_extensions:
-            extensions[ext['id']] = ext['extension']
-        return extensions
-
     def setExtensions(self, extensions):
         self.extensions = extensions
+
+    def reAssignExtensions(self):
+        self.extensions = self.getExtensionsList()
+
+    def getExtensionsList(self):
+        extensions = {}
+        query = QtSql.QSqlQuery(self.con)
+        query.prepare("SELECT id, extension from extensions")
+        if query.exec():
+            while query.next():
+                extensions[query.value('id')] = query.value('extension')
+            query.clear()
+        return extensions
 
     def setStatusFolder(self, path, status):
         query = QtSql.QSqlQuery(self.con)

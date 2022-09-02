@@ -26,7 +26,7 @@ CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
               'Internet': ':www_page.png', 'Presentation': ':chart_pie.png',
               'Programming': ':page_white_code.png', 'Spreadsheet': ':table_multiple.png',
               'System': ':application_osx_terminal.png', 'Video': ':television.png',
-              'Word': ':page_white_word.png'}
+              'Word': ':page_white_word.png', 'Uncategorized': ':uncategorized.png'}
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)",
@@ -67,8 +67,11 @@ PREFERENCES = [
     ['header_to_csv', 'Add header to exported csv', '0', '0', 'bool', '1'],
     ['file_dialog_modal', 'File Information is modal', '1', '1', 'bool', '1'],
     ['indexer_autorun', 'Run indexer when new folder is added', '1', '1', 'bool', '1'],
+    ['settings_tab_on_top', 'Settings tabs on top', '0', '0', 'bool', '1'],
+    ['index_all_types_of_files', 'Index all types of files', '0', '0', 'bool', '1'],
+    ['index_files_without_extension', 'Index files without extension', '1', '1', 'bool', '1'],
     ['window_size', 'Dimension for window when start (width, height)', '1000, 800', '1000, 800', 'str', '0'],
-    ['settings_tabs_order', 'Preferred order for settings tabs', '0, 1, 2, 3, 4', '0, 1, 2, 3, 4', 'str', '0'],
+    ['settings_tabs_order', 'Preferred order for settings tabs', 'Folders,Drives,Categories,Extensions,Preferences', 'Folders,Drives,Categories,Extensions,Preferences', 'str', '0'],
 ]
 
 

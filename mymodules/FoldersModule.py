@@ -1,3 +1,5 @@
+import sys
+
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog
 
@@ -5,7 +7,7 @@ from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
 from mymodules.GlobalFunctions import iconForButton, confirmationDialog, getPreference
 from mymodules.ModelsModule import FoldersModel
-from mymodules.SystemModule import folderCanBeIndexed
+from mymodules.SystemModule import folderCanBeIndexed, foldersAreOnSamePartition
 
 
 class Folders(QtWidgets.QWidget):
@@ -168,6 +170,8 @@ class Folders(QtWidgets.QWidget):
         if parents_of_drive:
             for parent_folder in parents_of_drive:
                 if folder.startswith(parent_folder):
+                    if 'linux' in sys.platform and not foldersAreOnSamePartition(folder, parent_folder):
+                        return False
                     QtWidgets.QMessageBox.warning(self.parent(),
                                                   'Exists!',
                                                   f"You already have indexed this folder within "

@@ -73,6 +73,7 @@ def foldersOfDrive(serial):
         query.clear()
         return folders
 
+
 def getExtensionsCategories():
     """
     :param extension:
@@ -349,22 +350,22 @@ def findFiles(search_term: str, extensions: list) -> list:
     extensions_list_ids = extensionsToInt(extensions) or []
     placeholder = ','.join("?" * len(extensions_list_ids))
     query = QtSql.QSqlQuery()
-    if len(extensions_list_ids) > 0:
-        query.prepare("select f.dir, f.filename, f.size, e.extension, d.label "
-                      "from files f "
-                      "left join extensions e on e.id=f.extension_id "
-                      "left join folders fo on fo.id=f.folder_id "
-                      "left join drives d on d.serial=fo.drive_id "
-                      "where f.extension_id in (%s) and (f.dir like ? or f.filename like ?)" % placeholder)
-        for binder in extensions_list_ids:
-            query.addBindValue(binder)
-    else:
-        query.prepare("select f.dir, f.filename, f.size, e.extension, fo.label "
-                      "from files f "
-                      "left join folders fo on fo.id=f.folder_id "
-                      "left join drives d on d.serial=fo.drive_id "
-                      "left join extensions e on e.id=f.extension_id "
-                      "where (f.dir like ? or f.filename like ?)")
+    # if len(extensions_list_ids) > 0:
+    query.prepare("select f.dir, f.filename, f.size, e.extension, d.label "
+                  "from files f "
+                  "left join extensions e on e.id=f.extension_id "
+                  "left join folders fo on fo.id=f.folder_id "
+                  "left join drives d on d.serial=fo.drive_id "
+                  "where (f.extension_id in (%s) or f.extension_id is null) and (f.dir like ? or f.filename like ?)" % placeholder)
+    for binder in extensions_list_ids:
+        query.addBindValue(binder)
+    # else:
+    #     query.prepare("select f.dir, f.filename, f.size, d.label "
+    #                   "from files f "
+    #                   "left join folders fo on fo.id=f.folder_id "
+    #                   "left join drives d on d.serial=fo.drive_id "
+    #                   "where f.dir like ? or f.filename like ?")
+
     query.addBindValue("%" + search_term + "%")
     query.addBindValue("%" + search_term + "%")
 
@@ -561,6 +562,17 @@ def getPreferenceByName(name):
         return ret
 
 
+def getPreferenceNameById(id):
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT name FROM preferences WHERE id=:id")
+    query.bindValue(":id", id)
+    if query.exec():
+        query.first()
+        ret = query.value('name')
+        query.clear()
+        return ret
+
+
 def connection(name: str):
     """
     :param name:
@@ -646,7 +658,7 @@ class GDatabase:
             '   dir TEXT NOT NULL, '
             '   filename TEXT NOT NULL, '
             '   size INTEGER, '
-            '   extension_id INTEGER NOT NULL, '
+            '   extension_id INTEGER DEFAULT NULL, '
             '   folder_id INTEGER NOT NULL, '
             '   FOREIGN KEY(extension_id) REFERENCES extensions(id), '
             '   FOREIGN KEY(folder_id) REFERENCES folders(id))',

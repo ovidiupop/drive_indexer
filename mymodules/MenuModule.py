@@ -134,9 +134,7 @@ class IMenu(QtWidgets.QWidget):
     def about(self):
         QtWidgets.QMessageBox.about(self, 'About Indexer',
                                     "<h4>Find all your files in a single place</h4><br>"
-                                    "Index your entire drive collection in one place and find anything in a second!<br><br>"
-                                    "This app was developed as a study project when I started learning Python and Qt, "
-                                    "so its code can be improved and also new features can be added!<br><br>"
-                                    "Any suggestions and criticisms are welcome!<br><br>"
+                                    "Index your entire drive collection in one place and find anything in a "
+                                    "second!<br><br> "
                                     "© 2022 Ovidiu Pop")
 

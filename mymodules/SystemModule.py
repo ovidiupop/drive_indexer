@@ -168,31 +168,16 @@ def mountedDrivesLinux():
     return disks
 
 
-def mountedDrives():
+def foldersAreOnSamePartition(folder1, folder2):
     if 'linux' in sys.platform:
-        disks = []
-        drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model | grep -e disk', shell=True,
-                                  stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        lines_drives = drives.stdout.readlines()
-        if lines_drives:
-            for line_drive in lines_drives:
-                line_drive = line_drive.decode('ascii').strip()
-                x = line_drive.split(' ')
-                while "" in x:
-                    x.remove("")
-                if x[0] == 'disk':
-                    disk = {'serial': x[1], 'path': x[2], 'size': sizeToGb(x[3]), 'hotplug': x[4], 'name': x[5]}
-                    disks.append(disk)
-                else:  # is partition
-                    pass
-        if disks:
-            setActiveDriveDB(disks)
-        return disks
-        # return this
-        # [{'serial': 'S3Z2NB2KA50740N', 'path': '/dev/sda', 'size': 465.8, 'hotplug': '0', 'name': 'Samsung_SSD_860_EVO_500GB'},
-        # {'serial': 'Z9AX3YM7', 'path': '/dev/sdc', 'size': 931.5, 'hotplug': '1', 'name': 'ST1000DM010-2EP102'},
-        # {'serial': 'WD-WMC4N0404141', 'path': '/dev/sdd', 'size': 2700.0, 'hotplug': '1', 'name': 'WDC_WD30EZRX-00D8PB0'},
-        # {'serial': '4990779F50C0', 'path': '/dev/sde', 'size': 931.5, 'hotplug': '1', 'name': 'XPG_EX500'}]
+        command1 = f'df "{folder1}" | sed -e 1d | ' + "awk '{print $NF}'"
+        response1 = subprocess.Popen(command1, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        command2 = f'df "{folder2}" | sed -e 1d | ' + "awk '{print $NF}'"
+        response2 = subprocess.Popen(command2, shell=True, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        lines1 = response1.stdout.readlines()
+        lines2 = response2.stdout.readlines()
+        return lines1 == lines2
+
     if 'win' in sys.platform:
         pass
 

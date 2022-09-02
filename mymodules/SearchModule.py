@@ -21,8 +21,6 @@ class Search(QtWidgets.QWidget):
         self.export_all_results_signal.connect(self.exportAllResultsToCSV)
         self.export_selected_results_signal.connect(self.exportSelectedResultsToCSV)
 
-        self.last_search_configuration = {}
-
         self.search_input_label = QtWidgets.QLabel('Search for:')
         self.search_term_input = QtWidgets.QLineEdit()
         self.search_term_input.setPlaceholderText('Insert term to search')
@@ -96,8 +94,7 @@ class Search(QtWidgets.QWidget):
         # check if row belongs to a mounted drive
         selected = self.found_results_table.currentIndex()
         if self.found_results_table.model().hasMountedDrive(selected):
-            if setStatusBarMW('Please wait while drive is initialized...'):
-                self.prepareFileDetailDialog(self.found_results_table)
+            self.prepareFileDetailDialog(self.found_results_table)
         else:
             QtWidgets.QMessageBox.information(None, 'No file preview', 'The drive is not mounted in system!')
 
@@ -110,13 +107,17 @@ class Search(QtWidgets.QWidget):
 
         self.getExtensionsForSearch()
         extensions = self.extensions_for_search
-        if not len(extensions):
-            QtWidgets.QMessageBox.information(None, 'No one category', 'Please check at least a category!')
-            return
+        # if not len(extensions):
+        #     QtWidgets.QMessageBox.information(None, 'No one category', 'Please check at least a category!')
+        #     return
 
-        self.last_search_configuration = {'term': search_term, 'extensions': extensions}
+        # searching
         results = gdb.findFiles(search_term, extensions)
-        count_results = len(results)
+        if results:
+            count_results = len(results)
+        else:
+            count_results = 0
+
         self.found_search_label.show()
         self.found_search_label.setText(f'Found: {count_results} results')
         self.updateResults(results)
@@ -219,5 +220,9 @@ class Search(QtWidgets.QWidget):
         file_path = data[0] + '/' + data[1]
         info = QFileInfo(file_path)
         extension = info.suffix()
-        category = ext_cat[extension]
-        FileDetailDialog(category, data, self)
+        if extension:
+            if setStatusBarMW('Please wait while drive is initialized...'):
+                category = ext_cat[extension]
+                FileDetailDialog(category, data, self)
+        else:
+            QtWidgets.QMessageBox.information(None, 'No file preview', 'File has not extension.')

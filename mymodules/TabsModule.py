@@ -10,7 +10,8 @@ from mymodules.DevicesMonitorModule import Monitoring, DeviceJobRunner, Devices
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
-from mymodules.GlobalFunctions import setStatusBarMW
+from mymodules.GDBModule import getPreferenceByName
+from mymodules.GlobalFunctions import setStatusBarMW, getPreference, setPreferenceByName
 from mymodules.IndexerModule import JobRunner
 from mymodules.PreferencesModule import Preferences
 from mymodules.SearchModule import Search
@@ -57,15 +58,10 @@ class TabsWidget(QtWidgets.QWidget):
 
         # tabs inside Settings tab
         self.tabs_settings = QTabWidget()
-        self.tabs_settings.setTabPosition(QTabWidget.West)
+        self.setSettingsTabsPosition()
         self.tabs_settings.setTabShape(QTabWidget.Rounded)
         self.tabs_settings.setMovable(True)
-
-        self.tabs_settings.addTab(self.tab_folders_group, QtGui.QIcon(':folder.png'), 'Folders')
-        self.tabs_settings.addTab(self.tab_drives_group, QtGui.QIcon(':drive.png'), 'Drives')
-        self.tabs_settings.addTab(self.tab_categories_group, QtGui.QIcon(':accordion.png'), 'Categories')
-        self.tabs_settings.addTab(self.tab_extensions_group, QtGui.QIcon(':file_extension_exe.png'), 'Extensions')
-        self.tabs_settings.addTab(self.tab_preferences_group, QtGui.QIcon(':preferences.png'), 'Preferences')
+        self.setSettingsTabsOrder()
 
         layout_tab_categories = self.categories.layout_tab_categories
         self.tab_categories_group.setLayout(layout_tab_categories)
@@ -94,6 +90,32 @@ class TabsWidget(QtWidgets.QWidget):
         self.setProgressBarToStatusBar()
         self.startThreadMonitoringDevices()
         self.parent().kill_device_monitor_runner.connect(lambda: self.killDeviceMonitorRunner())
+        self.tabs_settings.currentChanged.connect(self.onChangeTabsOrder)
+        self.preferences.change_settings_tab_position.connect(self.setSettingsTabsPosition)
+
+    def setSettingsTabsOrder(self):
+        map_dict = {'Folders': [':folder.png', self.tab_folders_group],
+                    'Drives': [':drive.png', self.tab_drives_group],
+                    'Categories': [':accordion.png', self.tab_categories_group],
+                    'Extensions': [':file_extension_exe.png', self.tab_extensions_group],
+                    'Preferences': [':preferences.png', self.tab_preferences_group]
+                    }
+        tabs_order_string = getPreferenceByName('settings_tabs_order')
+        tabs_order_list = tabs_order_string.split(',')
+        for tab in tabs_order_list:
+            icon = map_dict[tab][0]
+            widget = map_dict[tab][1]
+            self.tabs_settings.addTab(widget, QtGui.QIcon(icon), tab)
+
+    def onChangeTabsOrder(self):
+        order = []
+        for i in range(self.tabs_settings.count()):
+            order.append(self.tabs_settings.tabText(i))
+        setPreferenceByName('settings_tabs_order', ",".join(order))
+
+    def setSettingsTabsPosition(self):
+        position = QTabWidget.North if int(getPreference('settings_tab_on_top')) else QTabWidget.West
+        self.tabs_settings.setTabPosition(position)
 
     def killDeviceMonitorRunner(self):
         self.kill_device_monitor_runner.emit()
@@ -111,7 +133,7 @@ class TabsWidget(QtWidgets.QWidget):
         # re-enable buttons
         self.setStatusButtons(True)
         self.folders.folder_stop_index_button.hide()
-        self.setStatusBar(f'Indexed {self.runner.found_files} files')
+        self.setStatusBar(f'Found {self.runner.found_files} files')
         self.folders.indexing_progress_bar.setValue(100)
         self.toggleProgressVisibility(False)
         # show close button
@@ -163,6 +185,8 @@ class TabsWidget(QtWidgets.QWidget):
                 self.runner.setExtensions({ext_id: extension})
             self.setIndexableFolders()
             self.runner.found_files = 0
+            self.runner.index_all_types_of_files = int(getPreferenceByName('index_all_types_of_files'))
+            self.runner.index_files_without_extension = int(getPreferenceByName('index_files_without_extension'))
             self.runner.signals.finished.connect(self.onFinished)
             self.runner.signals.status_folder_changed.connect(self.folders.refreshTable)
             self.runner.signals.directory_changed.connect(self.onDirectoryChanged)
@@ -199,7 +223,6 @@ class TabsWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):
-        self.runner.found_files += 1
         self.folders.total_folders_indexed_label.setText(f'Found: {self.runner.found_files} files')
         self.folders.indexing_progress_bar.setValue(self.runner.percentage)
 
@@ -227,6 +250,3 @@ class TabsWidget(QtWidgets.QWidget):
         self.drives.drives_table.setModel(self.drives.drives_table_model)
         self.drives.drives_table_model.select()
         self.folders.fillPreferredFolders()
-
-
-
