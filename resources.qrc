@@ -29,6 +29,8 @@
 		<file alias="file.png">/images/app/32/file.png</file>
 		<file alias="file_extension_exe.png">/images/app/32/file_extension_exe.png</file>
 		<file alias="folder.png">/images/app/32/folder.png</file>
+		<file alias="folder_add.png">/images/app/32/folder_add.png</file>
+		<file alias="folder_delete.png">/images/app/32/folder_delete.png</file>
 		<file alias="folder_go.png">/images/app/32/folder_go.png</file>
 		<file alias="font.png">/images/app/32/font.png</file>
 		<file alias="image.png">/images/app/32/image.png</file>

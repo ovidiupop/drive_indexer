@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 from mymodules import GDBModule as gdb
-from mymodules.ComponentsModule import PushButton
+from mymodules.ComponentsModule import PushButton, ListView
 from mymodules.GlobalFunctions import iconForButton, categoriesCombo, confirmationDialog
 from mymodules.ModelsModule import ExtensionsModel
 
@@ -23,7 +23,7 @@ class Extensions(QtWidgets.QWidget):
         self.add_extension_input.setMaximumWidth(300)
         self.add_extension_input.setPlaceholderText('Insert new extension in selected category')
         self.add_extension_input.setVisible(False)
-        self.settings_extensions_list = QtWidgets.QListView()
+        self.settings_extensions_list = ListView()
         self.settings_extensions_list.setMaximumSize(300, 200)
         self.settings_extensions_list.hide()
         self.add_extension_button = PushButton('Add')
@@ -38,6 +38,7 @@ class Extensions(QtWidgets.QWidget):
         self.categories_combo = categoriesCombo()
         self.categories_combo.setFixedWidth(300)
 
+        self.settings_extensions_list.delete_key_pressed.connect(lambda: self.removeExtension())
         self.add_extension_input.returnPressed.connect(lambda: self.addNewExtension())
         self.add_extension_button.clicked.connect(lambda: self.addNewExtension())
         self.remove_extension_button.clicked.connect(lambda: self.removeExtension())
@@ -94,7 +95,8 @@ class Extensions(QtWidgets.QWidget):
 
     def removeExtension(self):
         selected_ex = self.settings_extensions_list.selectedIndexes()
-        confirmation_text = "'If you remove selected extensions, all indexed files belonging to them, will be also removed!<br><br>Do you proceed?"
+        confirmation_text = "'If you remove selected extensions, all indexed files belonging to them, will be also " \
+                            "removed!<br><br>Do you proceed? "
         confirm = confirmationDialog("Do you remove?", confirmation_text)
         if not confirm:
             return
@@ -110,7 +112,8 @@ class Extensions(QtWidgets.QWidget):
             self.loadExtensionsForCategory(category_id)
 
     def visibleButtons(self):
-        group = [self.add_extension_input, self.add_extension_button, self.remove_extension_button, self.settings_extensions_list]
+        group = [self.add_extension_input, self.add_extension_button, self.remove_extension_button,
+                 self.settings_extensions_list]
         index = self.categories_combo.currentIndex()
         for control in group:
             control.setVisible(index > 0)

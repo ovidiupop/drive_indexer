@@ -1,12 +1,10 @@
-import sys
-
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QTabWidget
 
 from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import Categories
-from mymodules.DevicesMonitorModule import Monitoring, DeviceJobRunner, Devices
+from mymodules.DevicesMonitorModule import Monitoring
 from mymodules.DrivesModule import DrivesView
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
@@ -220,6 +218,13 @@ class TabsWidget(QtWidgets.QWidget):
                                            f"Next folders are empty! Probably the source drive is not active!<br>"
                                            f"<br>{non}"
                                            f"<br><br>Please check!")
+
+        # folders_and_no_indexable =  self.folders.validFolders(folders, True)
+        # folders = folders_and_no_indexable[0]
+        # no_indexable = folders_and_no_indexable[1]
+        # if folders:
+        #     self.runner.folders_to_index = folders
+
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):

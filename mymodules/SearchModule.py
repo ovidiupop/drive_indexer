@@ -107,16 +107,9 @@ class Search(QtWidgets.QWidget):
 
         self.getExtensionsForSearch()
         extensions = self.extensions_for_search
-        # if not len(extensions):
-        #     QtWidgets.QMessageBox.information(None, 'No one category', 'Please check at least a category!')
-        #     return
-
         # searching
         results = gdb.findFiles(search_term, extensions)
-        if results:
-            count_results = len(results)
-        else:
-            count_results = 0
+        count_results = len(results) if results else 0
 
         self.found_search_label.show()
         self.found_search_label.setText(f'Found: {count_results} results')

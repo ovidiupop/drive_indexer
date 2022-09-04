@@ -4,6 +4,8 @@ from PyQt5 import QtCore, QtSql
 from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
 
 from mymodules import GDBModule
+from mymodules.GDBModule import getPreferenceByName
+from mymodules.GlobalFunctions import getForbiddenFolders
 
 
 def percentage(part, whole):
@@ -46,6 +48,7 @@ class JobRunner(QRunnable):
         self.con = GDBModule.connection('indexer_connection')
         self.con.open()
         self.extensions = self.getExtensionsList()
+        self.forbidden_folders = getForbiddenFolders()
         self.folders_to_index = []
         self.found_files = 0
         self.total_files = 0
@@ -55,6 +58,8 @@ class JobRunner(QRunnable):
         self.remove_indexed = True
         self.index_all_types_of_files = False
         self.index_files_without_extension = True
+        self.index_hidden_content = int(getPreferenceByName('index_hidden_content'))
+
 
     def reInitializeToZero(self):
         self.found_files = 0
@@ -96,12 +101,15 @@ class JobRunner(QRunnable):
         # switch to new directory (root or recursive)
         directory = QtCore.QDir(path)
         directory.setFilter(directory.filter() | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.NoSymLinks)
+        if self.index_hidden_content:
+            directory.setFilter(directory.filter() | QtCore.QDir.Hidden)
         self.signals.directory_changed.emit(path)
 
         for entry in directory.entryInfoList():
             if entry.isDir():
-                if self.folderExists(entry.filePath()):
+                if self.folderExists(entry.filePath()) or self.folderIsForbidden(entry.baseName()):
                     continue
+
                 self._index(entry.filePath())
 
             if entry.isFile():
@@ -259,3 +267,7 @@ class JobRunner(QRunnable):
         ret = query.exec() and query.first()
         query.clear()
         return ret
+
+    def folderIsForbidden(self, folder):
+        return folder.lower() in self.forbidden_folders
+

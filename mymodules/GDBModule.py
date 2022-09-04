@@ -226,9 +226,10 @@ def addFolder(folder: str, serial: str) -> bool:
     query.prepare(""" INSERT INTO folders (path, drive_id) VALUES (?,?) """)
     query.addBindValue(folder)
     query.addBindValue(serial)
-    ret = query.exec()
-    query.clear()
-    return ret
+    if query.exec():
+        ret = query.lastInsertId()
+        query.clear()
+        return ret
 
 
 def deleteFoldersDB(paths: list) -> bool:
@@ -244,10 +245,23 @@ def deleteFoldersDB(paths: list) -> bool:
         if query.exec():
             deleteFilesDB(folder_id)
         else:
-            printQueryErr(query, 'cleanFolders')
+            printQueryErr(query, 'deleteFoldersDB')
             return False
     query.clear()
     return True
+
+
+def cleanForDeadDrive(drive_label):
+    query = QtSql.QSqlQuery()
+    query.prepare("DELETE FROM files "
+                  "WHERE folder_id IN (SELECT id FROM folders WHERE drive_id=("
+                  "SELECT serial FROM drives WHERE label=:label))")
+    query.bindValue(':label', drive_label)
+    if query.exec():
+        query.clear()
+        return True
+    else:
+        printQueryErr(query, 'cleanForDeadDrive')
 
 
 def deleteFilesDB(folder_id: int) -> bool:
@@ -262,7 +276,7 @@ def deleteFilesDB(folder_id: int) -> bool:
         query.clear()
         return True
     else:
-        printQueryErr(query, 'clearFiles')
+        printQueryErr(query, 'deleteFilesDB')
 
 
 def extensionId(extension: str) -> int:
@@ -571,6 +585,22 @@ def getPreferenceNameById(id):
         ret = query.value('name')
         query.clear()
         return ret
+
+
+def getUsedExtensions():
+    result = []
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT c.category, coalesce(e.extension, 'no_extension') AS extension, COUNT(f.extension_id) as extensionId "
+                  "FROM files f "
+                  "LEFT JOIN extensions e ON f.extension_id=e.id "
+                  "LEFT JOIN categories c ON e.category_id=c.id "
+                  "GROUP BY extension "
+                  "order by extensionID DESC")
+    if query.exec():
+        while query.next():
+            result.append([query.value('category'), query.value('extension'), query.value('extensionID')])
+        query.clear()
+    return result
 
 
 def connection(name: str):

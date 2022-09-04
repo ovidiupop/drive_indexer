@@ -9,7 +9,7 @@ from mymodules import GDBModule as gdb
 from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
 
 
-def sorter(model_obj, table_obj, filter_key):
+def sorter(model_obj, table_obj, filter_key, order=Qt.DescendingOrder):
     # add sorting to table
     sortermodel = QSortFilterProxyModel()
     sortermodel.setSourceModel(model_obj)
@@ -18,7 +18,7 @@ def sorter(model_obj, table_obj, filter_key):
     # use sorter as model for table
     table_obj.setModel(sortermodel)
     table_obj.setSortingEnabled(True)
-    table_obj.sortByColumn(filter_key, Qt.DescendingOrder)
+    table_obj.sortByColumn(filter_key, order)
     table_obj.setSelectionBehavior(QAbstractItemView.SelectRows)
 
 
@@ -66,8 +66,8 @@ class FoldersModel(QtSql.QSqlRelationalTableModel):
         self.setRelation(2, QSqlRelation("drives", "serial", "label"))
         self.setEditStrategy(self.OnRowChange)
         self.setColumnsName()
-        self.setSort(self.fieldIndex("drive_id"), Qt.DescendingOrder)
-        sorter(self, self.parent(), 2)
+        self.setSort(self.fieldIndex("id"), Qt.AscendingOrder)
+        sorter(self, self.parent(), 1)
         self.parent().setItemDelegate(FoldersItemsDelegate(self))
         self.select()
 
@@ -95,6 +95,12 @@ class FoldersModel(QtSql.QSqlRelationalTableModel):
                 else:
                     return QIcon(':exclamation.png')
         return QSqlTableModel.data(self, index, role)
+
+    def selectRowByModelId(self, last_id):
+        for i in range(self.rowCount()):
+            if last_id == self.record(i).value("id"):
+                self.parent().selectRow(i)
+                break
 
 
 class FoldersItemsDelegate(QStyledItemDelegate):
@@ -274,26 +280,3 @@ class DrivesItemsDelegate(QStyledItemDelegate):
         else:
             return None
 
-# KEEP THIS FOR EXAMPLE
-# elif index.column() == OWNER:
-#     combobox = QComboBox(table_obj)
-#     combobox.addItems(sorted(index.model().owners))
-#     combobox.setEditable(True)
-#     return combobox
-#     elif index.column() == COUNTRY:
-#     combobox = QComboBox(table_obj)
-#     combobox.addItems(sorted(index.model().countries))
-#     combobox.setEditable(True)
-#     return combobox
-# elif index.column() == NAME:
-#     editor = QLineEdit(table_obj)
-#     self.connect(editor, SIGNAL("returnPressed()"),
-#                  self.commitAndCloseEditor)
-#     return editor
-#     elif index.column() == DESCRIPTION:
-#     editor = richtextlineedit.RichTextLineEdit(table_obj)
-#     self.connect(editor, SIGNAL("returnPressed()"),
-#                  self.commitAndCloseEditor)
-#     return editor
-# else:
-#     return QItemDelegate.createEditor(self, table_obj, option, index)

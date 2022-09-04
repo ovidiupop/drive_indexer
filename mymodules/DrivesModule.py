@@ -37,7 +37,7 @@ class Drives(QtWidgets.QWidget):
         self.drive_form_close = QtWidgets.QPushButton()
         self.drive_form_close.setMaximumWidth(30)
         self.combo_active_drives = QtWidgets.QComboBox()
-        self.combo_active_drives.setFixedWidth(330)
+        # self.combo_active_drives.setFixedWidth(330)
         self.refresh_drives_combo = PushButton()
         self.refresh_drives_combo.setIcon(iconForButton('SP_BrowserReload'))
 
@@ -110,13 +110,18 @@ class DrivesView(Drives):
         self.drive_mapper = DrivesMapper(self)
         self.drive_mapper.model().select()
         self.drive_mapper.toLast()
-
         self.group_form = QtWidgets.QGroupBox()
-        self.group_form.setMaximumWidth(330)
+        # self.group_form.setMaximumWidth(330)
         self.group_form.setLayout(form_drives)
         self.group_form.hide()
 
+        group_tools_drive = QtWidgets.QGroupBox()
+        group_tools_drive.setMaximumWidth(330)
+
         layout_tab_drives_buttons = QtWidgets.QVBoxLayout()
+        group_tools_drive.setLayout(layout_tab_drives_buttons)
+
+
         hlay = QtWidgets.QHBoxLayout()
         hlay.addWidget(self.combo_active_drives)
         hlay.addWidget(self.refresh_drives_combo)
@@ -126,16 +131,30 @@ class DrivesView(Drives):
         layout_tab_drives_buttons.addWidget(self.remove_drive_button)
         layout_tab_drives_buttons.addWidget(self.show_id_drive_button)
 
+        label_clean_dead_drive = QtWidgets.QLabel('Clean for dead drive')
+        self.input_clean_dead_drive = QtWidgets.QLineEdit()
+        self.button_clean_dead_drive = QtWidgets.QPushButton('Clean')
+        self.button_clean_dead_drive.clicked.connect(self.cleanDeadDrive)
+        layout_clean_dead_drive = QtWidgets.QVBoxLayout()
+        layout_clean_dead_drive.addWidget(label_clean_dead_drive)
+        layout_clean_dead_drive.addWidget(self.input_clean_dead_drive)
+        layout_clean_dead_drive.addWidget(self.button_clean_dead_drive)
+        group_clean_dead_drive = QtWidgets.QGroupBox()
+        # group_clean_dead_drive.setFixedWidth(330)
+        group_clean_dead_drive.setLayout(layout_clean_dead_drive)
+
+        layout_tab_drives_buttons.addWidget(group_clean_dead_drive)
         layout_tab_drives_buttons.addWidget(self.group_form)
         layout_tab_drives_buttons.addStretch()
 
-        layout_tab_drives_table = QtWidgets.QHBoxLayout()
+        layout_tab_drives_table = QtWidgets.QVBoxLayout()
         layout_tab_drives_table.addWidget(self.drives_table)
 
         # for connection with app
         self.layout_tab_drives = QtWidgets.QHBoxLayout()
-        self.layout_tab_drives.addLayout(layout_tab_drives_buttons)
+        self.layout_tab_drives.addWidget(group_tools_drive)
         self.layout_tab_drives.addLayout(layout_tab_drives_table)
+        layout_tab_drives_table.addStretch()
 
         self.my_actions()
         self.check_add_button.emit()
@@ -226,3 +245,29 @@ class DrivesView(Drives):
         parts = combo_text.split(' ')
         serial = parts[-1]
         self.add_drive_button.setDisabled(gdb.driveSerialExists(serial))
+
+    def cleanDeadDrive(self):
+        drive_label = self.input_clean_dead_drive.text()
+        if drive_label:
+            drives = gdb.getAll('drives')
+            if drives:
+                selected_drive = None
+                for drive in drives:
+                    if drive['label'] == drive_label:
+                        selected_drive = drive
+                        break
+                if not selected_drive:
+                    QtWidgets.QMessageBox.information(self.parent(),
+                                                   'No drive!',
+                                                   f"There isn't any drive with {drive_label} label!<br>")
+                    return None
+                confirmation_text = f"If you continue, all indexed files of drive {drive_label} will be removed!" \
+                                    f"<br>" \
+                                    f"<br>Do you proceed?"
+                confirm = confirmationDialog("Stop indexing?", confirmation_text)
+                if not confirm:
+                    return
+                if gdb.cleanForDeadDrive(selected_drive['serial']):
+                    QtWidgets.QMessageBox.information(self.parent(),
+                                                   'Cleaned!',
+                                                   f"Indexed files have been cleaned!<br>")

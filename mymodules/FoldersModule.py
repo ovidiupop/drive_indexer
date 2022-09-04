@@ -33,6 +33,7 @@ class Folders(QtWidgets.QWidget):
 
         self.folders_indexed_table = TableViewAutoCols(None)
         self.folders_indexed_table_model = FoldersModel(self.folders_indexed_table)
+        self.folders_indexed_table.delete_key_pressed.connect(self.removeFolders)
         self.folders_indexed_table.setModel(self.folders_indexed_table_model)
         self.folders_indexed_table.setColumnHidden(self.folders_indexed_table_model.fieldIndex("id"), True)
         self.folders_indexed_table.setColumns([0.1, 0.75, 0.14, 0.10])
@@ -134,10 +135,6 @@ class Folders(QtWidgets.QWidget):
         # TODO Check
         self.folders_indexed_table.clearSelection()
 
-    def selectLastItemFolderSources(self):
-        items = self.folders_indexed_table_model.rowCount()
-        self.folders_indexed_table.selectRow(int(items) - 1)
-
     def selectAndAddNewFolder(self):
         self.unselectFolderSources()
         home_path = QtCore.QDir.homePath()
@@ -152,9 +149,10 @@ class Folders(QtWidgets.QWidget):
                     serial = response[1]
                     if self.alreadyIndexed(folder_name, serial):
                         return None
-                    if gdb.addFolder(folder_name, serial):
+                    last_id = gdb.addFolder(folder_name, serial)
+                    if last_id:
                         self.refreshTable()
-                        self.selectLastItemFolderSources()
+                        self.folders_indexed_table_model.selectRowByModelId(last_id)
                         # start indexing of new folder
                         if int(getPreference('indexer_autorun')):
                             self.folder_added.emit()
@@ -163,7 +161,7 @@ class Folders(QtWidgets.QWidget):
                     QtWidgets.QMessageBox.critical(self.parent(),
                                                    'Error!',
                                                    f"Drive for this folder isn't available for index!"
-                                                                   f"\nPlease add {response[1]} in Drives section!")
+                                                   f"\nPlease add {response[1]} in Drives section!")
 
     def alreadyIndexed(self, folder, serial):
         parents_of_drive = gdb.foldersOfDrive(serial)
@@ -178,3 +176,86 @@ class Folders(QtWidgets.QWidget):
                                                   f"<b>{parent_folder}</b> folder!<br>Will not be added again!")
                     return True
         return False
+
+    # def selectFoldersToAdd(self):
+    #     self.unselectFolderSources()
+    #     home_path = QtCore.QDir.homePath()
+    #
+    #     selected_folders = None
+    #     dlg = getExistingDirectories(directory=home_path, caption="Select folders")
+    #     if dlg.exec_() == QDialog.Accepted:
+    #         selected_folders = dlg.selectedFiles()
+    #
+    #     # validate folders
+    #     if selected_folders:
+    #         valid = self.validFolders(selected_folders)
+    #
+    #         # add folders
+    #         if valid:
+    #             for folder_name, serial in valid:
+    #                 self.addNewFolder(folder_name, serial)
+    #
+    # def validFolders(self, folders, only_folders=False):
+    #     valid_folders = []  # valid
+    #     no_drive_mounted = []
+    #     indexed = []
+    #
+    #     for i, folder_name in enumerate(folders):
+    #         response = folderCanBeIndexed(folder_name)
+    #         if response[0]:  # True
+    #             serial = response[1]
+    #             parent_folder = self.alreadyIndexed(folder_name, serial)
+    #             if parent_folder:
+    #                 indexed.append([folder_name, parent_folder])
+    #             else:
+    #                 # valid folder
+    #                 valid_folders.append([folder_name, serial])
+    #         else:
+    #             serial = response[1]
+    #             no_drive_mounted.append([folder_name, serial])
+    #             folders.pop(i)
+    #
+    #     if indexed:
+    #         within = []
+    #         for folder, parent_folder in indexed:
+    #             w = folder + ' within ' + parent_folder
+    #             within.append(w)
+    #         QtWidgets.QMessageBox.warning(self.parent(),
+    #                                       'Already indexed!',
+    #                                       f"You already have indexed:<br>"
+    #                                       f"{'<br>'.join(within)}</b>")
+    #
+    #     if no_drive_mounted:
+    #         for folder, serial in no_drive_mounted:
+    #             folders_no_drive = []
+    #             folders_no_drive.append(serial + " drive for " + folder + ' folder')
+    #
+    #     if only_folders:
+    #         folders = []
+    #         for folder, serial in valid_folders:
+    #             folders.append(folder)
+    #         return [folders, no_drive_mounted]
+    #     return valid_folders
+    #
+    # def alreadyInDb(self):
+    #
+    # def alreadyIndexed(self, folder, serial):
+    #     parents_of_drive = gdb.foldersOfDrive(serial)
+    #     if parents_of_drive:
+    #         for parent_folder in parents_of_drive:
+    #             if folder.startswith(parent_folder):
+    #                 if 'linux' in sys.platform and not foldersAreOnSamePartition(folder, parent_folder):
+    #                     return False
+    #                 return parent_folder
+    #     return False
+    #
+    # def addNewFolder(self, folder_name, serial):
+    #     last_id = gdb.addFolder(folder_name, serial)
+    #     if last_id:
+    #         self.refreshTable()
+    #         self.folders_indexed_table_model.selectRowByModelId(last_id)
+    #
+    #         # start indexing of new folder
+    #         if int(getPreference('indexer_autorun')):
+    #             self.folder_added.emit()
+    #         self.refreshTable()

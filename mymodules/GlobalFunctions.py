@@ -68,10 +68,13 @@ PREFERENCES = [
     ['file_dialog_modal', 'File Information is modal', '1', '1', 'bool', '1'],
     ['indexer_autorun', 'Run indexer when new folder is added', '1', '1', 'bool', '1'],
     ['settings_tab_on_top', 'Settings tabs on top', '0', '0', 'bool', '1'],
-    ['index_all_types_of_files', 'Index all types of files', '0', '0', 'bool', '1'],
+    ['index_all_types_of_files', 'Index any types of files', '0', '0', 'bool', '1'],
     ['index_files_without_extension', 'Index files without extension', '1', '1', 'bool', '1'],
+    ['index_hidden_content', 'Index hidden content', '0', '0', 'bool', '1'],
+    ['forbidden_folders', 'Forbidden Folders', 'tmp,temp,cache', 'tmp,temp,cache', 'list', '0'],
     ['window_size', 'Dimension for window when start (width, height)', '1000, 800', '1000, 800', 'str', '0'],
-    ['settings_tabs_order', 'Preferred order for settings tabs', 'Folders,Drives,Categories,Extensions,Preferences', 'Folders,Drives,Categories,Extensions,Preferences', 'str', '0'],
+    ['settings_tabs_order', 'Preferred order for settings tabs', 'Folders,Drives,Categories,Extensions,Preferences',
+     'Folders,Drives,Categories,Extensions,Preferences', 'str', '0'],
 ]
 
 
@@ -83,7 +86,7 @@ def setStatusBarMW(message):
 
 
 def findMainWindow():
-    # Global function to find the (open) QMainWindow in application
+    # Global function to find the QMainWindow in application
     app = QApplication.instance()
     for widget in app.topLevelWidgets():
         if isinstance(widget, QMainWindow):
@@ -240,7 +243,6 @@ def goToFileBrowser(path):
 
     elif sys.platform == 'darwin':
         subprocess.Popen(['open', path])
-
     else:
         try:
             # xdg-open *should* be supported by recent Gnome, KDE, Xfce
@@ -261,3 +263,10 @@ def setPreferenceByName(name, value):
 
 def getPreference(name):
     return gdb.getPreferenceByName(name)
+
+
+def getForbiddenFolders():
+    folders = getPreference('forbidden_folders')
+    if folders:
+        return folders.split(',')
+    return []
