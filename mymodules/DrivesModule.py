@@ -267,7 +267,7 @@ class DrivesView(Drives):
                 confirm = confirmationDialog("Stop indexing?", confirmation_text)
                 if not confirm:
                     return
-                if gdb.cleanForDeadDrive(selected_drive['serial']):
+                if gdb.cleanForDeadDrive(selected_drive['label']):
                     QtWidgets.QMessageBox.information(self.parent(),
                                                    'Cleaned!',
                                                    f"Indexed files have been cleaned!<br>")
