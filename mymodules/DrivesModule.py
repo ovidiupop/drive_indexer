@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout, QLabel
+from PyQt5.QtCore import Qt, QModelIndex, QAbstractItemModel
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QAbstractItemView
 
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
 from mymodules.GlobalFunctions import iconForButton, confirmationDialog
@@ -14,6 +14,8 @@ COLUMN_SIZE_ID_HIDDEN = [0.10, 0.40, 0.20, 0.20, 0.09, 0.10]
 
 class Drives(QtWidgets.QWidget):
     check_add_button = QtCore.pyqtSignal()
+    remove_drive = QtCore.pyqtSignal(str)
+    cleaned_dead_drive = QtCore.pyqtSignal()
 
     def __init__(self, parent):
         super(Drives, self).__init__(parent)
@@ -121,7 +123,6 @@ class DrivesView(Drives):
         layout_tab_drives_buttons = QtWidgets.QVBoxLayout()
         group_tools_drive.setLayout(layout_tab_drives_buttons)
 
-
         hlay = QtWidgets.QHBoxLayout()
         hlay.addWidget(self.combo_active_drives)
         hlay.addWidget(self.refresh_drives_combo)
@@ -131,19 +132,6 @@ class DrivesView(Drives):
         layout_tab_drives_buttons.addWidget(self.remove_drive_button)
         layout_tab_drives_buttons.addWidget(self.show_id_drive_button)
 
-        label_clean_dead_drive = QtWidgets.QLabel('Clean for dead drive')
-        self.input_clean_dead_drive = QtWidgets.QLineEdit()
-        self.button_clean_dead_drive = QtWidgets.QPushButton('Clean')
-        self.button_clean_dead_drive.clicked.connect(self.cleanDeadDrive)
-        layout_clean_dead_drive = QtWidgets.QVBoxLayout()
-        layout_clean_dead_drive.addWidget(label_clean_dead_drive)
-        layout_clean_dead_drive.addWidget(self.input_clean_dead_drive)
-        layout_clean_dead_drive.addWidget(self.button_clean_dead_drive)
-        group_clean_dead_drive = QtWidgets.QGroupBox()
-        # group_clean_dead_drive.setFixedWidth(330)
-        group_clean_dead_drive.setLayout(layout_clean_dead_drive)
-
-        layout_tab_drives_buttons.addWidget(group_clean_dead_drive)
         layout_tab_drives_buttons.addWidget(self.group_form)
         layout_tab_drives_buttons.addStretch()
 
@@ -161,7 +149,7 @@ class DrivesView(Drives):
 
     def my_actions(self):
         self.add_drive_button.clicked.connect(self.addRowDrive)
-        self.remove_drive_button.clicked.connect(self.deleteRowDrive)
+        self.remove_drive_button.clicked.connect(self.removeDrive)
         self.show_id_drive_button.clicked.connect(self.toggleIdDrive)
         self.combo_active_drives.currentIndexChanged.connect(self.check_add_button)
         self.check_add_button.connect(self.disableAddButtonForExisting)
@@ -178,13 +166,18 @@ class DrivesView(Drives):
         else:
             self.drives_table.setColumns(COLUMN_SIZE_ID_HIDDEN)
 
-    def deleteRowDrive(self):
-        confirmation_text = f"You will remove the drive/s! <br><br>Do you proceed?"
+    def removeDrive(self):
+        confirmation_text = f"If you remove drive, related folders and indexed " \
+                            f"content will be removed also! <br><br>Do you proceed?"
         confirm = confirmationDialog("Do you remove?", confirmation_text)
         if not confirm:
             return
         selected = self.drives_table.selectedIndexes()
         for index in selected or []:
+            # clean also related folders
+            serial = self.drives_table.model().data(self.drives_table.model().index(index.row(), 0))
+            # emit for folders module, through tabs module
+            self.remove_drive.emit(serial)
             self.drives_table_model.removeRow(index.row())
         self.drives_table_model.select()
         self.check_add_button.emit()
@@ -245,29 +238,3 @@ class DrivesView(Drives):
         parts = combo_text.split(' ')
         serial = parts[-1]
         self.add_drive_button.setDisabled(gdb.driveSerialExists(serial))
-
-    def cleanDeadDrive(self):
-        drive_label = self.input_clean_dead_drive.text()
-        if drive_label:
-            drives = gdb.getAll('drives')
-            if drives:
-                selected_drive = None
-                for drive in drives:
-                    if drive['label'] == drive_label:
-                        selected_drive = drive
-                        break
-                if not selected_drive:
-                    QtWidgets.QMessageBox.information(self.parent(),
-                                                   'No drive!',
-                                                   f"There isn't any drive with {drive_label} label!<br>")
-                    return None
-                confirmation_text = f"If you continue, all indexed files of drive {drive_label} will be removed!" \
-                                    f"<br>" \
-                                    f"<br>Do you proceed?"
-                confirm = confirmationDialog("Stop indexing?", confirmation_text)
-                if not confirm:
-                    return
-                if gdb.cleanForDeadDrive(selected_drive['label']):
-                    QtWidgets.QMessageBox.information(self.parent(),
-                                                   'Cleaned!',
-                                                   f"Indexed files have been cleaned!<br>")

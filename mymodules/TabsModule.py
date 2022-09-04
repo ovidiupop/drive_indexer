@@ -90,6 +90,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.parent().kill_device_monitor_runner.connect(lambda: self.killDeviceMonitorRunner())
         self.tabs_settings.currentChanged.connect(self.onChangeTabsOrder)
         self.preferences.change_settings_tab_position.connect(self.setSettingsTabsPosition)
+        self.drives.remove_drive.connect(self.folders.removeFoldersForDrive)
 
     def setSettingsTabsOrder(self):
         map_dict = {'Folders': [':folder.png', self.tab_folders_group],
@@ -181,8 +182,10 @@ class TabsWidget(QtWidgets.QWidget):
                 extension = self.extensions.last_added_extension
                 ext_id = gdb.extensionId(extension)
                 self.runner.setExtensions({ext_id: extension})
+
             self.setIndexableFolders()
             self.runner.found_files = 0
+
             self.runner.index_all_types_of_files = int(getPreferenceByName('index_all_types_of_files'))
             self.runner.index_files_without_extension = int(getPreferenceByName('index_files_without_extension'))
             self.runner.signals.finished.connect(self.onFinished)
@@ -215,16 +218,8 @@ class TabsWidget(QtWidgets.QWidget):
             non = "<br>".join(non_indexable)
             QtWidgets.QMessageBox.critical(self,
                                            'Error!',
-                                           f"Next folders are empty! Probably the source drive is not active!<br>"
-                                           f"<br>{non}"
-                                           f"<br><br>Please check!")
-
-        # folders_and_no_indexable =  self.folders.validFolders(folders, True)
-        # folders = folders_and_no_indexable[0]
-        # no_indexable = folders_and_no_indexable[1]
-        # if folders:
-        #     self.runner.folders_to_index = folders
-
+                                           f"Next folders are empty! Is the source drive active?<br>"
+                                           f"<br>{non}")
 
     @QtCore.pyqtSlot()
     def onMatchFound(self):

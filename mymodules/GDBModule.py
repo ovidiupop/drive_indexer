@@ -251,19 +251,6 @@ def deleteFoldersDB(paths: list) -> bool:
     return True
 
 
-def cleanForDeadDrive(drive_label):
-    query = QtSql.QSqlQuery()
-    query.prepare("DELETE FROM files "
-                  "WHERE folder_id IN (SELECT id FROM folders WHERE drive_id=("
-                  "SELECT serial FROM drives WHERE label=:label))")
-    query.bindValue(':label', drive_label)
-    if query.exec():
-        query.clear()
-        return True
-    else:
-        printQueryErr(query, 'cleanForDeadDrive')
-
-
 def deleteFilesDB(folder_id: int) -> bool:
     """
     :param folder_id:

@@ -211,11 +211,17 @@ class Search(QtWidgets.QWidget):
         ext_cat = gdb.getExtensionsCategories()
         data = table.model().rowData(table.currentIndex())
         file_path = data[0] + '/' + data[1]
-        info = QFileInfo(file_path)
-        extension = info.suffix()
-        if extension:
-            if setStatusBarMW('Please wait while drive is initialized...'):
-                category = ext_cat[extension]
-                FileDetailDialog(category, data, self)
-        else:
-            QtWidgets.QMessageBox.information(None, 'No file preview', 'File has not extension.')
+        exists = QtCore.QFileInfo.exists(file_path)
+        if exists:
+            info = QFileInfo(file_path)
+            extension = info.suffix()
+            if extension:
+                if setStatusBarMW('Please wait while drive is initialized...'):
+                    if extension in ext_cat.keys():
+                        category = ext_cat[extension]
+                        FileDetailDialog(category, data, self)
+                    else:
+                        QtWidgets.QMessageBox.information(None, 'Extension error',
+                                                          f'Extension {extension} has been removed<br>No file preview!.')
+            else:
+                QtWidgets.QMessageBox.information(None, 'No file preview', 'File has not extension.')

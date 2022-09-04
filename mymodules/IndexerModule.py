@@ -1,7 +1,7 @@
 import os
 
 from PyQt5 import QtCore, QtSql
-from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot, QDir
 
 from mymodules import GDBModule
 from mymodules.GDBModule import getPreferenceByName
@@ -12,16 +12,6 @@ def percentage(part, whole):
     """calculate percents of progress """
     result = 100 * float(part) / float(whole)
     return int(result)
-
-
-def countTotalFiles(roots):
-    """ count the files in directories roots is array of folders
-    """
-    count = 0
-    for root in roots:
-        for root_dir, cur_dir, files in os.walk(root, topdown=True):
-            count += len(files)
-    return count
 
 
 class WorkerKilledException(Exception):
@@ -60,7 +50,6 @@ class JobRunner(QRunnable):
         self.index_files_without_extension = True
         self.index_hidden_content = int(getPreferenceByName('index_hidden_content'))
 
-
     def reInitializeToZero(self):
         self.found_files = 0
         self.checked_files = 0
@@ -71,7 +60,7 @@ class JobRunner(QRunnable):
     def run(self):
         try:
             self.reInitializeToZero()
-            self.total_files = countTotalFiles(self.folders_to_index)
+            self.total_files = self.countTotalFiles(self.folders_to_index)
 
             for folder in self.folders_to_index:
                 self.folder_id = self.folderId(folder)
@@ -107,13 +96,27 @@ class JobRunner(QRunnable):
 
         for entry in directory.entryInfoList():
             if entry.isDir():
-                if self.folderExists(entry.filePath()) or self.folderIsForbidden(entry.baseName()):
+                dir = QDir(entry.filePath())
+                actual_dir_name = dir.dirName()
+                if self.folderExists(entry.filePath()) or self.folderIsForbidden(actual_dir_name):
                     continue
 
                 self._index(entry.filePath())
 
             if entry.isFile():
                 self.addFileByExtension(entry, path)
+
+    def countTotalFiles(self, roots):
+        """ count the files in directories roots is array of folders
+        """
+        count = 0
+        for root in roots:
+            for root_dir, cur_dir, files in os.walk(root, topdown=True):
+                dir = QDir(root_dir)
+                actual_dir_name = dir.dirName()
+                if actual_dir_name not in self.forbidden_folders:
+                    count += len(files)
+        return count
 
     def extensionIdForFile(self, entry):
         # suppose the file has no extension

@@ -31,15 +31,7 @@ in parent do:
 # select distinct and sort all used extensions in a linux system
 find . -type f | perl -ne 'print $1 if m/\.([^.\/]+)$/' | sort -u > used_extensions.txt
 
-
-
 current_directory = str(pathlib.Path(__file__).parent.absolute())
-
-
-TO CREATE INDEX FOR ITERATING IN MODEL
-        QModelIndex * index = model.index(row, column)
-The simplest way to get value of a cell from table is: here row and col need to be integer!!!
-        val = model.data(model.index(row, col), Qt.DisplayRole)
 
 
 REMOVE ALL DIGITS to RIGHT
@@ -81,3 +73,21 @@ variant 1
     instance = obj()
 variant 2
     instance = globals()[class_name]()
+
+
+GET COLUMN'S VALUE From QSqlTableModel
+     selected = self.drives_table.selectedIndexes()
+        for index in selected or []:
+            serial = self.drives_table.model().data(self.drives_table.model().index(index.row(), 0))
+
+TO CREATE INDEX FOR ITERATING IN MODEL
+        QModelIndex * index = model.index(row, column)
+The simplest way to get value of a cell from table is: here row and col need to be integer!!!
+        val = model.data(model.index(row, col), Qt.DisplayRole)
+
+
+HOW TO SELECT MULTIPLE FOLDERS
+     home_path = QtCore.QDir.homePath()
+     dlg = getExistingDirectories(directory=home_path, caption="Select folders")
+     if dlg.exec_() == QDialog.Accepted:
+         selected_folders = dlg.selectedFiles()

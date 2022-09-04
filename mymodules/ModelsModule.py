@@ -205,11 +205,15 @@ class DrivesTableModel(QtSql.QSqlTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return None
-
         column_name = nameOfColumn(index.column())
+
         if role == Qt.DisplayRole:
             if column_name == 'active':
                 return None
+
+        if role == Qt.DisplayRole:
+            if column_name == 'serial':
+                return QSqlTableModel.data(self, index)
 
         if role == Qt.DecorationRole:
             if column_name == 'active':
