@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtGui import QIcon
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton
@@ -36,6 +37,7 @@ class CategoriesSelector(QtWidgets.QWidget):
         for idx, cat in enumerate(self.categories):
             category = cat['category']
             cat_name = QtWidgets.QCheckBox(category, self)
+            cat_name.setIcon(QIcon(cat['icon']))
             cat_name.setChecked(cat['selected'])
             x = cat_name
             cat_name.stateChanged.connect(lambda checked, val=x: self.setPreferredCategory(val))

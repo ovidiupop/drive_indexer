@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from PyQt5 import QtWidgets, QtGui, QtTest
 from PyQt5.QtCore import QMimeDatabase, QDir, QStandardPaths
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMessageBox, QTabWidget, QFileDialog, QApplication, QMainWindow
+from PyQt5.QtWidgets import QMessageBox, QTabWidget, QFileDialog, QApplication, QMainWindow, QListWidgetItem
 
 from mymodules import GDBModule as gdb
 
@@ -176,6 +176,17 @@ def tabIndexByName(tab_widget: QTabWidget, tab_name: str) -> int:
             return index
 
 
+def categoriesList():
+    categories = gdb.getAll('categories')
+    categories_list = QtWidgets.QListWidget()
+    for category in categories:
+        icon = QIcon(category['icon'])
+        item = QListWidgetItem(icon, category['category'], categories_list)
+        categories_list.addItem(item)
+    return categories_list
+
+
+# deprecated
 def categoriesCombo():
     categories = gdb.getAll('categories')
     combo = QtWidgets.QComboBox()

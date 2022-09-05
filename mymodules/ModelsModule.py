@@ -52,7 +52,7 @@ class ExtensionsModel(QtCore.QAbstractListModel):
         if role == Qt.DisplayRole:
             return ex
         elif role == Qt.DecorationRole:
-            return getIcon(ex)
+            return getIcon(ex, 32)
 
     # override method of abstract class
     def rowCount(self, index):

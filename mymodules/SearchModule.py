@@ -28,7 +28,9 @@ class Search(QtWidgets.QWidget):
 
         self.search_button = PushButton('Search')
         self.search_button.setMinimumWidth(200)
-        self.search_button.setIcon(iconForButton('SP_FileDialogContentsView'))
+        self.search_button.setIcon(QIcon(':magnifier.png'))
+        self.search_button.setStyleSheet("""QPushButton { text-align: center; }""")
+        self.search_button.setFixedSize(100, 40)
 
         self.search_term_input.returnPressed.connect(self.onSubmitted)
         self.search_button.clicked.connect(self.onSubmitted)

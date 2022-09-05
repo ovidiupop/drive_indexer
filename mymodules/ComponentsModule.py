@@ -38,8 +38,8 @@ class PushButton(QtWidgets.QPushButton):
     def __init__(self, *args, **kwargs):
         super(PushButton, self).__init__(*args, **kwargs)
         self.styleSheet = "QPushButton { text-align: left; padding: 5}"
-        icon = self.icon()
-        icon_size = self.iconSize()
+        # icon = self.icon()
+        # icon_size = self.iconSize()
         # remove icon
         self.setStyleSheet(self.styleSheet)
 

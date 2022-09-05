@@ -360,13 +360,6 @@ def findFiles(search_term: str, extensions: list) -> list:
                   "where (f.extension_id in (%s) or f.extension_id is null) and (f.dir like ? or f.filename like ?)" % placeholder)
     for binder in extensions_list_ids:
         query.addBindValue(binder)
-    # else:
-    #     query.prepare("select f.dir, f.filename, f.size, d.label "
-    #                   "from files f "
-    #                   "left join folders fo on fo.id=f.folder_id "
-    #                   "left join drives d on d.serial=fo.drive_id "
-    #                   "where f.dir like ? or f.filename like ?")
-
     query.addBindValue("%" + search_term + "%")
     query.addBindValue("%" + search_term + "%")
 
