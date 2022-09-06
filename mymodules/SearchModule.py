@@ -1,6 +1,7 @@
 import pandas as pd
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QFileInfo
+from PyQt5.QtCore import Qt, QFileInfo, QSortFilterProxyModel
+from PyQt5.QtWidgets import QAbstractItemView
 
 from mymodules import ComponentsModule, ModelsModule
 from mymodules.CategoriesModule import CategoriesSelector
@@ -118,9 +119,12 @@ class Search(QtWidgets.QWidget):
         self.updateResults(results)
 
     def updateResults(self, results):
-        data = pd.DataFrame(results, columns=ModelsModule.HEADER_SEARCH_RESULTS_TABLE)
-        self.found_results_table.setModel(SearchResultsTableModel(data, self.found_results_table))
-        self.update()
+        self.found_results_table_model = ModelsModule.SearchResultsTableModel(
+            pd.DataFrame(results, columns=HEADER_SEARCH_RESULTS_TABLE), self.found_results_table)
+        self.found_results_table.setModel(self.found_results_table_model)
+        self.found_results_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.found_results_table.setSortingEnabled(True)
+        self.found_results_table.sortByColumn(2, Qt.DescendingOrder)
 
     # load extensions when the search is started
     # based on checked categories from search form

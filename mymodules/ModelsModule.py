@@ -19,7 +19,78 @@ def sorter(model_obj, table_obj, filter_key, order=Qt.DescendingOrder):
     table_obj.setModel(sortermodel)
     table_obj.setSortingEnabled(True)
     table_obj.sortByColumn(filter_key, order)
-    table_obj.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+
+class SearchResultsTableModel(QtCore.QAbstractTableModel):
+    def __init__(self, data, parent):
+        super(SearchResultsTableModel, self).__init__(parent)
+        self._data = data
+
+    def sorter(self):
+        sorter(self, self.parent(), 2)
+
+    def hasMountedDrive(self, index):
+        index_column = self.colIndexByName('Drive')
+        value = str(self._data.iloc[index.row()][index_column])
+        return gdb.isDriveActiveByLabel(value)
+
+    def rowData(self, index):
+        row_data = []
+        for idx in enumerate(HEADER_SEARCH_RESULTS_TABLE):
+            row_data.append(str(self._data.iloc[index.row()][idx[0]]))
+        return row_data
+
+    def colIndexByName(self, name):
+        return [ix for ix, col in enumerate(HEADER_SEARCH_RESULTS_TABLE) if col == name][0]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                return str(self._data.iloc[index.row()][index.column()])
+            if role == Qt.TextAlignmentRole:
+                if index.column() == 2 or index.column() == 3:
+                    return Qt.AlignRight
+
+            if role == Qt.ForegroundRole:
+                if index.column() == self.colIndexByName('Drive'):
+                    value = str(self._data.iloc[index.row()][index.column()])
+                    is_active = gdb.isDriveActiveByLabel(value)
+                    if not is_active:
+                        return QtGui.QColor('red')
+        return None
+
+    def rowCount(self, parent=None):
+        return len(self._data.values)
+
+    def columnCount(self, parent=None):
+        return self._data.columns.size
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return HEADER_SEARCH_RESULTS_TABLE[section]
+            if orientation == Qt.Vertical:
+                return section + 1  # row numbers start from 1
+        return None
+
+    def flags(self, index):
+        flags = super(self.__class__, self).flags(index)
+        flags |= Qt.ItemIsEditable
+        flags |= Qt.ItemIsSelectable
+        flags |= Qt.ItemIsEnabled
+        flags |= Qt.ItemIsDragEnabled
+        flags |= Qt.ItemIsDropEnabled
+        return flags
+
+    def sort(self, column, order):
+        """Sort table by given column number."""
+        try:
+            self.layoutAboutToBeChanged.emit()
+            self._data = self._data.sort_values(self._data.columns[column], ascending=not order)
+            self.layoutChanged.emit()
+        except Exception as e:
+            print(e)
 
 
 class SortFilterProxyModel(QSortFilterProxyModel):
@@ -109,76 +180,6 @@ class FoldersItemsDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         return None
-
-
-class SearchResultsTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, data, parent):
-        super(SearchResultsTableModel, self).__init__(parent)
-        self._data = data
-        sorter(self, self.parent(), 2)
-
-    def hasMountedDrive(self, index):
-        index_column = self.colIndexByName('Drive')
-        value = str(self._data.iloc[index.row()][index_column])
-        return gdb.isDriveActiveByLabel(value)
-
-    def rowData(self, index):
-        row_data = []
-        for idx in enumerate(HEADER_SEARCH_RESULTS_TABLE):
-            row_data.append(str(self._data.iloc[index.row()][idx[0]]))
-        return row_data
-
-    def colIndexByName(self, name):
-        return [ix for ix, col in enumerate(HEADER_SEARCH_RESULTS_TABLE) if col == name][0]
-
-    def data(self, index, role=Qt.DisplayRole):
-        if index.isValid():
-            if role == Qt.DisplayRole:
-                return str(self._data.iloc[index.row()][index.column()])
-            if role == Qt.TextAlignmentRole:
-                if index.column() == 2 or index.column() == 3:
-                    return Qt.AlignRight
-
-            if role == Qt.ForegroundRole:
-                if index.column() == self.colIndexByName('Drive'):
-                    value = str(self._data.iloc[index.row()][index.column()])
-                    is_active = gdb.isDriveActiveByLabel(value)
-                    if not is_active:
-                        return QtGui.QColor('red')
-        return None
-
-    def rowCount(self, parent=None):
-        return len(self._data.values)
-
-    def columnCount(self, parent=None):
-        return self._data.columns.size
-
-    def headerData(self, section, orientation, role):
-        # section is the index of the column/row.
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
-                return HEADER_SEARCH_RESULTS_TABLE[section]
-            if orientation == Qt.Vertical:
-                return section + 1  # row numbers start from 1
-        return None
-
-    def flags(self, index):
-        flags = super(self.__class__, self).flags(index)
-        flags |= Qt.ItemIsEditable
-        flags |= Qt.ItemIsSelectable
-        flags |= Qt.ItemIsEnabled
-        flags |= Qt.ItemIsDragEnabled
-        flags |= Qt.ItemIsDropEnabled
-        return flags
-
-    def sort(self, column, order):
-        """Sort table by given column number."""
-        try:
-            self.layoutAboutToBeChanged.emit()
-            self._data = self._data.sort_values(self._data.columns[column], ascending=not order)
-            self.layoutChanged.emit()
-        except Exception as e:
-            print(e)
 
 
 class SearchResultsTableItemsDelegate(QStyledItemDelegate):

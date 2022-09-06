@@ -81,6 +81,17 @@ class FileDetailDialog(QtWidgets.QDialog):
             self.can_close = True
             super(FileDetailDialog, self).closeEvent(ev)
 
+    def keyPressEvent(self, ev):
+        if ev.key() == QtCore.Qt.Key_Escape:
+            if self.can_close:
+                super(FileDetailDialog, self).keyPressEvent(ev)
+            else:
+                ev.ignore()
+                # stop media player before close the dialog window
+                self.player.media_player.stop()
+                self.can_close = True
+                super(FileDetailDialog, self).keyPressEvent(ev)
+
 
 class DetailsFileWidget(QtWidgets.QWidget):
     def __init__(self, category: str, drive: str, file: QFileInfo, parent=None):
