@@ -100,8 +100,8 @@ class Extensions(QtWidgets.QWidget):
     def removeExtension(self):
         selected_ex = self.settings_extensions_list.selectedIndexes()
         if len(selected_ex):
-            confirmation_text = "If you remove selected extensions, all indexed files belonging to them, will be also " \
-                                "removed!<br><br>Do you proceed? "
+            confirmation_text = "If you remove selected extensions, all indexed files belonging to them, " \
+                                "will also be removed!<br><br>Do you proceed? "
             confirm = confirmationDialog("Do you remove?", confirmation_text)
             if not confirm:
                 return

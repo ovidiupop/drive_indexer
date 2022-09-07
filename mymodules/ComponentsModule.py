@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QFileDialog, QListView, QAbstractItemView, QTreeView
-
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QFileDialog, QListView, QAbstractItemView, QTreeView, QListWidgetItem
+from mymodules import GDBModule as gdb
 
 class TableViewAutoCols(QtWidgets.QTableView):
     """ Override QTableView to override resizeEvent method
@@ -31,6 +32,35 @@ class TableViewAutoCols(QtWidgets.QTableView):
             super().keyPressEvent(event)
 
 
+class TableReports(QtWidgets.QTableWidget):
+    def __init__(self, data, header, column_size, parent=None):
+        super(TableReports, self).__init__(parent)
+        self.header = header
+        self._data = data
+        self.rows_count = len(data)
+        self.columns_count = len(header)
+        self.column_size = column_size
+        self.setRowCount(self.rows_count)
+        self.setColumnCount(self.columns_count)
+        self.setHorizontalHeaderLabels(header)
+        self.setData()
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+        self.setSortingEnabled(True)
+
+    def setData(self):
+        for i, data in enumerate(self._data):
+            for j in range(self.columns_count):
+                item = QtWidgets.QTableWidgetItem()
+                item.setData(QtCore.Qt.DisplayRole, data[j])
+                self.setItem(i, j, item)
+
+    def resizeEvent(self, event):
+        width = event.size().width()
+        for index, size in enumerate(self.column_size):
+            self.setColumnWidth(index, width * size)
+
+
 class PushButton(QtWidgets.QPushButton):
     """
     Push button supporting icon to left/right
@@ -38,9 +68,6 @@ class PushButton(QtWidgets.QPushButton):
     def __init__(self, *args, **kwargs):
         super(PushButton, self).__init__(*args, **kwargs)
         self.styleSheet = "QPushButton { text-align: left; padding: 5}"
-        # icon = self.icon()
-        # icon_size = self.iconSize()
-        # remove icon
         self.setStyleSheet(self.styleSheet)
 
     def setTextCenter(self):
@@ -97,3 +124,17 @@ class getExistingDirectories(QFileDialog):
         self.setOption(self.ShowDirsOnly, True)
         self.findChildren(QListView)[0].setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.findChildren(QTreeView)[0].setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+
+# class CategoriesList(QtWidgets.QListWidget):
+#     def __init__(self, parent=None):
+#         super(CategoriesList, self).__init__(parent)
+#         self.setFixedWidth(300)
+#
+#         categories = gdb.getAll('categories')
+#         categories_list = QtWidgets.QListWidget()
+#         for category in categories:
+#             icon = QIcon(category['icon'])
+#             item = QListWidgetItem(icon, category['category'], categories_list)
+#             self.addItem(item)
+

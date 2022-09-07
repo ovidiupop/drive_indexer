@@ -12,6 +12,7 @@ from mymodules.GDBModule import getPreferenceByName
 from mymodules.GlobalFunctions import setStatusBarMW, getPreference, setPreferenceByName
 from mymodules.IndexerModule import JobRunner
 from mymodules.PreferencesModule import Preferences
+from mymodules.ReportsModule import Reports
 from mymodules.SearchModule import Search
 from mymodules.SystemModule import folderCanBeIndexed, isEmptyFolder
 
@@ -38,6 +39,9 @@ class TabsWidget(QtWidgets.QWidget):
         self.folders = Folders()
         # import Preferences Module
         self.preferences = Preferences()
+        # import Reports Module
+        self.reports = Reports()
+
         self.setDefaultActions()
 
         self.tab_search_group = QtWidgets.QGroupBox()
@@ -53,6 +57,7 @@ class TabsWidget(QtWidgets.QWidget):
         self.tab_extensions_group = QtWidgets.QGroupBox('Extensions')
         self.tab_drives_group = QtWidgets.QGroupBox('Drives')
         self.tab_preferences_group = QtWidgets.QGroupBox('Preferences')
+        self.tab_reports_group = QtWidgets.QGroupBox('Reports')
 
         # tabs inside Settings tab
         self.tabs_settings = QTabWidget()
@@ -81,6 +86,9 @@ class TabsWidget(QtWidgets.QWidget):
         folders_section_layout = self.folders.folders_section_layout
         self.tab_folders_group.setLayout(folders_section_layout)
 
+        reports_section_layout = self.reports.layout_tab_reports
+        self.tab_reports_group.setLayout(reports_section_layout)
+
         settings_tab_layout = QtWidgets.QVBoxLayout()
         settings_tab_layout.addWidget(self.tabs_settings)
         self.tab_settings_group.setLayout(settings_tab_layout)
@@ -97,8 +105,10 @@ class TabsWidget(QtWidgets.QWidget):
                     'Drives': [':drive.png', self.tab_drives_group],
                     'Categories': [':accordion.png', self.tab_categories_group],
                     'Extensions': [':file_extension_exe.png', self.tab_extensions_group],
-                    'Preferences': [':preferences.png', self.tab_preferences_group]
+                    'Preferences': [':preferences.png', self.tab_preferences_group],
+                    'Reports': [':chart_pie.png', self.tab_reports_group]
                     }
+
         tabs_order_string = getPreferenceByName('settings_tabs_order')
         tabs_order_list = tabs_order_string.split(',')
         for tab in tabs_order_list:

@@ -185,7 +185,6 @@ def categoriesList():
         categories_list.addItem(item)
     return categories_list
 
-
 # deprecated
 def categoriesCombo():
     categories = gdb.getAll('categories')

@@ -567,18 +567,64 @@ def getPreferenceNameById(id):
         return ret
 
 
+def countFiles():
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT COUNT(id) FROM files")
+    if query.exec():
+        while query.first():
+            return query.value(0)
+
+
 def getUsedExtensions():
     result = []
     query = QtSql.QSqlQuery()
-    query.prepare("SELECT c.category, coalesce(e.extension, 'no_extension') AS extension, COUNT(f.extension_id) as extensionId "
+    query.prepare("SELECT c.category, coalesce(e.extension, 'no_extension') AS extension, "
+                  "SUM(CASE WHEN f.extension_id is null THEN 1 ELSE 0 END) AS [no_extension], "
+                  "COUNT(f.extension_id) AS [with_extension] "
                   "FROM files f "
                   "LEFT JOIN extensions e ON f.extension_id=e.id "
                   "LEFT JOIN categories c ON e.category_id=c.id "
-                  "GROUP BY extension "
-                  "order by extensionID DESC")
+                  "GROUP BY extension_id ORDER BY with_extension DESC")
     if query.exec():
         while query.next():
-            result.append([query.value('category'), query.value('extension'), query.value('extensionID')])
+            if query.value('with_extension') != 0:
+                result.append([query.value('category'), query.value('extension'), query.value('with_extension')])
+            else:
+                result.append([query.value('category'), query.value('extension'), query.value('no_extension')])
+        query.clear()
+    return result
+
+
+# return list with files for each category
+# [[category, files], [category, files]]
+def categoryAndFiles():
+    result = []
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT c.category, COUNT(f.extension_id) as files "
+                  "FROM files f "
+                  "LEFT JOIN extensions e ON f.extension_id=e.id "
+                  "LEFT JOIN categories c ON e.category_id=c.id "
+                  "WHERE e.category_id NOT NULL "
+                  "GROUP BY category ORDER BY category ASC")
+    if query.exec():
+        while query.next():
+            result.append([query.value('category'), query.value('files')])
+        query.clear()
+    return result
+
+
+def filesOnDrive():
+    result = []
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT d.label as drive, COUNT(f.id) as filesOnDrive, d.active, d.size "
+                  "FROM files f "
+                  "LEFT JOIN folders fo ON f.folder_id=fo.id "
+                  "LEFT JOIN drives d on d.serial=fo.drive_id "
+                  "GROUP BY fo.drive_id "
+                  "ORDER BY filesOnDrive DESC")
+    if query.exec():
+        while query.next():
+            result.append([query.value('drive'), query.value('filesOnDrive'), query.value('active'), query.value('size')])
         query.clear()
     return result
 
