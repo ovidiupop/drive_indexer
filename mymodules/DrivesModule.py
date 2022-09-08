@@ -1,12 +1,12 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt, QModelIndex, QAbstractItemModel
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QAbstractItemView
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QHBoxLayout, QLabel
 
+from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton, TableViewAutoCols
 from mymodules.GlobalFunctions import iconForButton, confirmationDialog
 from mymodules.ModelsModule import DrivesTableModel, DrivesItemsDelegate, DrivesMapper
 from mymodules.SystemModule import SystemClass
-from mymodules import GDBModule as gdb
 
 COLUMN_SIZE = [0.10, 0.30, 0.20, 0.20, 0.10, 0.10]
 COLUMN_SIZE_ID_HIDDEN = [0.10, 0.40, 0.20, 0.20, 0.09, 0.10]

@@ -1,7 +1,7 @@
-from PyQt5 import QtWidgets, QtCore, QtGui, Qt
-from PyQt5.QtCore import QMimeData
-from PyQt5.QtGui import QIcon, QDrag
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QFileDialog, QListView, QAbstractItemView, QTreeView, QListWidgetItem
+
 from mymodules import GDBModule as gdb
 from mymodules.GlobalFunctions import getIcon
 

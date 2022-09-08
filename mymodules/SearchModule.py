@@ -1,13 +1,13 @@
 import pandas as pd
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QFileInfo, QSortFilterProxyModel
+from PyQt5.QtCore import Qt, QFileInfo
 from PyQt5.QtWidgets import QAbstractItemView
 
 from mymodules import ComponentsModule, ModelsModule
 from mymodules.CategoriesModule import CategoriesSelector
 from mymodules.ComponentsModule import PushButton
 from mymodules.GlobalFunctions import *
-from mymodules.ModelsModule import SearchResultsTableModel, SearchResultsTableItemsDelegate
+from mymodules.ModelsModule import SearchResultsTableItemsDelegate
 from mymodules.PreviewFileModule import FileDetailDialog
 
 

@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtChart import QPieSeries
 from PyQt5.QtCore import QFile
-from pyqtgraph.Qt import QtCore
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import TableReports

@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from mymodules import GDBModule as gdb
 from mymodules.ComponentsModule import PushButton, CategoriesList, ExtensionsListWidget
-from mymodules.GlobalFunctions import iconForButton, confirmationDialog, categoriesList, categoriesCombo
+from mymodules.GlobalFunctions import iconForButton, confirmationDialog, categoriesCombo
 
 
 class Extensions(QtWidgets.QWidget):

@@ -3,10 +3,10 @@ from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QIcon
 from PyQt5.QtSql import QSqlTableModel, QSqlRelation
 from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, \
-    QDataWidgetMapper, QAbstractItemView
+    QDataWidgetMapper
 
 from mymodules import GDBModule as gdb
-from mymodules.GlobalFunctions import getIcon, HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
+from mymodules.GlobalFunctions import HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
 
 
 def sorter(model_obj, table_obj, filter_key, order=Qt.DescendingOrder):
@@ -110,24 +110,6 @@ class SortFilterProxyModel(QSortFilterProxyModel):
                 if not text.contains(regex):
                     return False
         return True
-
-
-# class ExtensionsModel(QtCore.QAbstractListModel):
-#     def __init__(self, extensions):
-#         super().__init__()
-#         self.extensions = extensions
-#
-#     # override method of abstract class
-#     def data(self, index, role):
-#         ex = self.extensions[index.row()]
-#         if role == Qt.DisplayRole:
-#             return ex
-#         elif role == Qt.DecorationRole:
-#             return getIcon(ex, 32)
-#
-#     # override method of abstract class
-#     def rowCount(self, index):
-#         return len(self.extensions)
 
 
 class FoldersModel(QtSql.QSqlRelationalTableModel):
