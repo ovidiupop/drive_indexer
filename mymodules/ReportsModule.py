@@ -1,5 +1,4 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtChart import QPieSeries
 from PyQt5.QtCore import QFile
 
 from mymodules import GDBModule as gdb
@@ -14,8 +13,6 @@ class Reports(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(Reports, self).__init__(parent)
-
-        self.series = QPieSeries()
 
         lay_main = QtWidgets.QVBoxLayout()
         lay_top = QtWidgets.QHBoxLayout()
