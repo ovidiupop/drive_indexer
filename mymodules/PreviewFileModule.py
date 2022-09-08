@@ -24,7 +24,6 @@ class FileDetailDialog(QtWidgets.QDialog):
         # needed for media player
         self.can_close = True
         self.mw = findMainWindow()
-        self.text_preview_extensions = ['txt', 'srt', 'sub']
 
         # assign each column's value to class attribute
         [setattr(self, column.lower(), data[index]) for index, column in enumerate(HEADER_SEARCH_RESULTS_TABLE)]
@@ -49,7 +48,7 @@ class FileDetailDialog(QtWidgets.QDialog):
 
     def dispatcher(self, category):
         self.can_close = True
-        if category == 'Video' and self.extension not in self.text_preview_extensions:
+        if category == 'Video' and self.extension not in ['srt', 'sub']:
             self.can_close = False
             # add minimize, maximize and the other flags for manipulating window
             self.setWindowFlags(Qt.Window)
@@ -59,15 +58,14 @@ class FileDetailDialog(QtWidgets.QDialog):
             self.setMaximumHeight(200)
             self.can_close = False
             self.player = MediaPlayer('Audio', self.file_path, self)
-        elif category == 'Programming' or self.extension in self.text_preview_extensions:
-            encoding = getFileEncoding(self.file_path)
-            self.setWindowFlags(Qt.Window)
-            Editor(self.file_path, encoding, self)
         elif category == 'Image':
             self.setWindowFlags(Qt.Window)
             WImage(self.file_path, self)
         else:
-            self.setMaximumHeight(130)
+            encoding = getFileEncoding(self.file_path)
+            self.setWindowFlags(Qt.Window)
+            if not Editor(self.file_path, encoding, self):
+                self.setMaximumHeight(130)
 
         self.mw.statusbar.showMessage('')
 
@@ -309,8 +307,9 @@ class Editor(QTextEdit):
         text = 'Sorry! I could not read the file:\n' + file
         try:
             text = open(file, encoding=encoding).read()
-        except Exception as e:
-            print(e)
+        except Exception as _e:
+            pass
+
         self.setText(text)
         layout_editor = QtWidgets.QVBoxLayout()
         layout_editor.addWidget(self)
