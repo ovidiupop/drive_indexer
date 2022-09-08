@@ -448,6 +448,24 @@ def removeExtensions(extensions: list) -> bool:
     return False
 
 
+def moveExtensions(category_id: int, extensions: list) -> bool:
+    """
+    :param extensions:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    extension_ids = extensionsToInt(extensions)
+    for extension_id in extension_ids:
+        query.prepare("UPDATE extensions SET category_id=:category_id WHERE id=:id")
+        query.bindValue(':category_id', category_id)
+        query.bindValue(':id', extension_id)
+        if query.exec():
+            query.clear()
+        else:
+            return False
+    return True
+
+
 def getDriveByPath(path: str) -> str:
     """
     :param path:
@@ -505,6 +523,16 @@ def isDriveActiveByLabel(label: str) -> bool:
         ret = query.first()
         query.clear()
         return ret
+    return False
+
+
+def getCategoryId(category):
+    query = QtSql.QSqlQuery()
+    query.prepare("SELECT id FROM categories WHERE category=:category")
+    query.bindValue(":category", category)
+    if query.exec():
+        if query.first():
+            return query.value('id')
     return False
 
 

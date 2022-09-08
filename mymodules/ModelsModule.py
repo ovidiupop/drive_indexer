@@ -112,22 +112,22 @@ class SortFilterProxyModel(QSortFilterProxyModel):
         return True
 
 
-class ExtensionsModel(QtCore.QAbstractListModel):
-    def __init__(self, extensions):
-        super().__init__()
-        self.extensions = extensions
-
-    # override method of abstract class
-    def data(self, index, role):
-        ex = self.extensions[index.row()]
-        if role == Qt.DisplayRole:
-            return ex
-        elif role == Qt.DecorationRole:
-            return getIcon(ex, 32)
-
-    # override method of abstract class
-    def rowCount(self, index):
-        return len(self.extensions)
+# class ExtensionsModel(QtCore.QAbstractListModel):
+#     def __init__(self, extensions):
+#         super().__init__()
+#         self.extensions = extensions
+#
+#     # override method of abstract class
+#     def data(self, index, role):
+#         ex = self.extensions[index.row()]
+#         if role == Qt.DisplayRole:
+#             return ex
+#         elif role == Qt.DecorationRole:
+#             return getIcon(ex, 32)
+#
+#     # override method of abstract class
+#     def rowCount(self, index):
+#         return len(self.extensions)
 
 
 class FoldersModel(QtSql.QSqlRelationalTableModel):

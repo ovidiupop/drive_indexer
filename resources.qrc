@@ -33,6 +33,7 @@
 		<file alias="folder_delete.png">/images/app/32/folder_delete.png</file>
 		<file alias="folder_go.png">/images/app/32/folder_go.png</file>
 		<file alias="font.png">/images/app/32/font.png</file>
+		<file alias="heart.png">/images/app/32/heart.png</file>
 		<file alias="image.png">/images/app/32/image.png</file>
 		<file alias="lightning.png">/images/app/32/lightning.png</file>
 		<file alias="magnifier.png">/images/app/32/magnifier.png</file>

@@ -1,7 +1,10 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QIcon
+from PyQt5 import QtWidgets, QtCore, QtGui, Qt
+from PyQt5.QtCore import QMimeData
+from PyQt5.QtGui import QIcon, QDrag
 from PyQt5.QtWidgets import QFileDialog, QListView, QAbstractItemView, QTreeView, QListWidgetItem
 from mymodules import GDBModule as gdb
+from mymodules.GlobalFunctions import getIcon
+
 
 class TableViewAutoCols(QtWidgets.QTableView):
     """ Override QTableView to override resizeEvent method
@@ -16,6 +19,8 @@ class TableViewAutoCols(QtWidgets.QTableView):
         rowHeight = self.fontMetrics().height()
         self.verticalHeader().setDefaultSectionSize(rowHeight)
         self.setModel(model)
+        self.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
+        self.setSelectionMode(QtWidgets.QTableView.SingleSelection)
 
     def setColumns(self, columns):
         self.columns = columns
@@ -44,6 +49,8 @@ class TableReports(QtWidgets.QTableWidget):
         self.setColumnCount(self.columns_count)
         self.setHorizontalHeaderLabels(header)
         self.setData()
+        self.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
+        self.setSelectionMode(QtWidgets.QTableWidget.SingleSelection)
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
         self.setSortingEnabled(True)
@@ -102,20 +109,6 @@ class ListWidget(QtWidgets.QListWidget):
             super().keyPressEvent(event)
 
 
-class ListView(QtWidgets.QListView):
-
-    delete_key_pressed = QtCore.pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(ListView, self).__init__(parent)
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Delete:
-            self.delete_key_pressed.emit()
-        else:
-            super().keyPressEvent(event)
-
-
 class getExistingDirectories(QFileDialog):
     def __init__(self, *args, **kwargs):
         super(getExistingDirectories, self).__init__(*args, **kwargs)
@@ -126,15 +119,34 @@ class getExistingDirectories(QFileDialog):
         self.findChildren(QTreeView)[0].setSelectionMode(QAbstractItemView.ExtendedSelection)
 
 
-# class CategoriesList(QtWidgets.QListWidget):
-#     def __init__(self, parent=None):
-#         super(CategoriesList, self).__init__(parent)
-#         self.setFixedWidth(300)
-#
-#         categories = gdb.getAll('categories')
-#         categories_list = QtWidgets.QListWidget()
-#         for category in categories:
-#             icon = QIcon(category['icon'])
-#             item = QListWidgetItem(icon, category['category'], categories_list)
-#             self.addItem(item)
+class CategoriesList(QtWidgets.QListWidget):
+    def __init__(self, parent=None):
+        super(CategoriesList, self).__init__(parent)
+        self.setFixedWidth(300)
 
+        categories = gdb.getAll('categories')
+        for category in categories:
+            icon = QIcon(category['icon'])
+            item = QListWidgetItem(icon, category['category'], self)
+            self.addItem(item)
+
+
+class ExtensionsListWidget(QtWidgets.QListWidget):
+
+    delete_key_pressed = QtCore.pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(ExtensionsListWidget, self).__init__(parent)
+        self.setFixedWidth(300)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.delete_key_pressed.emit()
+        else:
+            super().keyPressEvent(event)
+
+    def setItems(self, extensions):
+        for extension in extensions:
+            icon = getIcon(extension, 32)
+            item = QListWidgetItem(icon, extension, self)
+            self.addItem(item)

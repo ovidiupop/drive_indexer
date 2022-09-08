@@ -116,7 +116,8 @@ def getIcon(item: str, size: int = 24) -> object:
     icon = QtGui.QIcon.fromTheme(mime_for_extension)
     if icon.isNull():
         icon = QtGui.QIcon(f':' + mime_for_extension + '.png')
-    return icon.pixmap(size)
+    return icon
+    # return icon.pixmap(size)
 
 
 def formatDictToHuman(d: dict) -> str:
@@ -184,6 +185,7 @@ def categoriesList():
         item = QListWidgetItem(icon, category['category'], categories_list)
         categories_list.addItem(item)
     return categories_list
+
 
 # deprecated
 def categoriesCombo():

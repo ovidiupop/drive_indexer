@@ -42,6 +42,7 @@ class Reports(QtWidgets.QWidget):
         self.group_database = QtWidgets.QGroupBox()
         self.group_database.setTitle('Database')
         lay_bottom.addWidget(self.group_database)
+        lay_bottom.addStretch()
         self.reportDatabase()
 
         self.layout_tab_reports = QtWidgets.QHBoxLayout()
@@ -76,7 +77,7 @@ class Reports(QtWidgets.QWidget):
     def reportDrives(self):
         drives = gdb.filesOnDrive()
         if drives:
-            table = TableReports(drives, ["Drive", "Files", "Active", "Size (Gb)"], [0.4, 0.2, 0.1, 0.3])
+            table = TableReports(drives, ["Drive", "Indexed Files", "Active", "Size (Gb)"], [0.4, 0.2, 0.1, 0.3])
             lay_v = QtWidgets.QVBoxLayout()
             layh = QtWidgets.QHBoxLayout()
             layh.addWidget(table)
