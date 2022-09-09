@@ -121,10 +121,12 @@ class Search(QtWidgets.QWidget):
     def updateResults(self, results):
         self.found_results_table_model = ModelsModule.SearchResultsTableModel(
             pd.DataFrame(results, columns=HEADER_SEARCH_RESULTS_TABLE), self.found_results_table)
+
         self.found_results_table.setModel(self.found_results_table_model)
         self.found_results_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+
         self.found_results_table.setSortingEnabled(True)
-        self.found_results_table.sortByColumn(2, Qt.DescendingOrder)
+        # self.found_results_table.sortByColumn(2, Qt.DescendingOrder)
 
     # load extensions when the search is started
     # based on checked categories from search form
@@ -228,13 +230,4 @@ class Search(QtWidgets.QWidget):
                     FileDetailDialog(category, data, self)
                 else:
                     FileDetailDialog(None, data, self)
-                # if extension in ext_cat.keys():
-                #     category = ext_cat[extension]
-                #     FileDetailDialog(category, data, self)
-                # else:
-                #     QtWidgets.QMessageBox.information(None, 'Extension error',
-                #                                       f'Extension {extension} has been '
-                #                                       f'removed<br>No file preview!.')
-            # else:
-            #     QtWidgets.QMessageBox.information(None, 'No file preview', 'File has not extension.')
 

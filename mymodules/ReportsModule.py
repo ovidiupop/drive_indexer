@@ -23,26 +23,30 @@ class Reports(QtWidgets.QWidget):
         self.group_drives = QtWidgets.QGroupBox()
         self.group_drives.setTitle('Drives')
         lay_top.addWidget(self.group_drives)
-        self.reportDrives()
 
         self.group_categories = QtWidgets.QGroupBox()
         self.group_categories.setTitle('Categories')
         lay_top.addWidget(self.group_categories)
-        self.reportCategories()
 
         self.group_extensions = QtWidgets.QGroupBox()
         self.group_extensions.setTitle('Extensions')
         lay_top.addWidget(self.group_extensions)
-        self.reportExtensions()
 
         self.group_database = QtWidgets.QGroupBox()
         self.group_database.setTitle('Database')
         lay_bottom.addWidget(self.group_database)
         lay_bottom.addStretch()
-        self.reportDatabase()
 
         self.layout_tab_reports = QtWidgets.QHBoxLayout()
         self.layout_tab_reports.addLayout(lay_main)
+
+        self.fillReports()
+
+    def fillReports(self):
+        self.reportCategories()
+        self.reportDrives()
+        self.reportExtensions()
+        self.reportDatabase()
 
     def reportDatabase(self):
         location = getDatabaseLocation()

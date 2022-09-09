@@ -369,7 +369,7 @@ def findFiles(search_term: str, extensions: list) -> list:
             item = [
                 query.value('dir'),
                 query.value('filename'),
-                HumanBytes.format(query.value('size'), True),
+                query.value('size'),
                 query.value('extension'),
                 query.value('label')
             ]

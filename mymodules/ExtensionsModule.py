@@ -155,8 +155,8 @@ class Extensions(QtWidgets.QWidget):
         selected_category = self.move_categories_cmb.currentText()
         if selected_category == 'Categories':
             QtWidgets.QMessageBox.information(self.parent(),
-                                           'Error!',
-                                           f"If you wish to move extension(s), please select a target category?")
+                                              'Error!',
+                                              f"If you wish to move extension(s), please select a target category?")
             return None
 
         selected_ex = self.settings_extensions_list.selectedIndexes()
@@ -177,4 +177,4 @@ class Extensions(QtWidgets.QWidget):
                     target_category = gdb.getCategoryId(selected_category)
                     if target_category:
                         if gdb.moveExtensions(target_category, extensions):
-                            self.loadExtensionsForCategory(active_cat_id-1)
+                            self.loadExtensionsForCategory(active_cat_id - 1)

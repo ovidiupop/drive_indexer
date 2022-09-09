@@ -2,42 +2,45 @@ from PyQt5 import QtCore, QtSql, QtGui
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QIcon
 from PyQt5.QtSql import QSqlTableModel, QSqlRelation
-from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, \
-    QDataWidgetMapper
+from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, QDataWidgetMapper
+import numpy as np
 
 from mymodules import GDBModule as gdb
 from mymodules.GlobalFunctions import HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
-
-
-def sorter(model_obj, table_obj, filter_key, order=Qt.DescendingOrder):
-    # add sorting to table
-    sortermodel = QSortFilterProxyModel()
-    sortermodel.setSourceModel(model_obj)
-    sortermodel.setFilterKeyColumn(filter_key)
-
-    # use sorter as model for table
-    table_obj.setModel(sortermodel)
-    table_obj.setSortingEnabled(True)
-    table_obj.sortByColumn(filter_key, order)
+from mymodules.HumanReadableSize import HumanBytes
 
 
 class SearchResultsTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data, parent):
         super(SearchResultsTableModel, self).__init__(parent)
-        self._data = data
+        self._data = np.array(data.values)
+        self._cols = data.columns
+        self.r, self.c = np.shape(self._data)
 
-    def sorter(self):
-        sorter(self, self.parent(), 2)
+    def sort(self, column, order):
+        """Sort table by given column number."""
+        try:
+            self.layoutAboutToBeChanged.emit()
+            if order == Qt.DescendingOrder:
+                # sort reverse n
+                self._data = self._data[self._data[:, column].argsort()[::-1]]
+            else:
+                self._data = self._data[self._data[:, column].argsort()]
+            self.layoutChanged.emit()
+        except Exception as e:
+            print(e)
 
     def hasMountedDrive(self, index):
         index_column = self.colIndexByName('Drive')
-        value = str(self._data.iloc[index.row()][index_column])
+        value = str(self._data[index.row()][index_column])
+        # value = str(self._data.iloc[index.row()][index_column])
         return gdb.isDriveActiveByLabel(value)
 
     def rowData(self, index):
         row_data = []
         for idx in enumerate(HEADER_SEARCH_RESULTS_TABLE):
-            row_data.append(str(self._data.iloc[index.row()][idx[0]]))
+            row_data.append(str(self._data[index.row()][idx[0]]))
+            # row_data.append(str(self._data.iloc[index.row()][idx[0]]))
         return row_data
 
     def colIndexByName(self, name):
@@ -46,24 +49,28 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
-                return str(self._data.iloc[index.row()][index.column()])
+                value = self._data[index.row(),index.column()]
+                if index.column() == 2:
+                    value = HumanBytes.format(value, True)
+                return str(value)
             if role == Qt.TextAlignmentRole:
                 if index.column() == 2 or index.column() == 3:
                     return Qt.AlignRight
 
             if role == Qt.ForegroundRole:
                 if index.column() == self.colIndexByName('Drive'):
-                    value = str(self._data.iloc[index.row()][index.column()])
+                    value = str(self._data[index.row(), index.column()])
+                    # value = str(self._data.iloc[index.row()][index.column()])
                     is_active = gdb.isDriveActiveByLabel(value)
                     if not is_active:
                         return QtGui.QColor('red')
         return None
 
     def rowCount(self, parent=None):
-        return len(self._data.values)
+        return self.r
 
     def columnCount(self, parent=None):
-        return self._data.columns.size
+        return self.c
 
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
@@ -83,14 +90,6 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
         flags |= Qt.ItemIsDropEnabled
         return flags
 
-    def sort(self, column, order):
-        """Sort table by given column number."""
-        try:
-            self.layoutAboutToBeChanged.emit()
-            self._data = self._data.sort_values(self._data.columns[column], ascending=not order)
-            self.layoutChanged.emit()
-        except Exception as e:
-            print(e)
 
 
 class SortFilterProxyModel(QSortFilterProxyModel):
@@ -110,6 +109,18 @@ class SortFilterProxyModel(QSortFilterProxyModel):
                 if not text.contains(regex):
                     return False
         return True
+
+
+def sorter(model_obj, table_obj, filter_key, order=Qt.DescendingOrder):
+    # add sorting to table
+    sortermodel = QSortFilterProxyModel()
+    sortermodel.setSourceModel(model_obj)
+    sortermodel.setFilterKeyColumn(filter_key)
+
+    # use sorter as model for table
+    table_obj.setModel(sortermodel)
+    table_obj.setSortingEnabled(True)
+    table_obj.sortByColumn(filter_key, order)
 
 
 class FoldersModel(QtSql.QSqlRelationalTableModel):
