@@ -76,7 +76,7 @@ class Extensions(QtWidgets.QWidget):
         layout_extensions_column.addWidget(self.settings_extensions_list)
         layout_extensions_column.addWidget(self.add_group)
         layout_extensions_column.addWidget(self.move_remove_group)
-        layout_extensions_column.addStretch()
+        # layout_extensions_column.addStretch()
 
         self.layout_tab_extensions = QtWidgets.QHBoxLayout()
         self.layout_tab_extensions.addLayout(layout_categories_column)

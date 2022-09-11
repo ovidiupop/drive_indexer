@@ -55,6 +55,9 @@ class Search(QtWidgets.QWidget):
         h_label = QtWidgets.QHBoxLayout()
         h_label.addWidget(self.search_input_label)
 
+        self.spinner = spinner(parent)
+        self.spinner.hide()
+
         h_search_row = QtWidgets.QHBoxLayout()
         h_search_row.addWidget(self.search_term_input)
         h_search_row.addWidget(self.search_button)
@@ -73,6 +76,7 @@ class Search(QtWidgets.QWidget):
         # search results section
         search_results_layout = QtWidgets.QVBoxLayout()
         row_over_table = QtWidgets.QHBoxLayout()
+        row_over_table.addWidget(self.spinner, 0, Qt.AlignLeft)
         row_over_table.addWidget(self.found_search_label, 0, Qt.AlignLeft)
         row_over_table.addStretch()
 
@@ -107,6 +111,10 @@ class Search(QtWidgets.QWidget):
         if not search_term:
             QtWidgets.QMessageBox.information(None, 'No term to search', 'Please write a term for search')
             return
+        self.spinner.show()
+        self.found_search_label.setText(f'Please wait! Searching ...')
+        self.found_search_label.show()
+        QtTest.QTest.qWait(1000)
 
         self.getExtensionsForSearch()
         extensions = self.extensions_for_search
@@ -114,7 +122,7 @@ class Search(QtWidgets.QWidget):
         results = gdb.findFiles(search_term, extensions)
         count_results = len(results) if results else 0
 
-        self.found_search_label.show()
+        self.spinner.hide()
         self.found_search_label.setText(f'Found: {count_results} results')
         self.updateResults(results)
 

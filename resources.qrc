@@ -52,6 +52,7 @@
 		<file alias="uncategorized.png">/images/app/32/uncategorized.png</file>
 		<file alias="untick.png">/images/app/32/untick.png</file>
 		<file alias="www_page.png">/images/app/32/www_page.png</file>
+		<file alias="loader.gif">/images/loader/loader.gif</file>
 		<file alias="app_logo_16.png">/images/logo/app_logo_16.png</file>
 		<file alias="app_logo_22.png">/images/logo/app_logo_22.png</file>
 		<file alias="app_logo_32.png">/images/logo/app_logo_32.png</file>

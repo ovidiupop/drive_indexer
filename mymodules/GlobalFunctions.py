@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 
 from PyQt5 import QtWidgets, QtGui, QtTest
 from PyQt5.QtCore import QMimeDatabase, QDir, QStandardPaths
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QMovie
 from PyQt5.QtWidgets import QMessageBox, QTabWidget, QFileDialog, QApplication, QMainWindow, QListWidgetItem
 
 from mymodules import GDBModule as gdb
@@ -282,3 +282,11 @@ def getForbiddenFolders():
     if folders:
         return folders.split(',')
     return []
+
+
+def spinner(parent):
+    label = QtWidgets.QLabel(parent)
+    movie = QMovie(":loader.gif")
+    label.setMovie(movie)
+    movie.start()
+    return label
