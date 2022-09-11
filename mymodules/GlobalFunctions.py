@@ -377,7 +377,7 @@ def getHelp(category):
 
         'other':  "<!DOCTYPE html><html><body><h1>Other</h1><p>The database will be saved in the local folder of " \
                 "active user.</p><p>In Linux systems this will be located in ~/.local/share/Drive Indexer</p><p>In " \
-                "Windows systems thiswill be located in C:\\Users\\user\\AppData\\Roaming\\Drive Indexer</p><p>When you import " \
+                "Windows systems this will be located in C:\\Users\\user\\AppData\\Roaming\\Drive Indexer</p><p>When you import " \
                 "a database, the old one is removed, so be cautions! Before import a database, back-up it (export) " \
                 "the old one.</p></body></html>",
 
