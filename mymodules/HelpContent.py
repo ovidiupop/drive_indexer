@@ -1,9 +1,12 @@
 from PyQt5 import QtWidgets
 
+from mymodules.GlobalFunctions import getHelp
+
 
 class HelpContent(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(HelpContent, self).__init__(parent)
+
         self.resize(800, 600)
         self.tabs = QtWidgets.QTabWidget()
         self.addTabs()
@@ -11,6 +14,7 @@ class HelpContent(QtWidgets.QDialog):
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.tabs)
         self.setLayout(layout)
+
         self.show()
 
     def addTabs(self):
@@ -25,6 +29,4 @@ class HelpContent(QtWidgets.QDialog):
         self.tabs.addTab(text, name)
 
     def getContent(self, category):
-        file_path = 'help/' + category + '.html'
-        return open(file_path).read()
-
+        return getHelp(category)

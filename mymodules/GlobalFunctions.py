@@ -290,3 +290,124 @@ def spinner(parent):
     label.setMovie(movie)
     movie.start()
     return label
+
+
+def getHelp(category):
+    helps = {
+        'categories': "<!DOCTYPE html><html><body><h1>Categories</h1><p>Sometime is not necessary to find all files but " \
+                      "some of specific type.</p><p>Here the categories are involved.</p><p>Each category have a number of " \
+                      "specific extensions related to it.</p><p>For example, in Spreadsheet category there are next " \
+                      "extensions: ods, xls, xlsm, xlsx. <br>If we wish to find only the files which have one of these " \
+                      "extensions, we can limit the search only to Spreadsheet category.<p><p>In the Categories tab you " \
+                      "can select the preferred ones. Those which will be automatically used when you search. What you will" \
+                      " select here, will save to database.<p><p>In the Search tab, you can refine your categories, " \
+                      "checking or unchecking some of them. That selection will be temporary and will not be saved to " \
+                      "database.<p></body></html>",
+
+        'drives': "<!DOCTYPE html><html><body><h1>Drives</h1><p>In the Drives tab, you need to set the drives that are " \
+                  "connected to the computer as active.</p><p>From the list you select the drive then click Add.<br>The " \
+                  "new added drive will be included in the table, and you can set for it your Own Label to easily identify " \
+                  "it.</p><p>To edit a field, you have to use the form and to save the new data. You must press Save Changes" \
+                  " else the changes will not be saved to database.</p><p>If you connect a new drive to your computer," \
+                  " the app will be notified and automatically add the new drive to the drive list. This will be the last" \
+                  " one on the list. If you want to index it, it must be added to the table!</p><p>If you disconnect a" \
+                  " drive added to the table, it will be marked in the Active column with a red X and removed from the " \
+                  "available drives list. Indexed folders belonging to this drive will no longer be visible in the Folder" \
+                  " tab until the drive is reconnected, but indexed files will obviously be available for " \
+                  "searching.</p><p>If you remove a drive from the table, belonging folders and indexed files will be " \
+                  "removed also.</p></body></html>",
+
+        'extensions': "<!DOCTYPE html><html><body><h1>Extensions</h1><p>Because is useless to index everything, there is a " \
+                      "list of extensions for desired files.</p><p>These are grouped by categories.</p><p>By default there" \
+                      " are 140 of extensions which will cover most preferred files. But if you will not need to find files " \
+                      "related to programming for example, you can remove all the extensions from that category.</p><p>The" \
+                      " number of indexed files is related to the number of extensions. If you wish to keep a small" \
+                      " database, you can 'clean' unwanted extensions.<br>In this case, the indexed files with those " \
+                      "extensions, will be removed from database.</p><p>Or, the other case, if you need to record and find" \
+                      " a type of files with an extension which is not in the default list, you can add its extension" \
+                      " anytime to the proper category.<br>After you add a new extensions, the indexer will start" \
+                      " immediately and will search and reindex all the folders only for that extension and only the " \
+                      "folders with connected drives. For the other drives you will have to reindex the entire folders " \
+                      "after you will connect the drives.</p><p>If you remove all extensions from a category, the category" \
+                      " itself will not be removed but will stay empty and available (for the case you change your " \
+                      "mind).</p><p>Adding of new extension is not possible during indexing process!</p></body></html>",
+
+        'folders': "<!DOCTYPE html><html><body><h1>Folders</h1><p>In the Folders tab happen the magic.</p><p>Here you" \
+                   " need to select the folders you want to index. Click Add to add a new folder. After you select a " \
+                   "folder in the File Manager, it will be added to the list and indexing will start automatically, unless" \
+                   " you have changed this behavior in the Preferences tab.</p><p>If you wish to add multiple folders " \
+                   "and index them in a single indexing, you have to uncheck 'Run indexer when new folder is added' " \
+                   "from Preferences tab.</p><p>If you selected to index a very large folder, there will be a lag of " \
+                   "some seconds until will start. You will know that the indexer is working as long as the buttons " \
+                   "are disabled and the 'Stop index' button is visible.</p><p>While the files are indexed, you will " \
+                   "see the progress in the status bar from any tab (and in the information area under the list in " \
+                   "Folders tab).</p><p>If you decide to remove some folders, the indexed content of them will be removed " \
+                   "from database, and you will not find anymore any references to them.<br>You can remove more folders " \
+                   "at once. Select those folders and click on Remove.<br>If you wish to completely clean your database, " \
+                   "you can use Remove All button. This will remove all folders and the files indexed.</p><p>If for any " \
+                   "reason you need to reindex one or more folders, you have to select them and then click on Re/Index " \
+                   "button. Previous records will be removed and the folders will be re-indexed.</p><p>During the indexing" \
+                   " process, all operations which can affect the result will be blocked. You will not be able to " \
+                   "add/remove folders, and also you will not be able to remove/add extensions.</p><p>If for any reason" \
+                   " you need to stop the indexer while it is indexing, you will have to reindex the folder. In the " \
+                   "Status column a red exclamation sign will be shown!</p></body></html>",
+
+        'general': "<!DOCTYPE html><html><body><h1>General</h1><p>If you are like me and have a big collection of old " \
+                   "drives where you keep all your history, documents, work, pictures, favorite music and movies, then " \
+                   "you never know exactly where to find them when you needs.</p><p>That's why File Indexer was created." \
+                   " Now, you can find anything in a second!</p><p>How it works?</p><ul><li>Mount your drive in your " \
+                   "computer or using an externally USB adapter or a docking station. And yes, you can index also Flash " \
+                   "drives! The application will identify your newly added drive when it will be connected to " \
+                   "computer.</li><li>In the Drives tab, you have to add each indexable drive. Select it from list and push" \
+                   " the Add button.</li><li>Add your desired folders (or the entire drive) in the Folders tab. When you " \
+                   "add the folder, the indexer will automatically start to scan your drive and index its files. In the " \
+                   "Preferences tab you can set to manually start the indexing.</li></ul><p>Important! If the folder to " \
+                   "be scanned is very large or if the drive is idle, will take few moments before it starts! Don't" \
+                   " worry!</p><ol><li>You have to index each drive of your collection.<ul><li>Application is set to " \
+                   "index by default only the files with most usual extensions, grouped by categories. But also you can " \
+                   "add any other extension as you prefer. Or you can set to index anything in the Preferences " \
+                   "tab!</li><li>Even if you will have same folders structure on more drives, the application will" \
+                   " identify them individual. In this way you will know always the right place where your " \
+                   "files are.</li></ul></li><li>You will search for the term which identify your files. The results " \
+                   "are displayed in the Search Results Table. Here you can sort them in the way you like.<ul><li>The " \
+                   "details of each file is easily to see, some of them having also a preview. Just double-click on the " \
+                   "line!</li></ul></li><li>If you wish to export the results in a csv file, you have two " \
+                   "options:<ul><li>Export all the results</li><li>Export only selected " \
+                   "results</li></ul></li></ol><p>That's all!</p><p>Happy searching!</p></body></html>",
+
+        'other':  "<!DOCTYPE html><html><body><h1>Other</h1><p>The database will be saved in the local folder of " \
+                "active user.</p><p>In Linux systems this will be located in ~/.local/share/Indexer</p><p>In " \
+                "Windows systems thiswill be located in C:\\Users\\user\\AppData\\Roaming\\Indexer</p><p>When you import " \
+                "a database, the old one is removed, so be cautions! Before import a database, back-up it (export) " \
+                "the old one.</p></body></html>",
+
+        'preferences': "<!DOCTYPE html><html><body><h1>Preferences</h1><p>Here you can set some preferences</p><p><ul><li>" \
+                       "Add header to exported csv</li></ul>If is checked, in exported csv will be added the header of each " \
+                       "column.</p><p><ul><li>File information is modal</li></ul>If is checked, when you double-clicked on " \
+                       "a row from search results, you will be able to open only a single file at a time. This will prevent " \
+                       "to have a lot of small windows opened which will need then to be closed.<br>But if you need to " \
+                       "compare more files, you can uncheck this option.</p><p><ul><li>Run indexer when new folder is " \
+                       "added</li></ul>If is checked, when you add a new folder, the indexer will begin instantly. In this " \
+                       "case you can add only a single folder at time. If is unchecked, you can add multiple folders, then " \
+                       "you have to select them and press the Re/Index button to index all of them!<p><ul><li>Settings " \
+                       "tabs on top</li></ul>If is checked, the tabs in the Settings section will be displayed at the top. " \
+                       "If is unchecked, the tabs in the Settings section will be displayed on the left.</p><p><ul><li>Index" \
+                       " all types of files</li></ul>If is checked, will be indexed all the found files, regardless of the " \
+                       "extension they have. The new found extensions will be added to Uncategorized category. If is " \
+                       "unchecked, will be indexed only the files having registered extensions. If you previously indexed " \
+                       "with checked option, you have to remove the extensions from Uncategorized category. This will remove " \
+                       "also files with those extensions, and the next index will avoid them.</p><p><ul><li>Index files " \
+                       "without extension</li></ul>If is checked, the files without extensions will also be " \
+                       "indexed.</p><p><ul><li>Index hidden content</li></ul>If is checked, the files and folders hidden " \
+                       "by system, will be scanned and indexed.</p></body></html>",
+
+        'search': "<!DOCTYPE html><html><body><h1>Search</h1><p>In the Search tab you can find the files you want!</p><p>If " \
+                  "you have indexed your folders, enter your search term, press Enter, or click the Search button.</p><p>If " \
+                  "you wish to search only for a specific category of files, you can uncheck the rest of categories.</p><p>" \
+                  "You can sort results as you wish, clicking on the table's header.</p><p>If some of the results belong to" \
+                  " a drive which is not mounted, the name of that drive will be red.</p><p>If the results belong to a " \
+                  "mounted drive, with a double click on the table line you can quickly see information about each file. " \
+                  "Many files also have preview.</p></body></html>"
+
+        }
+    return helps[category]
