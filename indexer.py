@@ -44,7 +44,7 @@ class IndexerWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
         window_size = getPreference('window_size').split(', ')
         self.resize(int(window_size[0]), int(window_size[1]))
-        self.setWindowTitle("File Indexer")
+        self.setWindowTitle(APP_NAME)
         self.setWindowIcon(QIcon(":app_logo_32.png"))
         self._createStatusBar()
 

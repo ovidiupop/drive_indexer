@@ -5,8 +5,12 @@ do not use this because did not select only used modules
     or cxfreeze indexer.py --icon=indexer.ico
 
 but this
-    pyinstaller --name="Indexer" --windowed --onefile indexer.py
+    pyinstaller --name="drive-indexer" --windowed --onefile indexer.py
 
 # generate resources
 python3 prepare_resources.py
 pyrcc5 -o resources.py resources.qtc
+
+
+create deb
+    see https://www.baeldung.com/linux/create-debian-package

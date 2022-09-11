@@ -12,8 +12,8 @@ from PyQt5.QtWidgets import QMessageBox, QTabWidget, QFileDialog, QApplication, 
 
 from mymodules import GDBModule as gdb
 
-APP_NAME = 'Indexer'
-DATABASE_NAME = 'indexer.sqlite'
+APP_NAME = 'Drive Indexer'
+DATABASE_NAME = 'drive-indexer.sqlite'
 DATABASE_DRIVER = 'QSQLITE'
 
 CSV_COLUMN_SEPARATOR = ','
@@ -73,8 +73,8 @@ PREFERENCES = [
     ['index_hidden_content', 'Index hidden content', '0', '0', 'bool', '1'],
     ['forbidden_folders', 'Forbidden Folders', 'tmp,temp,cache', 'tmp,temp,cache', 'list', '0'],
     ['window_size', 'Dimension for window when start (width, height)', '1000, 800', '1000, 800', 'str', '0'],
-    ['settings_tabs_order', 'Preferred order for settings tabs', 'Folders,Drives,Categories,Extensions,Preferences',
-     'Folders,Drives,Categories,Extensions,Preferences', 'str', '0'],
+    ['settings_tabs_order', 'Preferred order for settings tabs', 'Folders,Drives,Categories,Extensions,Preferences,Reports',
+     'Folders,Drives,Categories,Extensions,Preferences,Reports', 'str', '0'],
 ]
 
 
@@ -376,8 +376,8 @@ def getHelp(category):
                    "results</li></ul></li></ol><p>That's all!</p><p>Happy searching!</p></body></html>",
 
         'other':  "<!DOCTYPE html><html><body><h1>Other</h1><p>The database will be saved in the local folder of " \
-                "active user.</p><p>In Linux systems this will be located in ~/.local/share/Indexer</p><p>In " \
-                "Windows systems thiswill be located in C:\\Users\\user\\AppData\\Roaming\\Indexer</p><p>When you import " \
+                "active user.</p><p>In Linux systems this will be located in ~/.local/share/Drive Indexer</p><p>In " \
+                "Windows systems thiswill be located in C:\\Users\\user\\AppData\\Roaming\\Drive Indexer</p><p>When you import " \
                 "a database, the old one is removed, so be cautions! Before import a database, back-up it (export) " \
                 "the old one.</p></body></html>",
 
