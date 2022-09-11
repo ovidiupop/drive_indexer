@@ -12,6 +12,9 @@ from PyQt5.QtWidgets import QMessageBox, QTabWidget, QFileDialog, QApplication, 
 
 from mymodules import GDBModule as gdb
 
+VERSION = '1.0.0'
+ARCHITECTURE = 'amd64'
+
 APP_NAME = 'Drive Indexer'
 DATABASE_NAME = 'drive-indexer.sqlite'
 DATABASE_DRIVER = 'QSQLITE'
@@ -354,7 +357,7 @@ def getHelp(category):
 
         'general': "<!DOCTYPE html><html><body><h1>General</h1><p>If you are like me and have a big collection of old " \
                    "drives where you keep all your history, documents, work, pictures, favorite music and movies, then " \
-                   "you never know exactly where to find them when you needs.</p><p>That's why File Indexer was created." \
+                   "you never know exactly where to find them when you needs.</p><p>That's why Drive Indexer was created." \
                    " Now, you can find anything in a second!</p><p>How it works?</p><ul><li>Mount your drive in your " \
                    "computer or using an externally USB adapter or a docking station. And yes, you can index also Flash " \
                    "drives! The application will identify your newly added drive when it will be connected to " \

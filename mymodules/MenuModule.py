@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import QAction, QShortcut
 
-from mymodules.GlobalFunctions import exportDataBase, importDataBase, tabIndexByName
+from mymodules.GlobalFunctions import exportDataBase, importDataBase, tabIndexByName, VERSION
 from mymodules.HelpContent import HelpContent
 
 
@@ -132,8 +132,8 @@ class IMenu(QtWidgets.QWidget):
         HelpContent(self)
 
     def about(self):
-        QtWidgets.QMessageBox.about(self, 'About Indexer',
-                                    "<h4>Find all your files in a single place</h4><br>"
+        QtWidgets.QMessageBox.about(self, 'About Drive Indexer',
+                                    f"<h4>Find all your files in a single place</h4>v.{VERSION}<br><br>"
                                     "Index your entire drive collection in one place and find anything in a "
                                     "second!<br><br> "
                                     "© 2022 Ovidiu Pop")
