@@ -1,6 +1,0 @@
-in DEBIAN/control set new version and size
-in this folder run 
-dpkg-deb --root-owner-group --build TARGET
-
-TARGET drive-indexer_1.0.0_amd64
-
