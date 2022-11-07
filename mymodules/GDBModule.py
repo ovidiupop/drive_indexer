@@ -202,15 +202,17 @@ def setSelectedExtensionsByCategories() -> bool:
     return ret
 
 
-def folderExists(folder: str) -> bool:
+def folderExists(folder, serial) -> bool:
     """
     :param folder:
+    :param serial:
     :return:
     check if a folder exists
     """
     query = QtSql.QSqlQuery()
-    query.prepare("SELECT path FROM folders where path=:path limit 1")
+    query.prepare("SELECT path FROM folders where path=:path and serial:=serial limit 1")
     query.bindValue(':path', folder)
+    query.bindValue(':serial', serial)
     ret = query.exec() and query.first()
     query.clear()
     return ret

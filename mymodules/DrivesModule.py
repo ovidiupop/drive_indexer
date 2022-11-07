@@ -78,7 +78,7 @@ class DrivesView(Drives):
         form_drives = QtWidgets.QFormLayout()
         close_layout = QtWidgets.QHBoxLayout()
         close_layout.addWidget(self.drive_form_close)
-        self.drive_form_close.clicked.connect(self.close_drives_form)
+        self.drive_form_close.clicked.connect(self.closeDrivesForm)
         close_layout.setAlignment(Qt.AlignRight | Qt.AlignTop)
 
         controls = QHBoxLayout()
@@ -98,8 +98,8 @@ class DrivesView(Drives):
         controls.addWidget(prev_rec)
         controls.addWidget(next_rec)
 
-        self.drives_table.doubleClicked.connect(self.show_drive_form)
-        self.drives_table.clicked.connect(self.show_drive_form)
+        self.drives_table.doubleClicked.connect(self.showDriveForm)
+        self.drives_table.clicked.connect(self.showDriveForm)
         form_drives.addRow(close_layout)
         form_drives.addRow('Navigate', controls)
         form_drives.addRow(QLabel('Serial'), self.drive_serial_input)
@@ -144,10 +144,10 @@ class DrivesView(Drives):
         self.layout_tab_drives.addLayout(layout_tab_drives_table)
         layout_tab_drives_table.addStretch()
 
-        self.my_actions()
+        self.myActions()
         self.check_add_button.emit()
 
-    def my_actions(self):
+    def myActions(self):
         self.add_drive_button.clicked.connect(self.addRowDrive)
         self.remove_drive_button.clicked.connect(self.removeDrive)
         self.show_id_drive_button.clicked.connect(self.toggleIdDrive)
@@ -215,10 +215,10 @@ class DrivesView(Drives):
         self.drive_mapper.toLast()
         self.add_drive_button.setDisabled(True)
 
-    def close_drives_form(self):
+    def closeDrivesForm(self):
         self.group_form.hide()
 
-    def show_drive_form(self, drives_table_index):
+    def showDriveForm(self, drives_table_index):
         self.group_form.show()
         self.drive_mapper.setCurrentIndex(drives_table_index.row())
 

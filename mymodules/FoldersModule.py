@@ -152,24 +152,25 @@ class Folders(QtWidgets.QWidget):
         home_path = QtCore.QDir.homePath()
         folder_name = QFileDialog.getExistingDirectory(
             self, directory=home_path, caption="Select a folder")
-        if folder_name:
-            if not self.folderExists(folder_name):
-                serial = self.serialForIndexableFolder(folder_name)
-                if serial:
-                    if self.alreadyIndexed(folder_name, serial):
-                        return None
-                    last_id = gdb.addFolder(folder_name, serial)
-                    if last_id:
-                        self.refreshTable()
-                        self.folders_indexed_table_model.selectRowByModelId(last_id)
-                        # start indexing of new folder if autorun is on
-                        if int(getPreference('indexer_autorun')):
-                            self.folder_added.emit()
 
-                        self.refreshTable()
+        serial = self.serialForIndexableFolder(folder_name)
+        if serial:
+            if folder_name:
+                if not self.folderExists(folder_name, serial):
+                        if self.alreadyIndexed(folder_name, serial):
+                            return None
+                        last_id = gdb.addFolder(folder_name, serial)
+                        if last_id:
+                            self.refreshTable()
+                            self.folders_indexed_table_model.selectRowByModelId(last_id)
+                            # start indexing of new folder if autorun is on
+                            if int(getPreference('indexer_autorun')):
+                                self.folder_added.emit()
 
-    def folderExists(self, folder_name):
-        if gdb.folderExists(folder_name):
+                            self.refreshTable()
+
+    def folderExists(self, folder_name, serial):
+        if gdb.folderExists(folder_name, serial):
             QtWidgets.QMessageBox.warning(self.parent(), 'Folder indexed', 'Folder is already indexed')
             return True
         return False

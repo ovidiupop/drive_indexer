@@ -8,5 +8,5 @@
    To correct identify the drive will use composed key serial & label (not only serial,
         because adapter will set the same serial for each mounted drive)
    Why label and not name?
-        You can have more drives from same type. If will be mounted with the same adapter, will be no difference!
+        You can have more drives from same type. If it will be mounted with the same adapter, will be no difference!
 

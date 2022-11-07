@@ -147,9 +147,12 @@ def get_serial_number_of_physical_disk(drive_letter='C:'):
 # df /home/matricks/aacustom/Muzica/ => /dev/sda4      316212352 204173148  95906752  69% /home/matricks/aacustom
 # inxi -Dxx
 # lsblk -l -o type,fstype,kname,size,hotplug,serial,path,mountpoint,vendor,model | grep -e disk -e part
+
+# IMPORTANT! ptuuid is used as serial
+# if there is no ptuuid, will silently fall back to uuid
 def mountedDrivesLinux():
     disks = []
-    drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model | grep -e disk', shell=True,
+    drives = subprocess.Popen(f'lsblk -l -o type,serial,path,size,hotplug,model,ptuuid,uuid | grep -e disk', shell=True,
                               stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     lines_drives = drives.stdout.readlines()
     if lines_drives:
@@ -159,7 +162,7 @@ def mountedDrivesLinux():
             while "" in x:
                 x.remove("")
             if x[0] == 'disk':
-                disk = {'serial': x[1], 'path': x[2], 'size': sizeToGb(x[3]), 'hotplug': x[4], 'name': x[5]}
+                disk = {'serial': x[6], 'path': x[2], 'size': sizeToGb(x[3]), 'hotplug': x[4], 'name': x[5]}
                 disks.append(disk)
             else:  # is partition
                 pass
