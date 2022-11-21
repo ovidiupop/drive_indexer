@@ -1,4 +1,5 @@
-# drive_indexer
+# Drive Indexer
+
 Index your entire drive collection in one place and find anything in a second!
 
 If you are like me and have a big collection of old drives where you keep all your history, documents, work, pictures, favorite music and movies, then you never know exactly where to find them when you needs.
@@ -27,3 +28,19 @@ Important! If the folder to be scanned is very large or if the drive is idle, wi
 
 That's all!
 Happy searching!
+
+
+Screenshots
+---------
+![Drive_indexer_search](https://user-images.githubusercontent.com/1079754/203146246-d58789d8-5928-4224-8593-fd4442abeab8.jpeg)
+---
+![Drive_indexer_duplicates](https://user-images.githubusercontent.com/1079754/203147104-332383fd-3fe2-4d64-bb3e-70b20a8a6574.png)
+---
+![Drive_indexer_folders](https://user-images.githubusercontent.com/1079754/203147577-b16e6617-8508-4ea4-82f9-1cf93cfe193d.png)
+---
+![Drive_indexer_drives](https://user-images.githubusercontent.com/1079754/203146357-439a9e4f-b577-4cf7-b228-5201ef413c46.png)
+
+
+How to install
+---------
+In the folder named 'linux", there are two folders. One contain a deb package for easy install on debian based distros, and the other an linux executable file for use without install.
