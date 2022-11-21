@@ -34,7 +34,6 @@ CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
 HEADER_DUPLICATES_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive', 'Remove']
-HEADER_DUPLICATES_STRICT_TABLE = ['Reference', 'Is Reference', 'Size', 'Duplicate', 'Drive', 'Remove']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)",
                        "active": "Active", 'path': 'Path'}
 
@@ -331,6 +330,14 @@ def getHelp(category):
                   " tab until the drive is reconnected, but indexed files will obviously be available for " \
                   "searching.</p><p>If you remove a drive from the table, belonging folders and indexed files will be " \
                   "removed also.</p></body></html>",
+
+        'duplicates': "<!DOCTYPE html><html><body><h1>Duplicates</h1><p>In the Duplicates tab, you can find duplicates "
+                      "from indexed files.</p><p>Press the 'Find' button. The duplicates will be identified based on "
+                      "the file size and the filename.<br><br>The table will be populated with found duplicated. In the "
+                      "last column, you can check the boxes for the duplicates you wish to remove. By default, there "
+                      "will be a reference file which will not be checked and the next duplicates will be checked.<br>"
+                      "After you selected the instances of the files which you wish to remove, you can export the list "
+                      "as csv.</body></html>",
 
         'extensions': "<!DOCTYPE html><html><body><h1>Extensions</h1><p>Because is useless to index everything, there is a " \
                       "list of extensions for desired files.</p><p>These are grouped by categories.</p><p>By default there" \

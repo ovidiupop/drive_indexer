@@ -18,7 +18,7 @@ class HelpContent(QtWidgets.QDialog):
         self.show()
 
     def addTabs(self):
-        tabs = ['General', 'Search', 'Drives', 'Folders', 'Categories', 'Extensions', 'Preferences', 'Other']
+        tabs = ['General', 'Search', 'Duplicates', 'Drives', 'Folders', 'Categories', 'Extensions', 'Preferences', 'Other']
         for tab in tabs:
             self.contentTab(tab)
 

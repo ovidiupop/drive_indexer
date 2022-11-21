@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, QDataWidge
 
 from mymodules import GDBModule as gdb
 from mymodules.GlobalFunctions import HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE, \
-    randomColor, HEADER_DUPLICATES_TABLE, HEADER_DUPLICATES_STRICT_TABLE
+    randomColor, HEADER_DUPLICATES_TABLE
 from mymodules.HumanReadableSize import HumanBytes
 
 
@@ -205,106 +205,6 @@ class DuplicateResultsTableModel(QtCore.QAbstractTableModel):
             if orientation == Qt.Vertical:
                 return section + 1  # row numbers start from 1
         return None
-
-    def flags(self, index):
-        flags = super(self.__class__, self).flags(index)
-        flags |= Qt.ItemIsUserCheckable
-        return flags
-
-
-class DuplicateStrictResultsTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, data, parent):
-        super(DuplicateStrictResultsTableModel, self).__init__(parent)
-
-        self._data = np.array(data.values)
-        self._cols = data.columns
-        self.r, self.c = np.shape(self._data)
-        self.checks = {}
-
-    def rowData(self, index):
-        row_data = []
-        for idx in enumerate(HEADER_DUPLICATES_STRICT_TABLE):
-            row_data.append(str(self._data[index.row()][idx[0]]))
-        return row_data
-
-    def colIndexByName(self, name):
-        return [ix for ix, col in enumerate(HEADER_DUPLICATES_STRICT_TABLE) if col == name][0]
-
-    def checkState(self, index):
-        if index in self.checks.keys():
-            return self.checks[index]
-        else:
-            if self._data[index.row(), index.column()] == 0:
-                return Qt.Checked
-            return Qt.Unchecked
-
-    def data(self, index, role=Qt.DisplayRole):
-        if index.isValid():
-            if role == Qt.CheckStateRole:
-                if index.column() == self.colIndexByName('Remove'):
-                    return self.checkState(QPersistentModelIndex(index))
-
-            if role == Qt.DisplayRole:
-                value = self._data[index.row(), index.column()]
-                if index.column() == 1:
-                    return 'Yes' if value == 1 else 'No'
-                if index.column() == 2:
-                    try:
-                        value = HumanBytes.format(value, True)
-                    except Exception as e:
-                        print(e)
-
-                if index.column() == 5:
-                    return ""
-                return str(value)
-
-            if role == Qt.TextAlignmentRole:
-                if index.column() == 2:
-                    return Qt.AlignRight
-                if index.column() == 5:
-                    return Qt.AlignCenter
-
-            if role == Qt.ForegroundRole:
-                # if index.column() == self.colIndexByName('Drive'):
-                #     value = str(self._data[index.row(), index.column()])
-                #     is_active = gdb.isDriveActiveByLabel(value)
-                #     if not is_active:
-                #         return QtGui.QColor('red')
-                is_reference = self.colIndexByName('Is Reference')
-                value = str(self._data[index.row(), is_reference])
-                # if index.column() == self.colIndexByName('Is Reference'):
-                #     value = str(self._data[index.row(), index.column()])
-                if value == '0':
-                    return QtGui.QColor('red')
-
-        return None
-
-    def headerData(self, section, orientation, role):
-        # section is the index of the column/row.
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
-                return HEADER_DUPLICATES_STRICT_TABLE[section]
-            if orientation == Qt.Vertical:
-                return section + 1  # row numbers start from 1
-        return None
-
-    def setData(self, index, value, role=Qt.EditRole):
-        if not index.isValid():
-            return False
-        if role == Qt.CheckStateRole:
-            self.checks[QPersistentModelIndex(index)] = value
-            return True
-        return False
-
-    def rowCount(self, parent=None):
-        return self.r
-
-    def columnCount(self, parent=None):
-        return self.c
-
-        # flags = super().flags(index)
-        # flags |= Qt.ItemIsUserCheckable
-        # return flags
 
     def flags(self, index):
         flags = super(self.__class__, self).flags(index)
