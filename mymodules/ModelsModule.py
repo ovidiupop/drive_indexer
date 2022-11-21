@@ -1,12 +1,13 @@
+import numpy as np
 from PyQt5 import QtCore, QtSql, QtGui
-from PyQt5.QtCore import Qt, QSortFilterProxyModel
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QPersistentModelIndex
 from PyQt5.QtGui import QIcon
 from PyQt5.QtSql import QSqlTableModel, QSqlRelation
 from PyQt5.QtWidgets import QStyledItemDelegate, QSpinBox, QLineEdit, QDataWidgetMapper
-import numpy as np
 
 from mymodules import GDBModule as gdb
-from mymodules.GlobalFunctions import HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE
+from mymodules.GlobalFunctions import HEADER_SEARCH_RESULTS_TABLE, HEADER_DRIVES_TABLE, HEADER_FOLDERS_TABLE, \
+    randomColor, HEADER_DUPLICATES_TABLE, HEADER_DUPLICATES_STRICT_TABLE
 from mymodules.HumanReadableSize import HumanBytes
 
 
@@ -33,14 +34,12 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
     def hasMountedDrive(self, index):
         index_column = self.colIndexByName('Drive')
         value = str(self._data[index.row()][index_column])
-        # value = str(self._data.iloc[index.row()][index_column])
         return gdb.isDriveActiveByLabel(value)
 
     def rowData(self, index):
         row_data = []
         for idx in enumerate(HEADER_SEARCH_RESULTS_TABLE):
             row_data.append(str(self._data[index.row()][idx[0]]))
-            # row_data.append(str(self._data.iloc[index.row()][idx[0]]))
         return row_data
 
     def colIndexByName(self, name):
@@ -49,7 +48,7 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
-                value = self._data[index.row(),index.column()]
+                value = self._data[index.row(), index.column()]
                 if index.column() == 2:
                     value = HumanBytes.format(value, True)
                 return str(value)
@@ -90,6 +89,227 @@ class SearchResultsTableModel(QtCore.QAbstractTableModel):
         flags |= Qt.ItemIsDropEnabled
         return flags
 
+
+class DuplicateResultsTableModel(QtCore.QAbstractTableModel):
+    def __init__(self, data, parent):
+        super(DuplicateResultsTableModel, self).__init__(parent)
+
+        self._data = np.array(data.values)
+        self._cols = data.columns
+        self.r, self.c = np.shape(self._data)
+        self.last_color = None
+        self.checks = {}
+
+    def sort(self, column, order):
+        """Sort table by given column number."""
+        try:
+            self.layoutAboutToBeChanged.emit()
+            if order == Qt.DescendingOrder:
+                # sort reverse n
+                self._data = self._data[self._data[:, column].argsort()[::-1]]
+            else:
+                self._data = self._data[self._data[:, column].argsort()]
+            self.layoutChanged.emit()
+        except Exception as e:
+            print(e)
+
+    def hasMountedDrive(self, index):
+        index_column = self.colIndexByName('Drive')
+        value = str(self._data[index.row()][index_column])
+        return gdb.isDriveActiveByLabel(value)
+
+    def rowData(self, index):
+        row_data = []
+        for idx in enumerate(HEADER_DUPLICATES_TABLE):
+            row_data.append(str(self._data[index.row()][idx[0]]))
+        return row_data
+
+    def colIndexByName(self, name):
+        return [ix for ix, col in enumerate(HEADER_DUPLICATES_TABLE) if col == name][0]
+
+    def checkState(self, index):
+        if index in self.checks.keys():
+            return self.checks[index]
+        else:
+            row = index.row()
+            next_row = row + 1
+            if next_row < self.rowCount():
+                actual_filename = self._data[row, 1]
+                next_filename = self._data[next_row, 1]
+                actual_size = self._data[row, 2]
+                next_size = self._data[next_row, 2]
+                if actual_size == next_size and actual_filename == next_filename:
+                    return Qt.Unchecked
+                else:
+                    return Qt.Checked
+            return Qt.Unchecked
+
+            # if self._data[index.row(), index.column()] == 0:
+            #     return Qt.Checked
+            # return Qt.Unchecked
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.CheckStateRole:
+                if index.column() == self.colIndexByName('Remove'):
+                    return self.checkState(QPersistentModelIndex(index))
+
+            if role == Qt.DisplayRole:
+                value = self._data[index.row(), index.column()]
+                if index.column() == 2:
+                    value = HumanBytes.format(value, True)
+                if index.column() == 5:
+                    return ""
+                return str(value)
+
+            if role == Qt.TextAlignmentRole:
+                if index.column() == 2 or index.column() == 3:
+                    return Qt.AlignRight
+                if index.column() == 5:
+                    return Qt.AlignCenter
+
+            if role == Qt.ForegroundRole:
+                if index.column() == self.colIndexByName('Drive'):
+                    value = str(self._data[index.row(), index.column()])
+                    is_active = gdb.isDriveActiveByLabel(value)
+                    if not is_active:
+                        return QtGui.QColor('red')
+                if index.column() == self.colIndexByName('Filename'):
+                    value = str(self._data[index.row(), index.column()])
+                    previous_value = str(self._data[index.row() - 1, index.column()])
+                    if previous_value != value:
+                        self.last_color = randomColor()
+                    return QtGui.QColor(*self.last_color)
+
+        return None
+
+    def setData(self, index, value, role=Qt.EditRole):
+        if not index.isValid():
+            return False
+        if role == Qt.CheckStateRole:
+            self.checks[QPersistentModelIndex(index)] = value
+            return True
+        return False
+
+    def rowCount(self, parent=None):
+        return self.r
+
+    def columnCount(self, parent=None):
+        return self.c
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return HEADER_DUPLICATES_TABLE[section]
+            if orientation == Qt.Vertical:
+                return section + 1  # row numbers start from 1
+        return None
+
+    def flags(self, index):
+        flags = super(self.__class__, self).flags(index)
+        flags |= Qt.ItemIsUserCheckable
+        return flags
+
+
+class DuplicateStrictResultsTableModel(QtCore.QAbstractTableModel):
+    def __init__(self, data, parent):
+        super(DuplicateStrictResultsTableModel, self).__init__(parent)
+
+        self._data = np.array(data.values)
+        self._cols = data.columns
+        self.r, self.c = np.shape(self._data)
+        self.checks = {}
+
+    def rowData(self, index):
+        row_data = []
+        for idx in enumerate(HEADER_DUPLICATES_STRICT_TABLE):
+            row_data.append(str(self._data[index.row()][idx[0]]))
+        return row_data
+
+    def colIndexByName(self, name):
+        return [ix for ix, col in enumerate(HEADER_DUPLICATES_STRICT_TABLE) if col == name][0]
+
+    def checkState(self, index):
+        if index in self.checks.keys():
+            return self.checks[index]
+        else:
+            if self._data[index.row(), index.column()] == 0:
+                return Qt.Checked
+            return Qt.Unchecked
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.CheckStateRole:
+                if index.column() == self.colIndexByName('Remove'):
+                    return self.checkState(QPersistentModelIndex(index))
+
+            if role == Qt.DisplayRole:
+                value = self._data[index.row(), index.column()]
+                if index.column() == 1:
+                    return 'Yes' if value == 1 else 'No'
+                if index.column() == 2:
+                    try:
+                        value = HumanBytes.format(value, True)
+                    except Exception as e:
+                        print(e)
+
+                if index.column() == 5:
+                    return ""
+                return str(value)
+
+            if role == Qt.TextAlignmentRole:
+                if index.column() == 2:
+                    return Qt.AlignRight
+                if index.column() == 5:
+                    return Qt.AlignCenter
+
+            if role == Qt.ForegroundRole:
+                # if index.column() == self.colIndexByName('Drive'):
+                #     value = str(self._data[index.row(), index.column()])
+                #     is_active = gdb.isDriveActiveByLabel(value)
+                #     if not is_active:
+                #         return QtGui.QColor('red')
+                is_reference = self.colIndexByName('Is Reference')
+                value = str(self._data[index.row(), is_reference])
+                # if index.column() == self.colIndexByName('Is Reference'):
+                #     value = str(self._data[index.row(), index.column()])
+                if value == '0':
+                    return QtGui.QColor('red')
+
+        return None
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return HEADER_DUPLICATES_STRICT_TABLE[section]
+            if orientation == Qt.Vertical:
+                return section + 1  # row numbers start from 1
+        return None
+
+    def setData(self, index, value, role=Qt.EditRole):
+        if not index.isValid():
+            return False
+        if role == Qt.CheckStateRole:
+            self.checks[QPersistentModelIndex(index)] = value
+            return True
+        return False
+
+    def rowCount(self, parent=None):
+        return self.r
+
+    def columnCount(self, parent=None):
+        return self.c
+
+        # flags = super().flags(index)
+        # flags |= Qt.ItemIsUserCheckable
+        # return flags
+
+    def flags(self, index):
+        flags = super(self.__class__, self).flags(index)
+        flags |= Qt.ItemIsUserCheckable
+        return flags
 
 
 class SortFilterProxyModel(QSortFilterProxyModel):
@@ -204,8 +424,6 @@ class DrivesTableModel(QtSql.QSqlTableModel):
         if role == Qt.DisplayRole:
             if column_name == 'active':
                 return None
-
-        if role == Qt.DisplayRole:
             if column_name == 'serial':
                 return QSqlTableModel.data(self, index)
 
@@ -277,4 +495,3 @@ class DrivesItemsDelegate(QStyledItemDelegate):
             return spinbox
         else:
             return None
-

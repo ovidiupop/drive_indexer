@@ -252,7 +252,11 @@ class JobRunner(QRunnable):
     def folderId(self, path):
         """Get folder id inside of worker"""
         query = QtSql.QSqlQuery(self.con)
-        query.prepare("SELECT id FROM folders WHERE path=:path")
+        query.prepare("""SELECT id
+        FROM folders fo	
+        LEFT JOIN drives d ON d.serial = fo.drive_id 
+        WHERE fo.path=:path AND d.active = 1""")
+
         query.bindValue(':path', str(path))
         if query.exec():
             while query.first():

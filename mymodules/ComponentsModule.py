@@ -12,15 +12,19 @@ class TableViewAutoCols(QtWidgets.QTableView):
 
     delete_key_pressed = QtCore.pyqtSignal()
 
-    def __init__(self, model, parent=None):
+    def __init__(self, model, selection='Single', parent=None):
         super(TableViewAutoCols, self).__init__(parent)
         self.columns = []
+        self.selection = selection
 
         rowHeight = self.fontMetrics().height()
         self.verticalHeader().setDefaultSectionSize(rowHeight)
         self.setModel(model)
         self.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
-        self.setSelectionMode(QtWidgets.QTableView.SingleSelection)
+        if self.selection == 'Single':
+            self.setSelectionMode(QtWidgets.QTableView.SingleSelection)
+        else:
+            self.setSelectionMode(QtWidgets.QTableView.MultiSelection)
 
     def setColumns(self, columns):
         self.columns = columns

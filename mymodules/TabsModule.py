@@ -6,6 +6,7 @@ from mymodules import GDBModule as gdb
 from mymodules.CategoriesModule import Categories
 from mymodules.DevicesMonitorModule import Monitoring
 from mymodules.DrivesModule import DrivesView
+from mymodules.DuplicateFinderModule import DuplicateFinder
 from mymodules.ExtensionsModule import Extensions
 from mymodules.FoldersModule import Folders
 from mymodules.GDBModule import getPreferenceByName
@@ -33,6 +34,8 @@ class TabsWidget(QtWidgets.QWidget):
         self.drives = DrivesView()
         # import Search Module
         self.search = Search(self)
+        # import FindDuplicate Module
+        self.duplicates = DuplicateFinder(self)
         # import Extensions Module
         self.extensions = Extensions()
         # import Folders Module
@@ -45,10 +48,12 @@ class TabsWidget(QtWidgets.QWidget):
         self.setDefaultActions()
 
         self.tab_search_group = QtWidgets.QGroupBox()
+        self.tab_duplicates_group = QtWidgets.QGroupBox()
         self.tab_settings_group = QtWidgets.QGroupBox()
 
         self.tabs_main = QTabWidget()
         self.tabs_main.addTab(self.tab_search_group, QtGui.QIcon(':magnifier.png'), 'Search')
+        self.tabs_main.addTab(self.tab_duplicates_group, QtGui.QIcon(':magnifier.png'), 'Duplicates')
         self.tabs_main.addTab(self.tab_settings_group, QtGui.QIcon(':setting_tools.png'), 'Settings')
         self.tabs_main.setMovable(True)
 
@@ -76,6 +81,9 @@ class TabsWidget(QtWidgets.QWidget):
         # final layout for search tab
         layout_tab_search = self.search.search_tab_layout
         self.tab_search_group.setLayout(layout_tab_search)
+
+        layout_tab_duplicate = self.duplicates.find_duplicate_tab_layout
+        self.tab_duplicates_group.setLayout(layout_tab_duplicate)
 
         layout_tab_extensions = self.extensions.layout_tab_extensions
         self.tab_extensions_group.setLayout(layout_tab_extensions)

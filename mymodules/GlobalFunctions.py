@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from contextlib import redirect_stdout
+import random
 
 from PyQt5 import QtWidgets, QtGui, QtTest
 from PyQt5.QtCore import QMimeDatabase, QDir, QStandardPaths
@@ -32,6 +33,8 @@ CATEGORIES = {'Audio': ':music.png', 'Compressed': ':compress.png',
               'Word': ':page_white_word.png', 'Uncategorized': ':uncategorized.png'}
 
 HEADER_SEARCH_RESULTS_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive']
+HEADER_DUPLICATES_TABLE = ['Directory', 'Filename', 'Size', 'Extension', 'Drive', 'Remove']
+HEADER_DUPLICATES_STRICT_TABLE = ['Reference', 'Is Reference', 'Size', 'Duplicate', 'Drive', 'Remove']
 HEADER_DRIVES_TABLE = {"serial": "Serial Number", "name": "Drive Name", "label": "Own Label", "size": "Size (GB)",
                        "active": "Active", 'path': 'Path'}
 
@@ -79,6 +82,15 @@ PREFERENCES = [
     ['settings_tabs_order', 'Preferred order for settings tabs', 'Folders,Drives,Categories,Extensions,Preferences,Reports',
      'Folders,Drives,Categories,Extensions,Preferences,Reports', 'str', '0'],
 ]
+
+
+def randomColor():
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    rgb = (r, g, b)
+    return rgb
+    # return ','.join(str(v) for v in rgb)
 
 
 def setStatusBarMW(message):

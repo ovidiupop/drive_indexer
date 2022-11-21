@@ -131,11 +131,12 @@ class Folders(QtWidgets.QWidget):
         count = len(indexes)
         if count > 0:
             names = [self.folders_indexed_table.model().data(index) for index in indexes if index.column() == 1]
+            labels = [self.folders_indexed_table.model().data(index) for index in indexes if index.column() == 2]
             confirmation_text = f"Next folders will be removed:<br><br>{'<br>'.join(names)}! <br><br>Do you proceed?"
             confirm = confirmationDialog("Do you remove?", confirmation_text)
             if not confirm:
                 return
-            if gdb.deleteFoldersDB(names):
+            if gdb.deleteFoldersDB(names, labels):
                 self.refreshTable()
                 message = f'Removed folder <br><br> {names[0]}' if count == 1 \
                     else f"Removed folders <br><br>{'<br>'.join(names)}"
@@ -157,17 +158,17 @@ class Folders(QtWidgets.QWidget):
         if serial:
             if folder_name:
                 if not self.folderExists(folder_name, serial):
-                        if self.alreadyIndexed(folder_name, serial):
-                            return None
-                        last_id = gdb.addFolder(folder_name, serial)
-                        if last_id:
-                            self.refreshTable()
-                            self.folders_indexed_table_model.selectRowByModelId(last_id)
-                            # start indexing of new folder if autorun is on
-                            if int(getPreference('indexer_autorun')):
-                                self.folder_added.emit()
+                    if self.alreadyIndexed(folder_name, serial):
+                        return None
+                    last_id = gdb.addFolder(folder_name, serial)
+                    if last_id:
+                        self.refreshTable()
+                        self.folders_indexed_table_model.selectRowByModelId(last_id)
+                        # start indexing of new folder if autorun is on
+                        if int(getPreference('indexer_autorun')):
+                            self.folder_added.emit()
 
-                            self.refreshTable()
+                        self.refreshTable()
 
     def folderExists(self, folder_name, serial):
         if gdb.folderExists(folder_name, serial):

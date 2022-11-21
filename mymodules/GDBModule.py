@@ -234,16 +234,18 @@ def addFolder(folder: str, serial: str) -> bool:
         return ret
 
 
-def deleteFoldersDB(paths: list) -> bool:
+def deleteFoldersDB(paths: list, labels: list) -> bool:
     """
     :param paths:
+    :param labels:
     :return:
     """
     query = QtSql.QSqlQuery()
-    for path in paths:
-        folder_id = folderId(path)
-        query.prepare("""Delete from folders where path=:path""")
-        query.bindValue(':path', path)
+    for ind, path in enumerate(paths):
+        label = labels[ind]
+        folder_id = folderId(path, label)
+        query.prepare("""Delete from folders where id=:id""")
+        query.bindValue(':id', folder_id)
         if query.exec():
             deleteFilesDB(folder_id)
         else:
@@ -268,6 +270,23 @@ def deleteFilesDB(folder_id: int) -> bool:
         printQueryErr(query, 'deleteFilesDB')
 
 
+def cleanRemovedDuplicates(directory: str, filename: str) -> bool:
+    """
+    :param directory:
+    :param filename:
+    :return:
+    """
+    query = QtSql.QSqlQuery()
+    query.prepare("""Delete from files where dir=:dir AND filename=:filename""")
+    query.bindValue(':dir', directory)
+    query.bindValue(':filename', filename)
+    if query.exec():
+        query.clear()
+        return True
+    else:
+        printQueryErr(query, 'cleanRemovedDuplicates')
+
+
 def extensionId(extension: str) -> int:
     """
     :param extension:
@@ -285,14 +304,22 @@ def extensionId(extension: str) -> int:
         printQueryErr(query, 'extensionId')
 
 
-def folderId(path: str) -> int:
+def folderId(path: str, label: str) -> int:
     """
     :param path:
+    :param label:
     :return:
     """
     query = QtSql.QSqlQuery()
-    query.prepare("select id from folders where path=:path")
+    query.prepare("""
+        SELECT id FROM folders fo 
+        LEFT JOIN drives d ON d.serial = fo.drive_id 
+        WHERE fo.path=:path 
+        AND d.label=:label
+        """)
+
     query.bindValue(':path', path)
+    query.bindValue(':label', label)
     if query.exec():
         while query.next():
             folder_id = query.value(0)
@@ -374,6 +401,78 @@ def findFiles(search_term: str, extensions: list) -> list:
                 query.value('size'),
                 query.value('extension'),
                 query.value('label')
+            ]
+            results.append(item)
+        query.clear()
+        return results
+
+
+def findDuplicates():
+    query = QtSql.QSqlQuery()
+    query.prepare("""WITH cte AS (
+        SELECT f.dir, f.filename, f.size, e.extension, d.label, count(*) as Occurrence
+        FROM files f 
+        LEFT JOIN extensions e on e.id=f.extension_id
+        LEFT JOIN folders fo on fo.id=f.folder_id
+        LEFT JOIN drives d on d.serial=fo.drive_id
+        GROUP BY f.size, f.filename
+        HAVING COUNT(*) > 1
+        )
+        SELECT f.dir, f.filename, f.size, e.extension, d.label
+        FROM  files f
+            INNER JOIN cte ON cte.filename = f.filename AND cte.size = f.size
+            LEFT JOIN extensions e on e.id=f.extension_id
+            LEFT JOIN folders fo on fo.id=f.folder_id
+            LEFT JOIN drives d on d.serial=fo.drive_id
+        ORDER BY f.size DESC""")
+
+    if query.exec():
+        results = []
+        while query.next():
+            item = [
+                query.value('dir'),
+                query.value('filename'),
+                query.value('size'),
+                query.value('extension'),
+                query.value('label'),
+                0
+            ]
+            results.append(item)
+        query.clear()
+        return results
+
+
+def findDuplicatesBySize():
+    query = QtSql.QSqlQuery()
+    query.prepare("""WITH cte AS (
+        SELECT f.dir, f.filename, f.size, e.extension, d.label, count(*) as Occurrence
+        FROM files f 
+            LEFT JOIN extensions e on e.id=f.extension_id
+            LEFT JOIN folders fo on fo.id=f.folder_id
+            LEFT JOIN drives d on d.serial=fo.drive_id
+        WHERE d.active = 1
+        GROUP BY f.size, f.filename
+        HAVING COUNT(*) > 1
+        )
+        SELECT f.dir, f.filename, f.size, e.extension, d.label
+        FROM  files f
+            INNER JOIN cte ON cte.size = f.size
+            LEFT JOIN extensions e on e.id=f.extension_id
+            LEFT JOIN folders fo on fo.id=f.folder_id
+            LEFT JOIN drives d on d.serial=fo.drive_id
+        WHERE d.active = 1
+        ORDER BY f.size DESC""")
+
+    if query.exec():
+        results = []
+        while query.next():
+            item = [
+                query.value('dir'),
+                query.value('filename'),
+                query.value('size'),
+                query.value('extension'),
+                query.value('label'),
+                0
             ]
             results.append(item)
         query.clear()
@@ -654,7 +753,8 @@ def filesOnDrive():
                   "ORDER BY filesOnDrive DESC")
     if query.exec():
         while query.next():
-            result.append([query.value('drive'), query.value('filesOnDrive'), query.value('active'), query.value('size')])
+            result.append(
+                [query.value('drive'), query.value('filesOnDrive'), query.value('active'), query.value('size')])
         query.clear()
     return result
 
